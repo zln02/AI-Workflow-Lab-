@@ -1,0 +1,42 @@
+-- ============================================
+-- Migration 004: Create ai_models table
+-- ============================================
+CREATE TABLE IF NOT EXISTS ai_models (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  provider_id INT,
+  category_id INT,
+  model_name VARCHAR(255) NOT NULL,
+  price VARCHAR(100),
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  purpose_summary VARCHAR(200),
+  input_modalities SET('TEXT','IMAGE','AUDIO','VIDEO','PDF','CODE'),
+  output_modalities SET('TEXT','IMAGE','AUDIO','VIDEO'),
+  languages JSON,
+  benchmarks JSON,
+  params_billion DECIMAL(6,2),
+  latency_ms INT,
+  rate_limit_per_min INT,
+  api_available TINYINT(1) NOT NULL DEFAULT 1,
+  finetune_available TINYINT(1) NOT NULL DEFAULT 0,
+  onprem_available TINYINT(1) NOT NULL DEFAULT 0,
+  hosting_options SET('CLOUD','ON_PREM','EDGE'),
+  license_type ENUM('FREE','COMMERCIAL','OPEN_SOURCE','MIXED'),
+  commercial_use_allowed TINYINT(1) NOT NULL DEFAULT 1,
+  data_retention TEXT,
+  privacy_url VARCHAR(255),
+  tos_url VARCHAR(255),
+  homepage_url VARCHAR(255),
+  docs_url VARCHAR(255),
+  playground_url VARCHAR(255),
+  max_input_size_mb DECIMAL(8,2),
+  supported_file_types VARCHAR(255),
+  FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE SET NULL,
+  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+  INDEX idx_provider_id (provider_id),
+  INDEX idx_category_id (category_id),
+  INDEX idx_model_name (model_name),
+  INDEX idx_api_available (api_available),
+  INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI 모델 정보';
+

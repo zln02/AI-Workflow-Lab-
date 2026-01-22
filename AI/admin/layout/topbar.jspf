@@ -1,0 +1,44 @@
+<%@ page pageEncoding="UTF-8" %>
+<%
+  // session에서 직접 가져오기 (각 JSP 페이지에서 이미 선언된 변수와 충돌 방지)
+  model.Admin topbarAdmin = (model.Admin) session.getAttribute("admin");
+  String topbarAdminRole = (String) session.getAttribute("adminRole");
+  String roleDisplay = "관리자";
+  if ("SUPER".equals(topbarAdminRole) || "superadmin".equals(topbarAdminRole)) {
+    roleDisplay = "Superadmin";
+  } else if ("MANAGER".equals(topbarAdminRole)) {
+    roleDisplay = "Manager";
+  } else if ("EDITOR".equals(topbarAdminRole)) {
+    roleDisplay = "Editor";
+  } else if ("VIEWER".equals(topbarAdminRole)) {
+    roleDisplay = "Viewer";
+  }
+%>
+<header class="admin-topbar">
+  <div class="topbar-left">
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="메뉴 토글">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="검색..." class="search-input" id="searchInput">
+    </div>
+  </div>
+  
+  <div class="topbar-right">
+    <div class="admin-info">
+      <span class="admin-role-badge"><%= roleDisplay %></span>
+      <% if (topbarAdmin != null && topbarAdmin.getName() != null) { %>
+        <span class="admin-name"><%= topbarAdmin.getName() %></span>
+      <% } else if (topbarAdmin != null && topbarAdmin.getUsername() != null) { %>
+        <span class="admin-name"><%= topbarAdmin.getUsername() %></span>
+      <% } %>
+    </div>
+    <a href="/AI/admin/auth/logout.jsp" class="btn-logout">
+      <span>로그아웃</span>
+      <span class="logout-icon">🚪</span>
+    </a>
+  </div>
+</header>

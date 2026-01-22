@@ -1,0 +1,372 @@
+/* ============================================
+   HR 대시보드 전용 스타일
+   ============================================ */
+
+/* HR 레이아웃 오버라이드 */
+.hr-layout {
+  background: var(--bg-primary);
+}
+
+.hr-main-wrapper {
+  margin-left: 280px;
+}
+
+.hr-sidebar {
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--glass-border);
+}
+
+.hr-sidebar .brand {
+  color: var(--accent-primary);
+}
+
+.hr-sidebar .brand-icon {
+  font-size: 1.5rem;
+}
+
+.hr-topbar {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.hr-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.breadcrumb-separator {
+  color: var(--text-tertiary);
+}
+
+.breadcrumb-item.active {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.hr-role-badge {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--accent-primary);
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--glass-border);
+  margin: 0.75rem 0;
+}
+
+/* HR 필터 섹션 */
+.hr-filter-section {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.hr-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.hr-filter-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hr-filter-title::before {
+  content: "🔍";
+  font-size: 1.25rem;
+}
+
+.hr-filter-reset {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.hr-filter-reset:hover {
+  background: var(--glass-hover);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* 필터 그리드 */
+.hr-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.hr-filter-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.hr-filter-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.hr-filter-label-icon {
+  font-size: 1rem;
+  opacity: 0.7;
+}
+
+.hr-filter-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  padding-right: 2.5rem;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.hr-filter-select:hover {
+  background-color: var(--glass-hover);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.hr-filter-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  background-color: rgba(56, 189, 248, 0.1);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+}
+
+.hr-filter-select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 0.5rem;
+}
+
+.hr-filter-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* 필터 액션 바 */
+.hr-filter-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.hr-filter-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hr-filter-btn-primary {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.hr-filter-btn-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(56, 189, 248, 0.3);
+}
+
+.hr-filter-btn-secondary {
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+}
+
+.hr-filter-btn-secondary:hover {
+  background: var(--glass-hover);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.hr-filter-search {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+
+.hr-filter-search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  padding-left: 2.5rem;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  transition: all var(--transition-fast);
+}
+
+.hr-filter-search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.hr-filter-search-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  background-color: rgba(56, 189, 248, 0.1);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+}
+
+.hr-filter-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+/* 필터 활성 상태 표시 */
+.hr-filter-item.active .hr-filter-label {
+  color: var(--accent-primary);
+}
+
+.hr-filter-item.active .hr-filter-select {
+  border-color: var(--accent-primary);
+  background-color: rgba(56, 189, 248, 0.1);
+}
+
+/* 필터 배지 (선택된 필터 표시) */
+.hr-filter-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--glass-border);
+}
+
+.hr-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  color: var(--accent-primary);
+}
+
+.hr-filter-badge-remove {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all var(--transition-fast);
+}
+
+.hr-filter-badge-remove:hover {
+  background: rgba(56, 189, 248, 0.2);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .hr-filter-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .hr-filter-actions {
+    flex-direction: column;
+  }
+  
+  .hr-filter-search {
+    min-width: 100%;
+  }
+}
+
+/* 필터 로딩 상태 */
+.hr-filter-loading {
+  opacity: 0.6;
+  pointer-events: none;
+  position: relative;
+}
+
+.hr-filter-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--glass-border);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* 필터 계층 표시 */
+.hr-filter-hierarchy {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.hr-filter-hierarchy-separator {
+  color: var(--text-tertiary);
+  opacity: 0.5;
+}
+
+/* HR Dashboard CSS v2.1 - Updated: 20260105030747 */

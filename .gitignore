@@ -1,0 +1,171 @@
+# Compiled class files
+*.class
+*.jar
+*.war
+*.ear
+
+# Log files
+*.log
+logs/
+*.log.*
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Tomcat files
+work/
+temp/
+*.tmp
+
+# Build files
+target/
+build/
+dist/
+out/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Configuration files with sensitive data
+**/config.properties
+**/application.properties
+**/database.properties
+
+# Compiled JSP files
+**/jsp/org/apache/jsp/**/*.class
+
+# Session files
+SESSIONS.ser
+
+# Temporary files
+*.tmp
+*.temp
+
+# Package files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Node modules (if using Node.js tools)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Gradle
+.gradle/
+gradle-wrapper.jar
+gradlew
+gradlew.bat
+
+# Eclipse
+.metadata/
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.idea_modules/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# Application specific
+**/WEB-INF/classes/**/*.class
+**/WEB-INF/lib/
+**/META-INF/
+
+# Sensitive data
+**/credentials.properties
+**/secrets.properties
+**/*secret*
+**/*password*
+**/*key*
+
+# Test/Utility files with hardcoded credentials
+**/verify_data_storage.java
+**/find_placeholder_models.java
+**/*_storage.java
+**/*_models.java
+
+# Test files
+**/test-output/
+**/test-results/
+
+# Coverage reports
+**/coverage/
+**/.nyc_output/
+
+# Documentation build
+**/docs/_build/
+**/site/
+

@@ -1,0 +1,72 @@
+<%@ page pageEncoding="UTF-8" %>
+<%
+  // session에서 직접 가져오기 (각 JSP 페이지에서 이미 선언된 변수와 충돌 방지)
+  String sidebarAdminRole = (String) session.getAttribute("adminRole");
+  boolean sidebarIsSuperadmin = "SUPER".equals(sidebarAdminRole) || "superadmin".equals(sidebarAdminRole);
+%>
+<nav class="admin-sidebar" id="adminSidebar">
+  <div class="sidebar-header">
+    <div class="brand">
+      <span class="brand-icon">⚡</span>
+      <span class="brand-text">AI Navigator</span>
+    </div>
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="사이드바 토글">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+  
+  <div class="sidebar-menu">
+    <a href="/AI/admin/statistics/index.jsp" class="sidebar-item" data-path="/admin/statistics">
+      <span class="sidebar-icon">📈</span>
+      <span class="sidebar-text">판매 통계</span>
+    </a>
+    <a href="/AI/admin/models/index.jsp" class="sidebar-item" data-path="/admin/models">
+      <span class="sidebar-icon">🤖</span>
+      <span class="sidebar-text">모델</span>
+    </a>
+    <a href="/AI/admin/categories/index.jsp" class="sidebar-item" data-path="/admin/categories">
+      <span class="sidebar-icon">📁</span>
+      <span class="sidebar-text">카테고리</span>
+    </a>
+    <a href="/AI/admin/providers/index.jsp" class="sidebar-item" data-path="/admin/providers">
+      <span class="sidebar-icon">🏢</span>
+      <span class="sidebar-text">제공자</span>
+    </a>
+    <a href="/AI/admin/tags/index.jsp" class="sidebar-item" data-path="/admin/tags">
+      <span class="sidebar-icon">🏷️</span>
+      <span class="sidebar-text">태그</span>
+    </a>
+    <a href="/AI/admin/pricing/index.jsp" class="sidebar-item" data-path="/admin/pricing">
+      <span class="sidebar-icon">💰</span>
+      <span class="sidebar-text">요금제</span>
+    </a>
+    <a href="/AI/admin/packages/index.jsp" class="sidebar-item" data-path="/admin/packages">
+      <span class="sidebar-icon">📦</span>
+      <span class="sidebar-text">패키지</span>
+    </a>
+    <a href="/AI/admin/users/index.jsp" class="sidebar-item" data-path="/admin/users">
+      <span class="sidebar-icon">👥</span>
+      <span class="sidebar-text">고객 관리</span>
+    </a>
+    <a href="/AI/admin/hr/dashboard.jsp" class="sidebar-item" data-path="/admin/hr">
+      <span class="sidebar-icon">👔</span>
+      <span class="sidebar-text">HR 현황</span>
+    </a>
+    <% if (sidebarIsSuperadmin) { %>
+    <a href="/AI/admin/admins/index.jsp" class="sidebar-item" data-path="/admin/admins">
+      <span class="sidebar-icon">👤</span>
+      <span class="sidebar-text">관리자 관리</span>
+    </a>
+    <% } %>
+  </div>
+  
+  <div class="sidebar-footer">
+    <button class="theme-toggle" id="themeToggle" aria-label="다크모드 토글">
+      <span class="theme-icon">🌙</span>
+      <span class="theme-text">다크모드</span>
+    </button>
+  </div>
+</nav>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
