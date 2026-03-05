@@ -8,7 +8,7 @@
   </session-config>
   
   <welcome-file-list>
-    <welcome-file>intro.jsp</welcome-file>
+    <welcome-file>AI/user/home.jsp</welcome-file>
   </welcome-file-list>
   
   <filter>
@@ -35,6 +35,15 @@
   <filter-mapping>
     <filter-name>AuthFilter</filter-name>
     <url-pattern>/admin/*</url-pattern>
+  </filter-mapping>
+  
+  <filter>
+    <filter-name>SecurityHeadersFilter</filter-name>
+    <filter-class>filter.SecurityHeadersFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>SecurityHeadersFilter</filter-name>
+    <url-pattern>/*</url-pattern>
   </filter-mapping>
   
   <filter>
@@ -77,5 +86,14 @@
   <servlet-mapping>
     <servlet-name>LoginServlet</servlet-name>
     <url-pattern>/AI/admin/auth/login</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>AIToolServlet</servlet-name>
+    <servlet-class>servlet.AIToolServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>AIToolServlet</servlet-name>
+    <url-pattern>/AI/api/ai-tools/*</url-pattern>
   </servlet-mapping>
 </web-app>

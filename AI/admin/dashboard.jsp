@@ -1,9 +1,11 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="dao.AIModelDAO" %>
+<%@ page import="dao.AIToolDAO" %>
+<%@ page import="dao.LabProjectDAO" %>
 <%@ page import="dao.OrderDAO" %>
-<%@ page import="dao.PackageDAO" %>
-<%@ page import="model.AIModel" %>
+<%@ page import="model.AITool" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.sql.*" %>
+<%@ page import="db.DBConnect" %>
 <%
   // 관리자 인증 확인
   if (session.getAttribute("admin") == null) {
@@ -13,51 +15,26 @@
 
   String adminRole = (String) session.getAttribute("adminRole");
   boolean isSuperadmin = "superadmin".equals(adminRole) || "SUPER".equals(adminRole);
-  
-  // 실제 DB 데이터 조회
-  AIModelDAO modelDAO = new AIModelDAO();
+
+  // AI Workflow Lab 통계 조회
+  AIToolDAO toolDAO = new AIToolDAO();
+  LabProjectDAO projectDAO = new LabProjectDAO();
   OrderDAO orderDAO = new OrderDAO();
-  PackageDAO packageDAO = new PackageDAO();
-  
-  // 활성 모델 수 조회
-  List<AIModel> allModels = modelDAO.findAll();
-  int activeModelCount = 0;
-  StringBuilder activeModelNames = new StringBuilder();
+
+  int toolCount = 0, projectCount = 0, userCount = 0;
+  int recentCheckoutCount = 0;
   try {
-    for (AIModel model : allModels) {
-      boolean isActive = true;
-      try {
-        isActive = model.isApiAvailable();
-      } catch (Exception e) {
-        // api_available 필드가 없거나 접근 불가능한 경우 모든 모델을 활성으로 간주
-      }
-      
-      if (isActive) {
-        activeModelCount++;
-        if (activeModelNames.length() > 0) {
-          activeModelNames.append(" / ");
-        }
-        if (activeModelNames.length() < 100) {
-          String modelName = model.getModelName() != null ? model.getModelName() : "모델 #" + model.getId();
-          activeModelNames.append(modelName);
-        }
-      }
-    }
-    if (activeModelNames.length() == 0) {
-      activeModelNames.append("등록된 활성 모델이 없습니다");
-    } else if (activeModelNames.length() > 100) {
-      activeModelNames.append(" 외 ").append(activeModelCount - 3).append("개");
-    }
+    toolCount    = toolDAO.findAll().size();
+    projectCount = projectDAO.findAll().size();
+    recentCheckoutCount = orderDAO.countRecentOrders();
+    try (Connection _c = DBConnect.getConnection();
+         PreparedStatement _ps = _c.prepareStatement("SELECT COUNT(*) FROM users WHERE is_active=1");
+         ResultSet _rs = _ps.executeQuery()) {
+      if (_rs.next()) userCount = _rs.getInt(1);
+    } catch (Exception ignore) {}
   } catch (Exception e) {
-    activeModelCount = allModels.size();
-    activeModelNames.append("모델 조회 중 오류 발생");
+    // 데이터 조회 실패 시 기본값 유지
   }
-  
-  // 최근 7일간 체크아웃 수 조회
-  int recentCheckoutCount = orderDAO.countRecentOrders();
-  
-  // 전체 패키지 수
-  int totalPackageCount = packageDAO.findAll().size();
 %>
 <%@ include file="/AI/admin/layout/header.jspf" %>
 <div class="admin-layout">
@@ -66,25 +43,35 @@
     <%@ include file="/AI/admin/layout/topbar.jspf" %>
     <main class="admin-content">
       <header class="admin-dashboard-header">
-        <h1>관리자 대시보드</h1>
-        <p>AI Navigator 전체 흐름을 한 화면에서 모니터링합니다.</p>
+        <h1>AI Workflow Lab 관리자 대시보드</h1>
+        <p>플랫폼 전체 현황을 한눈에 모니터링하세요.</p>
       </header>
 
-      <section class="admin-grid">
-        <article>
-          <h2>활성 모델</h2>
-          <p><%= activeModelNames.toString() %></p>
-          <span class="counter"><%= activeModelCount %></span>
+      <!-- 핵심 지표 KPI -->
+      <section class="admin-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+        <article style="text-align:center;">
+          <div style="font-size:2rem;margin-bottom:.5rem;">🔧</div>
+          <h2>AI 도구</h2>
+          <p>등록된 AI 도구</p>
+          <span class="counter"><%= toolCount %></span>
         </article>
-        <article>
-          <h2>신규 체크아웃</h2>
+        <article style="text-align:center;">
+          <div style="font-size:2rem;margin-bottom:.5rem;">🧪</div>
+          <h2>실습 프로젝트</h2>
+          <p>활성 프로젝트</p>
+          <span class="counter"><%= projectCount %></span>
+        </article>
+        <article style="text-align:center;">
+          <div style="font-size:2rem;margin-bottom:.5rem;">👥</div>
+          <h2>가입 사용자</h2>
+          <p>활성 회원 수</p>
+          <span class="counter"><%= userCount %></span>
+        </article>
+        <article style="text-align:center;">
+          <div style="font-size:2rem;margin-bottom:.5rem;">🛒</div>
+          <h2>신규 주문</h2>
           <p>최근 7일간</p>
           <span class="counter"><%= recentCheckoutCount %></span>
-        </article>
-        <article>
-          <h2>등록된 패키지</h2>
-          <p>전체 패키지 수</p>
-          <span class="counter"><%= totalPackageCount %></span>
         </article>
       </section>
 
@@ -149,9 +136,10 @@
       <section class="admin-notice">
         <h2>빠른 링크</h2>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <a class="btn primary" href="/AI/admin/statistics/index.jsp">판매 통계 보기</a>
-          <a class="btn" href="/AI/admin/packages/index.jsp">패키지 관리</a>
-          <a class="btn" href="/AI/admin/models/index.jsp">모델 관리</a>
+          <a class="btn primary" href="/AI/admin/statistics/index.jsp">통계 보기</a>
+          <a class="btn" href="/AI/admin/tools/index.jsp">AI 도구 관리</a>
+          <a class="btn" href="/AI/admin/lab/index.jsp">실습 랩 관리</a>
+          <a class="btn" href="/AI/admin/models/index.jsp">AI 모델 관리</a>
           <% if (isSuperadmin) { %>
             <a class="btn" href="/AI/admin/admins/index.jsp">관리자 관리</a>
           <% } %>

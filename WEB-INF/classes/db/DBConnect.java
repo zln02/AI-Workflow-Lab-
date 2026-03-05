@@ -1,160 +1,107 @@
 package db;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.stream.Stream;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
-/**
- * 데이터베이스 연결 관리 클래스
- * 환경 변수를 통한 설정 관리 및 연결 풀 최적화
- */
-public final class DBConnect {
-  // 환경 변수에서 설정 읽기 (필수)
-  // 주의: 모든 데이터베이스 연결 정보는 환경 변수로 설정해야 합니다
-  private static final String DB_HOST = getRequiredEnv("DB_HOST");
-  private static final String DB_PORT = getRequiredEnv("DB_PORT");
-  private static final String DB_NAME = getRequiredEnv("DB_NAME");
-  private static final String DB_USER = getRequiredEnv("DB_USER");
-  private static final String DB_PASSWORD = getRequiredEnv("DB_PASSWORD");
-  
-  // JDBC URL 최적화: PreparedStatement 캐싱 및 성능 파라미터 추가
-  private static final String URL = String.format(
-      "jdbc:mysql://%s:%s/%s?" +
-      "useSSL=false&" +
-      "serverTimezone=Asia/Seoul&" +
-      "allowPublicKeyRetrieval=true&" +
-      "useUnicode=true&" +
-      "characterEncoding=UTF-8&" +
-      "cachePrepStmts=true&" +
-      "prepStmtCacheSize=250&" +
-      "prepStmtCacheSqlLimit=2048&" +
-      "rewriteBatchedStatements=true&" +
-      "useServerPrepStmts=true&" +
-      "cacheResultSetMetadata=true&" +
-      "cacheServerConfiguration=true&" +
-      "maintainTimeStats=false&" +
-      "connectTimeout=5000&" +
-      "socketTimeout=10000&" +
-      "autoReconnect=true&" +
-      "maxReconnects=3",
-      DB_HOST, DB_PORT, DB_NAME
-  );
-  
-  /**
-   * 환경 변수에서 값을 읽거나 기본값 반환
-   * @param envName 환경 변수 이름
-   * @param defaultValue 기본값
-   * @return 환경 변수 값 또는 기본값
-   */
-  private static String getEnvOrDefault(String envName, String defaultValue) {
-    String value = System.getenv(envName);
-    if (value != null && !value.trim().isEmpty()) {
-      return value.trim();
-    }
-    // 시스템 프로퍼티에서도 확인
-    value = System.getProperty(envName);
-    if (value != null && !value.trim().isEmpty()) {
-      return value.trim();
-    }
-    return defaultValue;
-  }
-
-  /**
-   * 환경 변수에서 필수 값을 읽기 (없으면 예외 발생)
-   * @param envName 환경 변수 이름
-   * @return 환경 변수 값
-   * @throws IllegalStateException 환경 변수가 설정되지 않은 경우
-   */
-  private static String getRequiredEnv(String envName) {
-    String value = System.getenv(envName);
-    if (value != null && !value.trim().isEmpty()) {
-      return value.trim();
-    }
-    // 시스템 프로퍼티에서도 확인
-    value = System.getProperty(envName);
-    if (value != null && !value.trim().isEmpty()) {
-      return value.trim();
-    }
-    throw new IllegalStateException(
-        String.format("필수 환경 변수 '%s'가 설정되지 않았습니다. 환경 변수를 설정해주세요.", envName));
-  }
-
-  static {
-    try {
-      Class.forName("com.mysql.cj.jdbc.Driver");
-      initializeSchema();
-    } catch (ClassNotFoundException e) {
-      throw new ExceptionInInitializerError(e);
-    }
-  }
-
-  private DBConnect() {}
-
-  /**
-   * 데이터베이스 연결 가져오기 (재시도 로직 포함)
-   * @return 데이터베이스 연결 객체
-   * @throws SQLException 연결 실패 시
-   */
-  public static Connection getConnection() throws SQLException {
-    int maxRetries = 3;
-    int retryDelay = 1000; // 1초
+public class DBConnect {
+    private static HikariDataSource dataSource;
     
-    for (int attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        return DriverManager.getConnection(URL, DB_USER, DB_PASSWORD);
-      } catch (SQLException e) {
-        if (attempt == maxRetries) {
-          // 마지막 시도에서도 실패하면 예외를 다시 던짐
-          throw new SQLException("데이터베이스 연결 실패 (시도: " + attempt + "/" + maxRetries + ")", e);
-        }
-        // 연결 실패 시 재시도 전 대기
+    static {
         try {
-          Thread.sleep(retryDelay);
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          throw new SQLException("연결 재시도 중 인터럽트 발생", ie);
+            // HikariCP 설정
+            HikariConfig config = new HikariConfig();
+            
+            // 환경 변수에서 데이터베이스 설정 읽기
+            String dbUrl = System.getenv("DB_URL");
+            String dbUser = System.getenv("DB_USER");
+            String dbPassword = System.getenv("DB_PASSWORD");
+            
+            // 환경 변수가 없으면 기본값 사용 (개발용)
+            if (dbUrl == null) {
+                dbUrl = "jdbc:mysql://localhost:3306/ai_navigator?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+            }
+            if (dbUser == null) {
+                dbUser = "root";
+            }
+            if (dbPassword == null) {
+                dbPassword = "1234!"; // 개발 환경에서만 사용
+            }
+            
+            config.setJdbcUrl(dbUrl);
+            config.setUsername(dbUser);
+            config.setPassword(dbPassword);
+            
+            // 커넥션 풀 설정
+            config.setDriverClassName("com.mysql.cj.jdbc.Driver");
+            config.setMaximumPoolSize(20);
+            config.setMinimumIdle(5);
+            config.setConnectionTimeout(30000);
+            config.setIdleTimeout(600000);
+            config.setMaxLifetime(1800000);
+            config.setLeakDetectionThreshold(60000);
+            
+            // 보안 설정
+            config.addDataSourceProperty("cachePrepStmts", "true");
+            config.addDataSourceProperty("prepStmtCacheSize", "250");
+            config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+            config.addDataSourceProperty("useServerPrepStmts", "true");
+            config.addDataSourceProperty("useLocalSessionState", "true");
+            config.addDataSourceProperty("rewriteBatchedStatements", "true");
+            config.addDataSourceProperty("cacheResultSetMetadata", "true");
+            config.addDataSourceProperty("cacheServerConfiguration", "true");
+            config.addDataSourceProperty("elideSetAutoCommits", "true");
+            config.addDataSourceProperty("maintainTimeStats", "false");
+            
+            dataSource = new HikariDataSource(config);
+            
+            System.out.println("HikariCP connection pool initialized successfully");
+            
+        } catch (Exception e) {
+            System.err.println("Failed to initialize connection pool: " + e.getMessage());
+            e.printStackTrace();
         }
-      }
     }
     
-    // 이 코드는 실행되지 않지만 컴파일러를 만족시키기 위해 필요
-    throw new SQLException("데이터베이스 연결에 실패했습니다");
-  }
-
-  private static void initializeSchema() {
-    Path script =
-        Path.of(
-            System.getProperty("catalina.base"),
-            "webapps",
-            "AI",
-            "database",
-            "schema.sql");
-    if (!Files.exists(script)) {
-      return;
+    public static Connection getConnection() throws SQLException {
+        if (dataSource == null) {
+            throw new SQLException("Connection pool not initialized");
+        }
+        return dataSource.getConnection();
     }
-    try {
-      String sql = Files.readString(script, StandardCharsets.UTF_8);
-      try (Connection conn = DriverManager.getConnection(URL, DB_USER, DB_PASSWORD);
-          Statement stmt = conn.createStatement()) {
-        Stream.of(sql.split(";"))
-            .map(String::trim)
-            .filter(line -> !line.isEmpty())
-            .forEach(
-                statement -> {
-                  try {
-                    stmt.execute(statement);
-                  } catch (SQLException ignored) {
-                    // ignore statements that already exist
-                  }
-                });
-      }
-    } catch (Exception ignored) {
-      // schema initialization should not crash the application
+    
+    public static void closeConnection() {
+        if (dataSource != null) {
+            dataSource.close();
+            System.out.println("Connection pool closed");
+        }
     }
-  }
+    
+    // 테스트용 메서드
+    public static boolean testConnection() {
+        try (Connection conn = getConnection()) {
+            if (conn != null && !conn.isClosed()) {
+                conn.createStatement().execute("SELECT 1");
+                return true;
+            }
+        } catch (SQLException e) {
+            System.err.println("Connection test failed: " + e.getMessage());
+        }
+        return false;
+    }
+    
+    // 커넥션 풀 상태 정보
+    public static String getPoolStatus() {
+        if (dataSource == null) {
+            return "Pool not initialized";
+        }
+        return String.format(
+            "Active: %d, Idle: %d, Total: %d, Waiting: %d",
+            dataSource.getHikariPoolMXBean().getActiveConnections(),
+            dataSource.getHikariPoolMXBean().getIdleConnections(),
+            dataSource.getHikariPoolMXBean().getTotalConnections(),
+            dataSource.getHikariPoolMXBean().getThreadsAwaitingConnection()
+        );
+    }
 }
