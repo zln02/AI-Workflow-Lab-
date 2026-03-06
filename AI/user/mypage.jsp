@@ -148,7 +148,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>마이페이지 - AI Navigator</title>
+  <title>마이페이지- AI Workflow Lab</title>
   <link rel="stylesheet" href="/AI/assets/css/user.css">
 </head>
 <body>

@@ -15,14 +15,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>요금제 - AI Navigator</title>
+  <title>요금제- AI Workflow Lab</title>
   <link rel="stylesheet" href="/AI/assets/css/user.css">
 </head>
 <body>
   <!-- Navbar -->
   <nav class="navbar" id="navbar">
     <div class="navbar-container">
-      <a href="/AI/user/home.jsp" class="navbar-logo">AI Navigator</a>
+      <a href="/AI/user/home.jsp" class="navbar-logo">AI Workflow Lab/a>
       <ul class="navbar-menu" id="navbarMenu">
         <li><a href="/AI/user/models.jsp">모델</a></li>
         <li><a href="/AI/user/package.jsp">패키지</a></li>

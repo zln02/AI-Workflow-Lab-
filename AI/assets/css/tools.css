@@ -1,0 +1,119 @@
+/* ============================================
+   AI Workflow Lab - Tools Navigator Styles
+   ============================================ */
+
+/* Body padding for fixed navbar */
+body {
+  padding-top: 44px;
+}
+
+/* Navbar compatibility */
+.navbar.navbar-expand-lg {
+  height: auto;
+  min-height: 44px;
+}
+
+/* Tool Card */
+.tool-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tool-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+  border-color: #0071e3;
+}
+
+.tool-card .card-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 12px 16px;
+}
+
+/* Provider Logo */
+.provider-logo-sm {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: contain;
+  background: #f5f5f7;
+}
+
+/* Star Rating */
+.star-rating {
+  color: #f5c518;
+  font-size: 0.85rem;
+}
+
+/* Tag badges */
+.tag-badge {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: #f0f4ff;
+  color: #3b5bdb;
+  border: 1px solid #dbe4ff;
+}
+
+/* Filter sidebar */
+.filter-card {
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  position: sticky;
+  top: 60px;
+}
+
+/* Recommendation result */
+.recommend-result-card {
+  border-left: 4px solid #0071e3;
+  border-radius: 8px;
+  padding: 12px 16px;
+  background: #f0f7ff;
+  margin-bottom: 8px;
+}
+
+/* List view tool row */
+.tool-list-row {
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.tool-list-row:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-color: #0071e3;
+}
+
+/* Category badge colors */
+.badge-text-gen { background: #dbeafe; color: #1d4ed8; }
+.badge-image-gen { background: #fce7f3; color: #be185d; }
+.badge-code-gen { background: #d1fae5; color: #065f46; }
+.badge-voice { background: #fef3c7; color: #92400e; }
+.badge-video { background: #ede9fe; color: #5b21b6; }
+.badge-translate { background: #e0f2fe; color: #0369a1; }
+.badge-data { background: #f0fdf4; color: #166534; }
+
+/* Popular tools list */
+.popular-tool-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+  gap: 8px;
+}
+
+.popular-tool-item:last-child {
+  border-bottom: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .filter-card {
+    position: static;
+  }
+}

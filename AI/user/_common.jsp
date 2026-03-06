@@ -148,7 +148,7 @@
    */
   public String[] getProviderLogo(String providerName, String modelName) {
     String logoFileName = getProviderLogoFileName(providerName);
-    String logoPath = "/AI/assets/img/providers/" + logoFileName + ".png";
+    String logoPath = "/AI/assets/img/providers/" + logoFileName + ".svg";
     return new String[]{logoPath, providerName != null ? providerName : "Unknown"};
   }
 %>

@@ -49,14 +49,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>회원가입 - AI Navigator</title>
+  <title>회원가입- AI Workflow Lab</title>
   <link rel="stylesheet" href="/AI/assets/css/user.css">
 </head>
 <body>
   <!-- Navbar -->
   <nav class="navbar" id="navbar">
     <div class="navbar-container">
-      <a href="/AI/user/home.jsp" class="navbar-logo">AI Navigator</a>
+      <a href="/AI/user/home.jsp" class="navbar-logo">AI Workflow Lab/a>
       <ul class="navbar-menu" id="navbarMenu">
         <li><a href="/AI/user/home.jsp">모델</a></li>
         <li><a href="/AI/user/package.jsp">패키지</a></li>
@@ -70,7 +70,7 @@
   <main style="width: min(980px, 100%); margin: 0 auto; padding: 80px 22px;">
     <section class="user-hero" style="text-align: center; margin-bottom: 60px;">
       <h1>회원가입</h1>
-      <p style="color: var(--text-secondary); margin-top: 12px;">AI Navigator에 가입하고 모든 기능을 이용하세요.</p>
+      <p style="color: var(--text-secondary); margin-top: 12px;">AI Workflow Lab에 가입하고 모든 기능을 이용하세요.</p>
     </section>
 
     <section style="max-width: 500px; margin: 0 auto;">

@@ -91,14 +91,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= pkg.getTitle() %> - AI Navigator</title>
+  <title><%= pkg.getTitle() %>- AI Workflow Lab</title>
   <link rel="stylesheet" href="/AI/assets/css/user.css">
 </head>
 <body>
   <!-- Navbar -->
   <nav class="navbar" id="navbar">
     <div class="navbar-container">
-      <a href="/AI/user/home.jsp" class="navbar-logo">AI Navigator</a>
+      <a href="/AI/user/home.jsp" class="navbar-logo">AI Workflow Lab/a>
       <ul class="navbar-menu" id="navbarMenu">
         <li><a href="/AI/user/home.jsp">모델</a></li>
         <li><a href="/AI/user/package.jsp" class="active">패키지</a></li>

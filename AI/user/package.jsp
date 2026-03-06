@@ -91,7 +91,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>패키지 - AI Navigator</title>
+  <title>패키지- AI Workflow Lab</title>
   <link rel="stylesheet" href="/AI/assets/css/user.css">
   <link rel="stylesheet" href="/AI/assets/css/animations.css">
 </head>
@@ -99,7 +99,7 @@
   <!-- Navbar -->
   <nav class="navbar" id="navbar">
     <div class="navbar-container">
-      <a href="/AI/user/home.jsp" class="navbar-logo">AI Navigator</a>
+      <a href="/AI/user/home.jsp" class="navbar-logo">AI Workflow Lab/a>
       <ul class="navbar-menu" id="navbarMenu">
         <li><a href="/AI/user/models.jsp">모델</a></li>
         <li><a href="/AI/user/package.jsp" class="active">패키지</a></li>

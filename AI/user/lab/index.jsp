@@ -37,7 +37,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= pageTitle %> - AI Workflow Lab</title>
-  <link rel="stylesheet" href="/AI/assets/css/landing.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding-top: 44px; font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif; }
+    .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); border-bottom: 0.5px solid rgba(0,0,0,0.1); height: 44px; display: flex; align-items: center; padding: 0; }
+    .navbar-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 20px; }
+    .navbar-logo { font-size: 17px; font-weight: 500; color: #1d1d1f; text-decoration: none; }
+    .navbar-menu-wrapper { display: flex; align-items: center; gap: 2rem; }
+    .navbar-menu { display: flex; gap: 1.5rem; list-style: none; align-items: center; margin: 0; padding: 0; }
+    .navbar-menu a { color: #1d1d1f; text-decoration: none; font-size: 13px; }
+    .navbar-menu a:hover, .navbar-menu a.active { color: #0071e3; }
+    .navbar-toggle { display: none; background: none; border: none; color: #1d1d1f; font-size: 1.5rem; cursor: pointer; }
+    .lab-card { border-radius: 12px; transition: all 0.2s ease; border: 1px solid #e9ecef; }
+    .lab-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); border-color: #198754; }
+  </style>
 </head>
 <body>
 <%@ include file="/AI/partials/header.jsp" %>

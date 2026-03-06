@@ -669,11 +669,62 @@ async function deleteUser(userId, userName) {
 function showEditSubscriptionModal(subscriptionId, subscriptionJson) {
   try {
     const sub = JSON.parse(subscriptionJson);
-    alert('구독 수정 기능은 준비 중입니다.\n구독 ID: ' + subscriptionId + '\n요금제: ' + (sub.planCode || '-'));
-    // TODO: 구독 수정 모달 구현
+    const modal = document.getElementById('editSubscriptionModal');
+    if (!modal) {
+      alert('구독 수정 폼을 찾을 수 없습니다.');
+      return;
+    }
+    
+    document.getElementById('editSubId').value = subscriptionId;
+    document.getElementById('editSubPlanCode').value = sub.planCode || '';
+    document.getElementById('editSubStatus').value = sub.status || 'active';
+    document.getElementById('editSubStartDate').value = sub.startDate || '';
+    document.getElementById('editSubEndDate').value = sub.endDate || '';
+    document.getElementById('editSubRenewalDate').value = sub.renewalDate || '';
+    
+    modal.style.display = 'block';
   } catch (error) {
     console.error('Error parsing subscription:', error);
     alert('구독 정보를 불러오는 중 오류가 발생했습니다.');
+  }
+}
+
+// 구독 수정 저장
+async function saveSubscription() {
+  const subId = document.getElementById('editSubId').value;
+  const planCode = document.getElementById('editSubPlanCode').value;
+  const status = document.getElementById('editSubStatus').value;
+  const startDate = document.getElementById('editSubStartDate').value;
+  const endDate = document.getElementById('editSubEndDate').value;
+  const renewalDate = document.getElementById('editSubRenewalDate').value;
+  
+  try {
+    const response = await fetch('/AI/api/subscription-update.jsp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: subId,
+        planCode: planCode,
+        status: status,
+        startDate: startDate,
+        endDate: endDate,
+        renewalDate: renewalDate
+      })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      alert('구독이 수정되었습니다.');
+      document.getElementById('editSubscriptionModal').style.display = 'none';
+      location.reload();
+    } else {
+      alert('오류: ' + (data.error || '구독 수정에 실패했습니다.'));
+    }
+  } catch (error) {
+    console.error('Update subscription error:', error);
+    alert('구독 수정 중 오류가 발생했습니다.');
   }
 }
 
@@ -747,11 +798,56 @@ async function deleteSubscription(subscriptionId, planName) {
 function showEditOrderModal(orderId, orderJson) {
   try {
     const order = JSON.parse(orderJson);
-    alert('주문 수정 기능은 준비 중입니다.\n주문 ID: ' + orderId + '\n주문자: ' + (order.customerName || '-'));
-    // TODO: 주문 수정 모달 구현
+    const modal = document.getElementById('editOrderModal');
+    if (!modal) {
+      alert('주문 수정 폼을 찾을 수 없습니다.');
+      return;
+    }
+    
+    document.getElementById('editOrderId').value = orderId;
+    document.getElementById('editOrderStatus').value = order.status || 'pending';
+    document.getElementById('editOrderNotes').value = order.notes || '';
+    document.getElementById('editOrderAmount').value = order.amount || '';
+    
+    modal.style.display = 'block';
   } catch (error) {
     console.error('Error parsing order:', error);
     alert('주문 정보를 불러오는 중 오류가 발생했습니다.');
+  }
+}
+
+// 주문 수정 저장
+async function saveOrder() {
+  const orderId = document.getElementById('editOrderId').value;
+  const status = document.getElementById('editOrderStatus').value;
+  const notes = document.getElementById('editOrderNotes').value;
+  const amount = document.getElementById('editOrderAmount').value;
+  
+  try {
+    const response = await fetch('/AI/api/order-update.jsp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: orderId,
+        status: status,
+        notes: notes,
+        amount: amount
+      })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      alert('주문이 수정되었습니다.');
+      document.getElementById('editOrderModal').style.display = 'none';
+      location.reload();
+    } else {
+      alert('오류: ' + (data.error || '주문 수정에 실패했습니다.'));
+    }
+  } catch (error) {
+    console.error('Update order error:', error);
+    alert('주문 수정 중 오류가 발생했습니다.');
   }
 }
 
@@ -830,5 +926,103 @@ async function deleteOrder(orderId, orderNumber) {
     alert('주문 삭제 중 오류가 발생했습니다: ' + error.message);
   }
 }
+
+// 구독 수정 모달 닫기
+function closeEditSubscriptionModal() {
+  document.getElementById('editSubscriptionModal').style.display = 'none';
+}
+
+// 주문 수정 모달 닫기
+function closeEditOrderModal() {
+  document.getElementById('editOrderModal').style.display = 'none';
+}
+
+// 모달 외부 클릭으로 닫기
+window.onclick = function(event) {
+  const subModal = document.getElementById('editSubscriptionModal');
+  const orderModal = document.getElementById('editOrderModal');
+  if (event.target == subModal) {
+    subModal.style.display = 'none';
+  }
+  if (event.target == orderModal) {
+    orderModal.style.display = 'none';
+  }
+}
 </script>
+
+<!-- 구독 수정 모달 -->
+<div id="editSubscriptionModal" class="admin-modal" style="display: none;">
+  <div class="admin-modal-content">
+    <div class="admin-modal-header">
+      <h2>구독 수정</h2>
+      <button type="button" class="admin-modal-close" onclick="closeEditSubscriptionModal()">×</button>
+    </div>
+    <form onsubmit="saveSubscription(); return false;">
+      <div class="form-group">
+        <label>요금제</label>
+        <input type="text" id="editSubPlanCode" readonly>
+      </div>
+      <div class="form-group">
+        <label>상태</label>
+        <select id="editSubStatus">
+          <option value="active">활성</option>
+          <option value="paused">일시중지</option>
+          <option value="cancelled">취소</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>시작일</label>
+        <input type="date" id="editSubStartDate">
+      </div>
+      <div class="form-group">
+        <label>종료일</label>
+        <input type="date" id="editSubEndDate">
+      </div>
+      <div class="form-group">
+        <label>갱신일</label>
+        <input type="date" id="editSubRenewalDate">
+      </div>
+      <input type="hidden" id="editSubId">
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+        <button type="button" class="btn secondary" onclick="closeEditSubscriptionModal()">취소</button>
+        <button type="submit" class="btn primary">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 주문 수정 모달 -->
+<div id="editOrderModal" class="admin-modal" style="display: none;">
+  <div class="admin-modal-content">
+    <div class="admin-modal-header">
+      <h2>주문 수정</h2>
+      <button type="button" class="admin-modal-close" onclick="closeEditOrderModal()">×</button>
+    </div>
+    <form onsubmit="saveOrder(); return false;">
+      <div class="form-group">
+        <label>상태</label>
+        <select id="editOrderStatus">
+          <option value="pending">대기중</option>
+          <option value="processing">처리중</option>
+          <option value="shipped">배송됨</option>
+          <option value="delivered">배달완료</option>
+          <option value="cancelled">취소</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>금액</label>
+        <input type="number" id="editOrderAmount" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>메모</label>
+        <textarea id="editOrderNotes" rows="4"></textarea>
+      </div>
+      <input type="hidden" id="editOrderId">
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+        <button type="button" class="btn secondary" onclick="closeEditOrderModal()">취소</button>
+        <button type="submit" class="btn primary">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
 

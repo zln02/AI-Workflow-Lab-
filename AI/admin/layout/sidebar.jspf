@@ -32,27 +32,14 @@
       <span class="sidebar-icon">🧪</span>
       <span class="sidebar-text">실습 랩 관리</span>
     </a>
-    <a href="/AI/admin/models/index.jsp" class="sidebar-item" data-path="/admin/models">
-      <span class="sidebar-icon">🤖</span>
-      <span class="sidebar-text">AI 모델 관리</span>
-    </a>
-
     <div class="sidebar-section-label" style="padding:.5rem 1rem;font-size:.7rem;text-transform:uppercase;opacity:.5;">운영 관리</div>
     <a href="/AI/admin/users/index.jsp" class="sidebar-item" data-path="/admin/users">
       <span class="sidebar-icon">👥</span>
       <span class="sidebar-text">사용자 관리</span>
     </a>
-    <a href="/AI/admin/statistics/index.jsp" class="sidebar-item" data-path="/admin/statistics">
-      <span class="sidebar-icon">📈</span>
-      <span class="sidebar-text">통계</span>
-    </a>
     <a href="/AI/admin/packages/index.jsp" class="sidebar-item" data-path="/admin/packages">
-      <span class="sidebar-icon">📦</span>
-      <span class="sidebar-text">패키지</span>
-    </a>
-    <a href="/AI/admin/providers/index.jsp" class="sidebar-item" data-path="/admin/providers">
-      <span class="sidebar-icon">🏢</span>
-      <span class="sidebar-text">제공자</span>
+      <span class="sidebar-icon">�</span>
+      <span class="sidebar-text">구독 플랜</span>
     </a>
     <a href="/AI/admin/categories/index.jsp" class="sidebar-item" data-path="/admin/categories">
       <span class="sidebar-icon">📁</span>
