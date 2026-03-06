@@ -357,4 +357,26 @@ public class UserDAO {
         
         return user;
     }
+    
+    /**
+     * 프로필 이미지만 업데이트
+     */
+    public boolean updateProfileImage(int userId, String profileImageUrl) {
+        String sql = "UPDATE users SET profile_image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, profileImageUrl);
+            ps.setInt(2, userId);
+            
+            int result = ps.executeUpdate();
+            return result > 0;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return false;
+    }
 }
