@@ -68,21 +68,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>로그인- AI Workflow Lab</title>
   <link rel="stylesheet" href="/AI/assets/css/user.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar" id="navbar">
-    <div class="navbar-container">
-      <a href="/AI/user/home.jsp" class="navbar-logo">AI Workflow Lab/a>
-      <ul class="navbar-menu" id="navbarMenu">
-        <li><a href="/AI/user/home.jsp">모델</a></li>
-        <li><a href="/AI/user/package.jsp">패키지</a></li>
-        <li><a href="/AI/user/pricing.jsp">요금제</a></li>
-        <li><a href="/AI/user/signup.jsp">회원가입</a></li>
-      </ul>
-      <button class="navbar-toggle" id="navbarToggle">☰</button>
-    </div>
-  </nav>
+  <%@ include file="/AI/partials/header.jsp" %>
 
   <main style="width: min(980px, 100%); margin: 0 auto; padding: 80px 22px;">
     <section class="user-hero" style="text-align: center; margin-bottom: 60px;">

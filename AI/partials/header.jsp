@@ -3,8 +3,10 @@
 <%@ page import="model.User" %>
 <%
   request.setCharacterEncoding("UTF-8");
-  User currentUser = (User) session.getAttribute("user");
-  boolean isLoggedIn = currentUser != null && currentUser.isActive();
+  // 이미 선언된 경우 재선언하지 않도록 session에서 직접 참조
+  Object _headerUserObj = session.getAttribute("user");
+  User _headerUser = (_headerUserObj instanceof User) ? (User) _headerUserObj : null;
+  boolean _headerIsLoggedIn = _headerUser != null && _headerUser.isActive();
 %>
 <!-- Bootstrap 5.3.3 -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -27,9 +29,9 @@
         </a></li>
       </ul>
       <ul class="navbar-menu navbar-menu-auth">
-        <% if (isLoggedIn) { %>
+        <% if (_headerIsLoggedIn) { %>
           <li><a href="/AI/user/mypage.jsp" title="마이페이지">
-            <i class="bi bi-person-circle me-1"></i><%= currentUser.getDisplayName() %>
+            <i class="bi bi-person-circle me-1"></i><%= _headerUser.getDisplayName() %>
           </a></li>
           <li><a href="/AI/user/logout.jsp">로그아웃</a></li>
         <% } else { %>
