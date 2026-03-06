@@ -12,7 +12,7 @@
 <nav class="navbar" id="navbar">
   <div class="navbar-container">
     <a href="/AI/user/home.jsp" class="navbar-logo">
-      <i class="bi bi-cpu-fill me-1"></i>AI Workflow Lab
+      <i class="bi bi-lightning-charge-fill me-1"></i>AI Workflow Lab
     </a>
     <div class="navbar-menu-wrapper">
       <ul class="navbar-menu" id="navbarMenu">
@@ -23,7 +23,7 @@
           <i class="bi bi-flask me-1"></i>실습 랩
         </a></li>
         <li><a href="/AI/user/portfolio/index.jsp" <%= request.getRequestURI().contains("/portfolio/") ? "class=\"active\"" : "" %>>
-          <i class="bi bi-collection me-1"></i>포트폴리오
+          <i class="bi bi-folder-check me-1"></i>포트폴리오
         </a></li>
       </ul>
       <ul class="navbar-menu navbar-menu-auth">
@@ -38,7 +38,7 @@
         <% } %>
       </ul>
     </div>
-    <button class="navbar-toggle" id="navbarToggle">☰</button>
+    <button class="navbar-toggle" id="navbarToggle"><i class="bi bi-list"></i></button>
   </div>
 </nav>
 
