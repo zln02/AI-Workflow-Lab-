@@ -2,6 +2,7 @@
 <%@ page import="service.UserService" %>
 <%@ page import="model.User" %>
 <%@ page import="util.CSRFUtil" %>
+<%@ page import="util.EscapeUtil" %>
 <%@ page import="java.util.List" %>
 <%
   request.setCharacterEncoding("UTF-8");
@@ -41,9 +42,8 @@
         }
       }
     }
-    }
   }
-  
+
   // 이미 로그인한 경우 홈으로 리다이렉트
   User currentUser = (User) session.getAttribute("user");
   if (currentUser != null && currentUser.isActive()) {
@@ -73,13 +73,13 @@
       <div class="glass-card" style="padding: 48px;">
         <% if (errorMessage != null) { %>
           <div id="error-message" class="error-message" style="background: #ff3b30; color: #ffffff; padding: 16px; border-radius: 12px; margin-bottom: 24px; font-size: 14px; line-height: 1.42859;">
-            <%= escapeHtml(errorMessage) %>
+            <%= EscapeUtil.escapeHtml(errorMessage) %>
           </div>
         <% } %>
         
         <% if (successMessage != null) { %>
           <div class="success-message" style="background: #34c759; color: #ffffff; padding: 16px; border-radius: 12px; margin-bottom: 24px; font-size: 14px; line-height: 1.42859;">
-            <%= escapeHtml(successMessage) %>
+            <%= EscapeUtil.escapeHtml(successMessage) %>
           </div>
         <% } %>
 
@@ -89,14 +89,14 @@
             <label for="email">이메일 *</label>
             <input type="email" id="email" name="email" placeholder="example@email.com" required 
                    maxlength="255" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
-                   value="<%= request.getParameter("email") != null ? escapeHtml(request.getParameter("email")) : "" %>">
+                   value="<%= request.getParameter("email") != null ? EscapeUtil.escapeHtml(request.getParameter("email")) : "" %>">
           </div>
 
           <div class="form-group">
             <label for="name">이름 *</label>
             <input type="text" id="name" name="name" placeholder="홍길동" required 
                    maxlength="100" minlength="2"
-                   value="<%= request.getParameter("name") != null ? escapeHtml(request.getParameter("name")) : "" %>">
+                   value="<%= request.getParameter("name") != null ? EscapeUtil.escapeHtml(request.getParameter("name")) : "" %>">
           </div>
 
           <div class="form-group">

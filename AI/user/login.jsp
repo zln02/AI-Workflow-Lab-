@@ -9,7 +9,13 @@
   request.setCharacterEncoding("UTF-8");
   
   String errorMessage = null;
-  String redirectUrl = request.getParameter("redirect");
+  // Open Redirect 방지: 상대경로만 허용
+  String redirectParam = request.getParameter("redirect");
+  String redirectUrl = null;
+  if (redirectParam != null && !redirectParam.isEmpty()
+      && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
+    redirectUrl = redirectParam;
+  }
   
   // POST 요청 처리 (로그인)
   if ("POST".equals(request.getMethod())) {
@@ -56,9 +62,8 @@
         errorMessage = "이메일과 비밀번호를 입력해주세요.";
       }
     }
-    }
   }
-  
+
   // 이미 로그인한 경우 홈으로 리다이렉트
   User currentUser = (User) session.getAttribute("user");
   if (currentUser != null && currentUser.isActive()) {

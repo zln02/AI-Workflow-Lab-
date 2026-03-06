@@ -7,7 +7,7 @@
 <%@ page import="model.Package" %>
 <%@ page import="java.util.*" %>
 <%
-  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
   response.setHeader("Access-Control-Allow-Methods", "GET");
   response.setHeader("Content-Type", "application/json; charset=UTF-8");
   
@@ -40,7 +40,7 @@
       m.put("name", model.getModelName());
       m.put("description", model.getDescription());
       m.put("price", model.getPrice());
-      m.put("priceUsd", model.getPriceUsd());
+      m.put("priceUsd", model.getPrice());
       m.put("categoryName", model.getCategoryName());
       m.put("providerName", model.getProviderName());
       models.add(m);
@@ -93,19 +93,9 @@
   } catch (Exception e) {
     response.setStatus(500);
     Map<String, Object> error = new HashMap<>();
-    String errorMessage = "검색 중 오류가 발생했습니다";
-    if (e.getMessage() != null) {
-      errorMessage += ": " + e.getMessage();
-    }
-    error.put("error", errorMessage);
-    error.put("details", e.getClass().getName());
-    // 개발 환경에서만 스택 트레이스 포함
-    if (e.getCause() != null) {
-      error.put("cause", e.getCause().getMessage());
-    }
+    error.put("error", "검색 중 오류가 발생했습니다.");
     Gson gson = new Gson();
     out.print(gson.toJson(error));
-    // 서버 로그에도 기록
     e.printStackTrace();
   }
 %>

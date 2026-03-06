@@ -9,6 +9,7 @@
 <%@ page import="dao.PackageDAO" %>
 <%@ page import="dao.AIModelDAO" %>
 <%@ page import="service.UserService" %>
+<%@ page import="util.CSRFUtil" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.HashMap" %>
@@ -85,18 +86,22 @@
             String itemName = "";
             try {
               if ("PACKAGE".equals(itemType)) {
-                model.Package pkg = packageDAO.findById(itemId);
+                model.Package pkg = packageDAO.getPackageById(itemId);
                 itemName = pkg != null && pkg.getTitle() != null ? pkg.getTitle() : "패키지 #" + itemId;
               } else if ("MODEL".equals(itemType)) {
-                model.AIModel modelObj = modelDAO.findById(itemId);
+                model.AIModel modelObj = modelDAO.getModelById(itemId);
                 if (modelObj != null) {
                   itemName = modelObj.getModelName() != null ? modelObj.getModelName() : "모델 #" + itemId;
                   // 모델 가격이 없으면 모델에서 가격 가져오기
                   if (priceObj == null || priceObj.compareTo(BigDecimal.ZERO) == 0) {
                     try {
-                      if (modelObj.getPriceUsd() != null && modelObj.getPriceUsd().compareTo(BigDecimal.ZERO) > 0) {
-                        priceObj = modelObj.getPriceUsd();
-                        itemDetail.put("price", priceObj);
+                      String priceStr = modelObj.getPrice();
+                      if (priceStr != null && !priceStr.isEmpty()) {
+                        BigDecimal parsedPrice = new BigDecimal(priceStr.replaceAll("[^0-9.]", ""));
+                        if (parsedPrice.compareTo(BigDecimal.ZERO) > 0) {
+                          priceObj = parsedPrice;
+                          itemDetail.put("price", priceObj);
+                        }
                       }
                     } catch (Exception e) {
                       // 가격 가져오기 실패 시 무시
@@ -128,7 +133,8 @@
   // 비밀번호 변경 처리
   String passwordError = null;
   String passwordSuccess = null;
-  if ("POST".equals(request.getMethod()) && "changePassword".equals(request.getParameter("action"))) {
+  if ("POST".equals(request.getMethod()) && "changePassword".equals(request.getParameter("action"))
+      && CSRFUtil.validateToken(request)) {
     String currentPassword = request.getParameter("currentPassword");
     String newPassword = request.getParameter("newPassword");
     String newPasswordConfirm = request.getParameter("newPasswordConfirm");
@@ -390,7 +396,7 @@
         <div class="form-group">
           <label>이름</label>
           <div style="padding: 12px 16px; background: var(--surface); border-radius: 12px; color: var(--text);">
-            <%= user.getName() != null ? user.getName() : "" %>
+            <%= user.getFullName() != null ? user.getFullName() : "" %>
           </div>
         </div>
 
@@ -398,7 +404,7 @@
           <label>계정 상태</label>
           <div style="padding: 12px 16px; background: var(--surface); border-radius: 12px; color: var(--text);">
             <span style="padding: 4px 12px; background: #34c759; color: #ffffff; border-radius: 999px; font-size: 12px;">
-              <%= user.getStatus() != null && user.getStatus().equals("ACTIVE") ? "활성" : "비활성" %>
+              <%= user.isActive() ? "활성" : "비활성" %>
             </span>
           </div>
         </div>
@@ -442,6 +448,7 @@
 
         <form method="POST" action="/AI/user/mypage.jsp" id="changePasswordForm">
           <input type="hidden" name="action" value="changePassword">
+          <%= CSRFUtil.getHiddenFieldHtml(request) %>
           
           <div class="form-group">
             <label for="currentPassword">현재 비밀번호 *</label>

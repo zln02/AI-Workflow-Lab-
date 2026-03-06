@@ -8,9 +8,17 @@
   User _headerUser = (_headerUserObj instanceof User) ? (User) _headerUserObj : null;
   boolean _headerIsLoggedIn = _headerUser != null && _headerUser.isActive();
 %>
+<!-- Favicon -->
+<link rel="icon" href="data:,">
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <!-- Bootstrap 5.3.3 -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<!-- Dark Theme -->
+<link href="/AI/assets/css/dark-theme.css" rel="stylesheet">
 <nav class="navbar" id="navbar">
   <div class="navbar-container">
     <a href="/AI/user/home.jsp" class="navbar-logo">
@@ -24,8 +32,8 @@
         <li><a href="/AI/user/lab/index.jsp" <%= request.getRequestURI().contains("/lab/") ? "class=\"active\"" : "" %>>
           <i class="bi bi-flask me-1"></i>실습 랩
         </a></li>
-        <li><a href="/AI/user/portfolio/index.jsp" <%= request.getRequestURI().contains("/portfolio/") ? "class=\"active\"" : "" %>>
-          <i class="bi bi-folder-check me-1"></i>포트폴리오
+        <li><a href="/AI/user/mypage.jsp" <%= request.getRequestURI().contains("/mypage") ? "class=\"active\"" : "" %>>
+          <i class="bi bi-person-circle me-1"></i>마이페이지
         </a></li>
       </ul>
       <ul class="navbar-menu navbar-menu-auth">

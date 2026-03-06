@@ -4,17 +4,19 @@
 <%@ page import="java.util.*" %>
 <%@ page import="java.math.BigDecimal" %>
 <%
-  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
   response.setHeader("Access-Control-Allow-Methods", "GET");
   response.setHeader("Content-Type", "application/json; charset=UTF-8");
-  
-  // 세션에서 user_id 가져오기
+
+  // 세션에서 실제 user_id 가져오기
   long userId = 0;
   try {
-    String sessionId = session.getId();
-    userId = Math.abs(sessionId.hashCode());
+    model.User sessionUser = (model.User) session.getAttribute("user");
+    if (sessionUser != null) {
+      userId = sessionUser.getId();
+    }
   } catch (Exception e) {
-    userId = System.currentTimeMillis() % 1000000;
+    // 비로그인 사용자는 userId=0 유지
   }
   
   // 세션에서 장바구니 가져오기
@@ -55,7 +57,8 @@
   } catch (Exception e) {
     response.setStatus(500);
     Map<String, Object> error = new HashMap<>();
-    error.put("error", "장바구니 요약 조회 중 오류가 발생했습니다: " + e.getMessage());
+    e.printStackTrace();
+    error.put("error", "장바구니 요약 조회 중 오류가 발생했습니다.");
     Gson gson = new Gson();
     out.print(gson.toJson(error));
   }

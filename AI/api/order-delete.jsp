@@ -3,7 +3,7 @@
 <%@ page import="com.google.gson.Gson" %>
 <%@ page import="java.util.*" %>
 <%
-  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
   response.setHeader("Content-Type", "application/json; charset=UTF-8");
   
   if (session.getAttribute("admin") == null) {
@@ -35,9 +35,7 @@
       payload = gson.fromJson(body, HashMap.class);
     }
     
-    // 디버깅: 받은 데이터 로그 출력
-    System.err.println("Order delete request body: " + body);
-    System.err.println("Parsed payload: " + payload);
+    // 디버깅 로그 (민감 정보 제외)
     
     Object idObj = payload.get("id");
     String idParam = null;
@@ -51,7 +49,6 @@
       }
     }
     
-    System.err.println("Extracted order ID: " + idParam);
     
     if (idParam == null || idParam.trim().isEmpty()) {
       response.setStatus(400);
@@ -64,17 +61,9 @@
       // 숫자만 추출 (공백, 특수문자 제거)
       String cleanId = idParam.trim().replaceAll("[^0-9-]", "");
       orderId = Integer.parseInt(cleanId);
-      System.err.println("Parsed order ID: " + orderId);
-    } catch (NumberFormatException e) {
-      System.err.println("NumberFormatException: idParam=" + idParam + ", cleanId=" + (idParam != null ? idParam.trim().replaceAll("[^0-9-]", "") : "null"));
-      System.err.println("Full exception: " + e.getClass().getName() + ": " + e.getMessage());
-      e.printStackTrace();
+      } catch (NumberFormatException e) {
       response.setStatus(400);
-      String errorMsg = "유효하지 않은 주문 ID입니다";
-      if (idParam != null && !idParam.trim().isEmpty()) {
-        errorMsg += ": " + idParam;
-      }
-      out.print("{\"error\":\"" + errorMsg + "\"}");
+      out.print("{\"error\":\"유효하지 않은 주문 ID입니다.\"}");
       return;
     }
     
@@ -105,22 +94,14 @@
     out.print(gson.toJson(error));
   } catch (Exception e) {
     e.printStackTrace();
-    System.err.println("Order delete error: " + e.getClass().getName() + ": " + e.getMessage());
-    if (e.getCause() != null) {
-      System.err.println("Cause: " + e.getCause().getMessage());
-      System.err.println("Cause class: " + e.getCause().getClass().getName());
-    }
     response.setStatus(500);
     Map<String, Object> error = new HashMap<>();
     String errorMessage = e.getMessage();
-    if (errorMessage != null) {
-      if (errorMessage.contains("foreign key") || errorMessage.contains("Foreign key")) {
-        errorMessage = "이 주문은 다른 데이터와 연결되어 있어 삭제할 수 없습니다.";
-      } else if (errorMessage.contains("Table") && errorMessage.contains("doesn't exist")) {
-        errorMessage = "주문 테이블을 찾을 수 없습니다. 데이터베이스를 확인해주세요.";
-      }
+    if (errorMessage != null && (errorMessage.contains("foreign key") || errorMessage.contains("Foreign key"))) {
+      error.put("error", "이 주문은 다른 데이터와 연결되어 있어 삭제할 수 없습니다.");
+    } else {
+      error.put("error", "서버 오류가 발생했습니다.");
     }
-    error.put("error", "서버 오류가 발생했습니다: " + (errorMessage != null ? errorMessage : "알 수 없는 오류"));
     Gson gson = new Gson();
     out.print(gson.toJson(error));
   }

@@ -77,32 +77,26 @@
     .home-section-title { font-size: 32px; font-weight: 600; color: #1d1d1f; letter-spacing: -0.003em; margin-bottom: 6px; }
     .home-section-sub { font-size: 17px; color: #86868b; margin-bottom: 0; }
 
-    /* AI Tool Cards */
-    .ai-tool-card { background: #fff; border: 1px solid #e5e5e7; border-radius: 16px; overflow: hidden; transition: all 0.25s ease; display: flex; flex-direction: column; height: 100%; }
-    .ai-tool-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.1); border-color: #0071e3; }
-    .ai-tool-card-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; background: #fafafa; }
-    .provider-logo { width: 32px; height: 32px; border-radius: 6px; object-fit: contain; }
-    .provider-logo-fallback { width: 32px; height: 32px; border-radius: 6px; background: #e5e5e7; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-    .ai-tool-card-body { padding: 16px; flex: 1; }
-    .ai-tool-card-title { font-size: 17px; font-weight: 600; color: #1d1d1f; margin-bottom: 6px; }
-    .ai-tool-card-desc { font-size: 14px; color: #86868b; line-height: 1.5; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .ai-tool-card-footer { padding: 12px 16px; border-top: 1px solid #f0f0f0; }
+    /* Dark Theme Overrides */
+    .ai-tool-card { background: var(--bg-card); border: 1px solid var(--border-primary); }
+    .ai-tool-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
+    .ai-tool-card-header { border-bottom: 1px solid var(--border-primary); background: var(--bg-tertiary); }
+    .provider-logo-fallback { background: var(--bg-tertiary); }
+    .ai-tool-card-title { color: var(--text-primary); }
+    .ai-tool-card-desc { color: var(--text-secondary); }
+    .ai-tool-card-footer { border-top: 1px solid var(--border-primary); }
 
-    /* Platform intro cards */
-    .platform-card { border-radius: 20px; padding: 32px; transition: transform 0.25s ease; }
-    .platform-card:hover { transform: translateY(-4px); }
+    .platform-card { background: var(--bg-card); border: 1px solid var(--border-primary); }
+    .platform-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
 
-    /* Lab project cards */
-    .lab-card { background: #fff; border: 1px solid #e5e5e7; border-radius: 16px; overflow: hidden; transition: all 0.25s ease; height: 100%; }
-    .lab-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.1); }
+    .lab-card { background: var(--bg-card); border: 1px solid var(--border-primary); }
+    .lab-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
 
-    /* CTA section */
-    .cta-section { background: linear-gradient(135deg, #0071e3, #5856d6); }
+    .cta-section { background: var(--primary-gradient); }
 
-    /* Difficulty badges */
-    .badge-beginner { background: #d1fae5; color: #065f46; border: none; }
-    .badge-intermediate { background: #fef3c7; color: #92400e; border: none; }
-    .badge-advanced { background: #fee2e2; color: #991b1b; border: none; }
+    .badge-beginner { background: rgba(16, 185, 129, 0.2); color: var(--difficulty-beginner); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-intermediate { background: rgba(245, 158, 11, 0.2); color: var(--difficulty-intermediate); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-advanced { background: rgba(239, 68, 68, 0.2); color: var(--difficulty-advanced); border: 1px solid rgba(239, 68, 68, 0.3); }
   </style>
 </head>
 <body>
@@ -252,11 +246,16 @@
                 </p>
                 <div class="small text-muted">
                   <span><i class="bi bi-clock me-1"></i><%= project.getFormattedDuration() %></span>
-                  <span class="ms-3"><i class="bi bi-people me-1"></i><%= project.getCurrentParticipants() != null ? project.getCurrentParticipants() : 0 %>명</span>
+                  <% Integer participants = project.getCurrentParticipants(); 
+                     if (participants != null && participants > 0) { %>
+                  <span class="ms-3"><i class="bi bi-people me-1"></i><%= participants %>명</span>
+                  <% } else { %>
+                  <span class="ms-3"><i class="bi bi-people me-1"></i>Coming Soon</span>
+                  <% } %>
                 </div>
               </div>
               <div class="p-3 border-top">
-                <a href="/AI/user/lab/detail.jsp?id=<%= project.getId() %>" class="btn btn-success btn-sm w-100">
+                <a href="/AI/user/lab/detail.jsp?id=<%= project.getId() %>" class="btn btn-outline-success btn-sm w-100">
                   실습 시작하기
                 </a>
               </div>

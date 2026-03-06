@@ -47,9 +47,12 @@
         errorMessage = "계정이 활성화되지 않았거나 접근이 차단된 상태입니다.";
       }
       if (errorMessage != null) {
+        // JS 문자열 삽입 방지: 하드코딩된 메시지만 사용하므로 안전하나 data-attribute 방식으로 전달
+        out.println("<div id='login-error-msg' data-message='" + errorMessage.replace("'", "&#39;") + "' style='display:none'></div>");
         out.println("<script>");
         out.println("document.addEventListener('DOMContentLoaded', function() {");
-        out.println("  showToast('" + errorMessage + "', 'error');");
+        out.println("  var el = document.getElementById('login-error-msg');");
+        out.println("  if (el) { showToast(el.getAttribute('data-message'), 'error'); }");
         out.println("});");
         out.println("</script>");
       }

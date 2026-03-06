@@ -9,7 +9,7 @@
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%
-  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
   response.setHeader("Content-Type", "application/json; charset=UTF-8");
   
   if (!"POST".equals(request.getMethod())) {
@@ -102,7 +102,8 @@
   } catch (Exception e) {
     response.setStatus(500);
     Map<String, Object> error = new HashMap<>();
-    error.put("error", "구독 생성 중 오류가 발생했습니다: " + e.getMessage());
+    e.printStackTrace();
+    error.put("error", "구독 생성 중 오류가 발생했습니다.");
     Gson gson = new Gson();
     out.print(gson.toJson(error));
   }

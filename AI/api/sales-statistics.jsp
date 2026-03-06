@@ -12,7 +12,7 @@
     return;
   }
 
-  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
   response.setHeader("Access-Control-Allow-Methods", "GET");
   response.setHeader("Content-Type", "application/json; charset=UTF-8");
 
@@ -63,7 +63,7 @@
     e.printStackTrace();
     Map<String, Object> error = new HashMap<>();
     error.put("success", false);
-    error.put("error", "통계 조회 중 오류가 발생했습니다: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getName()));
+    error.put("error", "통계 조회 중 오류가 발생했습니다.");
     
     Gson gson = new Gson();
     out.print(gson.toJson(error));

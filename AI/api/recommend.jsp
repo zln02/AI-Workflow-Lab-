@@ -4,7 +4,7 @@
 <%@ page import="com.google.gson.Gson" %>
 <%@ page import="java.util.*" %>
 <%
-  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
   response.setHeader("Access-Control-Allow-Methods", "GET");
   response.setHeader("Content-Type", "application/json; charset=UTF-8");
   
@@ -25,7 +25,7 @@
       m.put("name", model.getModelName());
       m.put("description", model.getDescription());
       m.put("price", model.getPrice());
-      m.put("priceUsd", model.getPriceUsd());
+      m.put("priceUsd", model.getPrice());
       m.put("categoryName", model.getCategoryName());
       m.put("providerName", model.getProviderName());
       models.add(m);
@@ -58,7 +58,8 @@
   } catch (Exception e) {
     response.setStatus(500);
     Map<String, Object> error = new HashMap<>();
-    error.put("error", "추천 조회 중 오류가 발생했습니다: " + e.getMessage());
+    e.printStackTrace();
+    error.put("error", "추천 조회 중 오류가 발생했습니다.");
     Gson gson = new Gson();
     out.print(gson.toJson(error));
   }

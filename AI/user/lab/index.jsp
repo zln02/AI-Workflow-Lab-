@@ -83,11 +83,10 @@
   <div class="row">
     <!-- 사이드바 -->
     <aside class="col-lg-3 col-md-4 mb-4">
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-success text-white">
-          <h5 class="mb-0"><i class="bi bi-funnel"></i> 필터</h5>
+      <div class="filter-sidebar">
+        <div class="filter-title">
+          <i class="bi bi-funnel me-2"></i>필터
         </div>
-        <div class="card-body">
           <form method="get">
             <div class="mb-3">
               <input type="text" class="form-control" name="keyword"
@@ -132,7 +131,7 @@
               </select>
             </div>
             <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-success flex-grow-1">적용</button>
+              <button type="submit" class="btn btn-gradient flex-grow-1">적용</button>
               <a href="/AI/user/lab/index.jsp" class="btn btn-outline-secondary">초기화</a>
             </div>
           </form>
@@ -140,9 +139,10 @@
       </div>
 
       <!-- 인기 프로젝트 -->
-      <div class="card shadow-sm">
-        <div class="card-header bg-danger text-white">
-          <h5 class="mb-0"><i class="bi bi-trophy me-2"></i>인기 프로젝트</h5>
+      <div class="filter-sidebar">
+        <div class="filter-title">
+          <i class="bi bi-trophy me-2"></i>인기 프로젝트
+        </div>
         </div>
         <div class="card-body p-0">
           <ul class="list-group list-group-flush">
@@ -168,12 +168,24 @@
       <div class="d-flex justify-content-between align-items-center mb-4">
         <p class="text-muted mb-0">총 <strong><%= projects.size() %></strong>개 프로젝트</p>
         <!-- 유형별 빠른 필터 -->
-        <div class="btn-group" role="group">
-          <a href="/AI/user/lab/index.jsp" class="btn btn-sm <%= (ptype == null || ptype.isEmpty()) ? "btn-dark" : "btn-outline-dark" %>">전체</a>
-          <a href="?type=Tutorial" class="btn btn-sm <%= "Tutorial".equals(ptype) ? "btn-info" : "btn-outline-info" %>">튜토리얼</a>
-          <a href="?type=Challenge" class="btn btn-sm <%= "Challenge".equals(ptype) ? "btn-warning" : "btn-outline-warning" %>">챌린지</a>
-          <a href="?type=Real-world" class="btn btn-sm <%= "Real-world".equals(ptype) ? "btn-danger" : "btn-outline-danger" %>">실전</a>
-        </div>
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a class="nav-link <%= (ptype == null || ptype.isEmpty()) ? "active" : "" %>" 
+               href="/AI/user/lab/index.jsp">전체</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link <%= "Tutorial".equals(ptype) ? "active" : "" %>" 
+               href="?type=Tutorial">튜토리얼</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link <%= "Challenge".equals(ptype) ? "active" : "" %>" 
+               href="?type=Challenge">챌린지</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link <%= "Real-world".equals(ptype) ? "active" : "" %>" 
+               href="?type=Real-world">실전</a>
+          </li>
+        </ul>
       </div>
 
       <div class="row g-4">
@@ -220,12 +232,20 @@
 
               <div class="d-flex gap-3 text-muted small mt-auto">
                 <span><i class="bi bi-clock me-1"></i><%= p.getFormattedDuration() %></span>
-                <span><i class="bi bi-people me-1"></i><%= p.getCurrentParticipants() != null ? p.getCurrentParticipants() : 0 %>명 참여</span>
-                <span><i class="bi bi-list-ol me-1"></i><%= p.getStepCount() %>단계</span>
+                <% Integer participants = p.getCurrentParticipants(); 
+                   if (participants != null && participants > 0) { %>
+                <span><i class="bi bi-people me-1"></i><%= participants %>명 참여</span>
+                <% } else { %>
+                <span><i class="bi bi-people me-1"></i>Coming Soon</span>
+                <% } %>
+                <% Integer stepCount = p.getStepCount(); 
+                   if (stepCount != null && stepCount > 0) { %>
+                <span><i class="bi bi-list-ol me-1"></i><%= stepCount %>단계</span>
+                <% } %>
               </div>
             </div>
             <div class="card-footer bg-transparent">
-              <a href="/AI/user/lab/detail.jsp?id=<%= p.getId() %>" class="btn btn-success btn-sm w-100">
+              <a href="/AI/user/lab/detail.jsp?id=<%= p.getId() %>" class="btn btn-outline-success btn-sm w-100">
                 <i class="bi bi-play-circle me-1"></i>실습 시작하기
               </a>
             </div>
@@ -239,5 +259,10 @@
 
 <%@ include file="/AI/partials/footer.jsp" %>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="/AI/assets/js/animations.js"></script>
+
 </body>
 </html>

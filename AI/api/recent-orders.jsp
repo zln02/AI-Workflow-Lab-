@@ -14,7 +14,7 @@
     return;
   }
 
-  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
   response.setHeader("Access-Control-Allow-Methods", "GET");
   response.setHeader("Content-Type", "application/json; charset=UTF-8");
 
@@ -36,8 +36,9 @@
       }
     }
     
-    // 최근 주문 조회
-    List<Order> orders = orderDAO.findRecentOrders(limit);
+    // 최근 주문 조회 (전체 조회 후 limit 적용)
+    List<Order> allOrders = orderDAO.findAll();
+    List<Order> orders = allOrders.size() > limit ? allOrders.subList(0, limit) : allOrders;
     
     // 주문 정보를 JSON 형태로 변환
     List<Map<String, Object>> orderList = new ArrayList<>();
@@ -70,12 +71,12 @@
         
         try {
           if ("MODEL".equals(itemType)) {
-            var model = modelDAO.findById(itemId);
+            var model = modelDAO.getModelById(itemId);
             if (model != null) {
               itemName = model.getModelName() != null ? model.getModelName() : "모델 #" + itemId;
             }
           } else if ("PACKAGE".equals(itemType)) {
-            var pkg = packageDAO.findById(itemId);
+            var pkg = packageDAO.getPackageById(itemId);
             if (pkg != null) {
               itemName = pkg.getTitle() != null ? pkg.getTitle() : "패키지 #" + itemId;
             }
@@ -106,7 +107,7 @@
     e.printStackTrace();
     Map<String, Object> error = new HashMap<>();
     error.put("success", false);
-    error.put("error", "최근 주문 조회 중 오류가 발생했습니다: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getName()));
+    error.put("error", "최근 주문 조회 중 오류가 발생했습니다.");
     
     Gson gson = new Gson();
     out.print(gson.toJson(error));
