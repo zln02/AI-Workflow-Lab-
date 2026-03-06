@@ -3,13 +3,19 @@
   <request-character-encoding>UTF-8</request-character-encoding>
   <response-character-encoding>UTF-8</response-character-encoding>
   
-  <session-config>
-    <session-timeout>120</session-timeout>
-  </session-config>
-  
   <welcome-file-list>
     <welcome-file>AI/user/home.jsp</welcome-file>
   </welcome-file-list>
+  
+  <!-- 세션 타임아웃 설정 (30분) -->
+  <session-config>
+    <session-timeout>30</session-timeout>
+    <cookie-config>
+      <http-only>true</http-only>
+      <secure>false</secure>
+    </cookie-config>
+    <tracking-mode>COOKIE</tracking-mode>
+  </session-config>
   
   <filter>
     <filter-name>CharacterEncodingFilter</filter-name>

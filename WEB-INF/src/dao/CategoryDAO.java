@@ -17,25 +17,23 @@ public class CategoryDAO {
         List<Category> categories = new ArrayList<>();
         String sql = "SELECT * FROM categories WHERE is_active = 1 ORDER BY display_order ASC, category_name ASC";
         
-        try {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            while (rs.next()) {
-                Category category = new Category();
-                category.setId(rs.getInt("id"));
-                category.setCategoryName(rs.getString("category_name"));
-                category.setDescription(rs.getString("description"));
-                category.setIcon(rs.getString("icon"));
-                category.setDisplayOrder(rs.getInt("display_order"));
-                category.setIsActive(rs.getBoolean("is_active"));
-                category.setCreatedAt(rs.getTimestamp("created_at"));
-                category.setUpdatedAt(rs.getTimestamp("updated_at"));
-                categories.add(category);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Category category = new Category();
+                    category.setId(rs.getInt("id"));
+                    category.setCategoryName(rs.getString("category_name"));
+                    category.setDescription(rs.getString("description"));
+                    category.setIcon(rs.getString("icon"));
+                    category.setDisplayOrder(rs.getInt("display_order"));
+                    category.setIsActive(rs.getBoolean("is_active"));
+                    category.setCreatedAt(rs.getTimestamp("created_at"));
+                    category.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    categories.add(category);
+                }
             }
-            
-            rs.close();
-            stmt.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -48,25 +46,23 @@ public class CategoryDAO {
         List<Category> categories = new ArrayList<>();
         String sql = "SELECT * FROM categories ORDER BY display_order ASC, category_name ASC";
         
-        try {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            while (rs.next()) {
-                Category category = new Category();
-                category.setId(rs.getInt("id"));
-                category.setCategoryName(rs.getString("category_name"));
-                category.setDescription(rs.getString("description"));
-                category.setIcon(rs.getString("icon"));
-                category.setDisplayOrder(rs.getInt("display_order"));
-                category.setIsActive(rs.getBoolean("is_active"));
-                category.setCreatedAt(rs.getTimestamp("created_at"));
-                category.setUpdatedAt(rs.getTimestamp("updated_at"));
-                categories.add(category);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Category category = new Category();
+                    category.setId(rs.getInt("id"));
+                    category.setCategoryName(rs.getString("category_name"));
+                    category.setDescription(rs.getString("description"));
+                    category.setIcon(rs.getString("icon"));
+                    category.setDisplayOrder(rs.getInt("display_order"));
+                    category.setIsActive(rs.getBoolean("is_active"));
+                    category.setCreatedAt(rs.getTimestamp("created_at"));
+                    category.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    categories.add(category);
+                }
             }
-            
-            rs.close();
-            stmt.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -207,15 +203,13 @@ public class CategoryDAO {
     public int getMaxDisplayOrder() {
         String sql = "SELECT MAX(display_order) FROM categories";
         
-        try {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            if (rs.next()) {
-                int maxOrder = rs.getInt(1);
-                rs.close();
-                stmt.close();
-                return maxOrder;
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();

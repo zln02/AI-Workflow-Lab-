@@ -141,15 +141,13 @@ public class PackageDAO {
     public int getTotalPackageCount() {
         String sql = "SELECT COUNT(*) FROM packages WHERE is_active = 1";
         
-        try {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            if (rs.next()) {
-                int count = rs.getInt(1);
-                rs.close();
-                stmt.close();
-                return count;
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();

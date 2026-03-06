@@ -3,6 +3,7 @@
 <%@ page import="service.UserService" %>
 <%@ page import="dao.UserDAO" %>
 <%@ page import="model.User" %>
+<%@ page import="util.CSRFUtil" %>
 <%@ include file="/AI/user/_common.jsp" %>
 <%
   request.setCharacterEncoding("UTF-8");
@@ -12,8 +13,12 @@
   
   // POST 요청 처리 (로그인)
   if ("POST".equals(request.getMethod())) {
-    String email = request.getParameter("email");
-    String password = request.getParameter("password");
+    // CSRF 토큰 검증
+    if (!CSRFUtil.validateToken(request)) {
+      errorMessage = "보안 검증에 실패했습니다. 다시 시도해주세요.";
+    } else {
+      String email = request.getParameter("email");
+      String password = request.getParameter("password");
     
     if (email != null && password != null && !email.trim().isEmpty() && !password.isEmpty()) {
       UserService userService = new UserService();
@@ -30,8 +35,10 @@
         User user = userService.authenticate(email, password);
         
         if (user != null) {
-          // 세션에 사용자 저장
-          session.setAttribute("user", user);
+          // 세션 재생성 (session fixation 방지)
+          session.invalidate();
+          HttpSession newSession = request.getSession(true);
+          newSession.setAttribute("user", user);
           
           // 리다이렉트 URL이 있으면 해당 페이지로, 없으면 홈으로
           if (redirectUrl != null && !redirectUrl.isEmpty()) {
@@ -46,7 +53,9 @@
         }
       }
     } else {
-      errorMessage = "이메일과 비밀번호를 입력해주세요.";
+        errorMessage = "이메일과 비밀번호를 입력해주세요.";
+      }
+    }
     }
   }
   
@@ -93,6 +102,7 @@
         <% } %>
 
         <form method="POST" action="/AI/user/login.jsp<%= redirectUrl != null ? "?redirect=" + java.net.URLEncoder.encode(redirectUrl, "UTF-8") : "" %>" id="loginForm">
+          <%= CSRFUtil.getHiddenFieldHtml(request) %>
           <div class="form-group">
             <label for="email">이메일</label>
             <input type="email" id="email" name="email" placeholder="example@email.com" required 

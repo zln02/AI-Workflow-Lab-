@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="service.UserService" %>
 <%@ page import="model.User" %>
+<%@ page import="util.CSRFUtil" %>
 <%@ page import="java.util.List" %>
 <%
   request.setCharacterEncoding("UTF-8");
@@ -10,7 +11,11 @@
   
   // POST 요청 처리 (회원가입)
   if ("POST".equals(request.getMethod())) {
-    String email = request.getParameter("email");
+    // CSRF 토큰 검증
+    if (!CSRFUtil.validateToken(request)) {
+      errorMessage = "보안 검증에 실패했습니다. 다시 시도해주세요.";
+    } else {
+      String email = request.getParameter("email");
     String password = request.getParameter("password");
     String passwordConfirm = request.getParameter("passwordConfirm");
     String name = request.getParameter("name");
@@ -32,8 +37,10 @@
         response.sendRedirect("/AI/user/home.jsp");
         return;
       } else {
-        errorMessage = "회원가입 중 오류가 발생했습니다. 다시 시도해주세요.";
+          errorMessage = "회원가입 중 오류가 발생했습니다. 다시 시도해주세요.";
+        }
       }
+    }
     }
   }
   
@@ -66,29 +73,30 @@
       <div class="glass-card" style="padding: 48px;">
         <% if (errorMessage != null) { %>
           <div id="error-message" class="error-message" style="background: #ff3b30; color: #ffffff; padding: 16px; border-radius: 12px; margin-bottom: 24px; font-size: 14px; line-height: 1.42859;">
-            <%= errorMessage %>
+            <%= escapeHtml(errorMessage) %>
           </div>
         <% } %>
         
         <% if (successMessage != null) { %>
           <div class="success-message" style="background: #34c759; color: #ffffff; padding: 16px; border-radius: 12px; margin-bottom: 24px; font-size: 14px; line-height: 1.42859;">
-            <%= successMessage %>
+            <%= escapeHtml(successMessage) %>
           </div>
         <% } %>
 
         <form method="POST" action="/AI/user/signup.jsp" id="signupForm">
+          <%= CSRFUtil.getHiddenFieldHtml(request) %>
           <div class="form-group">
             <label for="email">이메일 *</label>
             <input type="email" id="email" name="email" placeholder="example@email.com" required 
                    maxlength="255" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
-                   value="<%= request.getParameter("email") != null ? request.getParameter("email") : "" %>">
+                   value="<%= request.getParameter("email") != null ? escapeHtml(request.getParameter("email")) : "" %>">
           </div>
 
           <div class="form-group">
             <label for="name">이름 *</label>
             <input type="text" id="name" name="name" placeholder="홍길동" required 
                    maxlength="100" minlength="2"
-                   value="<%= request.getParameter("name") != null ? request.getParameter("name") : "" %>">
+                   value="<%= request.getParameter("name") != null ? escapeHtml(request.getParameter("name")) : "" %>">
           </div>
 
           <div class="form-group">
