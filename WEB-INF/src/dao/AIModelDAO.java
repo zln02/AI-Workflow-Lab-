@@ -1,52 +1,15 @@
 package dao;
 
-import java.sql.*;
-import java.util.*;
 import model.AIModel;
-import db.DBConnect;
+import util.DBConnect;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AIModelDAO {
-    private Connection conn;
+    private java.sql.Connection conn;
     
     public AIModelDAO() {
         this.conn = DBConnect.getConnection();
-    }
-    
-    // 추천 AI 모델 가져오기
-    public List<AIModel> getFeaturedModels(int limit) {
-        List<AIModel> models = new ArrayList<>();
-        String sql = "SELECT * FROM ai_models WHERE is_active = 1 ORDER BY created_at DESC LIMIT ?";
-        
-        try {
-            PreparedStatement pstmt = conn.prepareStatement(sql);
-            pstmt.setInt(1, limit);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                AIModel model = new AIModel();
-                model.setId(rs.getInt("id"));
-                model.setModelName(rs.getString("model_name"));
-                model.setProviderName(rs.getString("provider_name"));
-                model.setPurposeSummary(rs.getString("purpose_summary"));
-                model.setPrice(rs.getString("price"));
-                model.setParamsBillion(rs.getString("params_billion"));
-                model.setLatencyMs(rs.getInt("latency_ms"));
-                model.setInputModalities(rs.getString("input_modalities"));
-                model.setOutputModalities(rs.getString("output_modalities"));
-                model.setCategoryId(rs.getInt("category_id"));
-                model.setIsActive(rs.getBoolean("is_active"));
-                model.setCreatedAt(rs.getTimestamp("created_at"));
-                model.setUpdatedAt(rs.getTimestamp("updated_at"));
-                models.add(model);
-            }
-            
-            rs.close();
-            pstmt.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return models;
     }
     
     // 모든 AI 모델 가져오기 (페이징)
@@ -54,33 +17,32 @@ public class AIModelDAO {
         List<AIModel> models = new ArrayList<>();
         String sql = "SELECT * FROM ai_models WHERE is_active = 1 ORDER BY created_at DESC LIMIT ? OFFSET ?";
         
-        try {
-            PreparedStatement pstmt = conn.prepareStatement(sql);
+        try (java.sql.Connection conn = DBConnect.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
             pstmt.setInt(1, pageSize);
             pstmt.setInt(2, (page - 1) * pageSize);
-            ResultSet rs = pstmt.executeQuery();
             
-            while (rs.next()) {
-                AIModel model = new AIModel();
-                model.setId(rs.getInt("id"));
-                model.setModelName(rs.getString("model_name"));
-                model.setProviderName(rs.getString("provider_name"));
-                model.setPurposeSummary(rs.getString("purpose_summary"));
-                model.setPrice(rs.getString("price"));
-                model.setParamsBillion(rs.getString("params_billion"));
-                model.setLatencyMs(rs.getInt("latency_ms"));
-                model.setInputModalities(rs.getString("input_modalities"));
-                model.setOutputModalities(rs.getString("output_modalities"));
-                model.setCategoryId(rs.getInt("category_id"));
-                model.setIsActive(rs.getBoolean("is_active"));
-                model.setCreatedAt(rs.getTimestamp("created_at"));
-                model.setUpdatedAt(rs.getTimestamp("updated_at"));
-                models.add(model);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    AIModel model = new AIModel();
+                    model.setId(rs.getInt("id"));
+                    model.setModelName(rs.getString("model_name"));
+                    model.setProviderName(rs.getString("provider_name"));
+                    model.setPurposeSummary(rs.getString("purpose_summary"));
+                    model.setPrice(rs.getString("price"));
+                    model.setParamsBillion(rs.getString("params_billion"));
+                    model.setLatencyMs(rs.getInt("latency_ms"));
+                    model.setInputModalities(rs.getString("input_modalities"));
+                    model.setOutputModalities(rs.getString("output_modalities"));
+                    model.setCategoryId(rs.getInt("category_id"));
+                    model.setIsActive(rs.getBoolean("is_active"));
+                    model.setCreatedAt(rs.getTimestamp("created_at"));
+                    model.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    models.add(model);
+                }
             }
-            
-            rs.close();
-            pstmt.close();
-        } catch (SQLException e) {
+        } catch (java.sql.SQLException e) {
             e.printStackTrace();
         }
         
@@ -92,33 +54,32 @@ public class AIModelDAO {
         List<AIModel> models = new ArrayList<>();
         String sql = "SELECT * FROM ai_models WHERE category_id = ? AND is_active = 1 ORDER BY created_at DESC LIMIT ?";
         
-        try {
-            PreparedStatement pstmt = conn.prepareStatement(sql);
+        try (java.sql.Connection conn = DBConnect.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
             pstmt.setInt(1, categoryId);
             pstmt.setInt(2, limit);
-            ResultSet rs = pstmt.executeQuery();
             
-            while (rs.next()) {
-                AIModel model = new AIModel();
-                model.setId(rs.getInt("id"));
-                model.setModelName(rs.getString("model_name"));
-                model.setProviderName(rs.getString("provider_name"));
-                model.setPurposeSummary(rs.getString("purpose_summary"));
-                model.setPrice(rs.getString("price"));
-                model.setParamsBillion(rs.getString("params_billion"));
-                model.setLatencyMs(rs.getInt("latency_ms"));
-                model.setInputModalities(rs.getString("input_modalities"));
-                model.setOutputModalities(rs.getString("output_modalities"));
-                model.setCategoryId(rs.getInt("category_id"));
-                model.setIsActive(rs.getBoolean("is_active"));
-                model.setCreatedAt(rs.getTimestamp("created_at"));
-                model.setUpdatedAt(rs.getTimestamp("updated_at"));
-                models.add(model);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    AIModel model = new AIModel();
+                    model.setId(rs.getInt("id"));
+                    model.setModelName(rs.getString("model_name"));
+                    model.setProviderName(rs.getString("provider_name"));
+                    model.setPurposeSummary(rs.getString("purpose_summary"));
+                    model.setPrice(rs.getString("price"));
+                    model.setParamsBillion(rs.getString("params_billion"));
+                    model.setLatencyMs(rs.getInt("latency_ms"));
+                    model.setInputModalities(rs.getString("input_modalities"));
+                    model.setOutputModalities(rs.getString("output_modalities"));
+                    model.setCategoryId(rs.getInt("category_id"));
+                    model.setIsActive(rs.getBoolean("is_active"));
+                    model.setCreatedAt(rs.getTimestamp("created_at"));
+                    model.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    models.add(model);
+                }
             }
-            
-            rs.close();
-            pstmt.close();
-        } catch (SQLException e) {
+        } catch (java.sql.SQLException e) {
             e.printStackTrace();
         }
         
@@ -132,9 +93,11 @@ public class AIModelDAO {
         List<Object> params = new ArrayList<>();
         
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append(" AND (model_name LIKE ? OR purpose_summary LIKE ?)");
-            params.add("%" + keyword + "%");
-            params.add("%" + keyword + "%");
+            sql.append(" AND (model_name LIKE ? OR purpose_summary LIKE ? OR provider_name LIKE ?)");
+            String searchPattern = "%" + keyword.trim() + "%";
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
         }
         
         if (categoryId > 0) {
@@ -150,39 +113,33 @@ public class AIModelDAO {
         sql.append(" ORDER BY created_at DESC LIMIT ?");
         params.add(limit);
         
-        try {
-            PreparedStatement pstmt = conn.prepareStatement(sql.toString());
+        try (java.sql.Connection conn = DBConnect.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            
             for (int i = 0; i < params.size(); i++) {
-                if (params.get(i) instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) params.get(i));
-                } else {
-                    pstmt.setString(i + 1, (String) params.get(i));
+                pstmt.setObject(i + 1, params.get(i));
+            }
+            
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    AIModel model = new AIModel();
+                    model.setId(rs.getInt("id"));
+                    model.setModelName(rs.getString("model_name"));
+                    model.setProviderName(rs.getString("provider_name"));
+                    model.setPurposeSummary(rs.getString("purpose_summary"));
+                    model.setPrice(rs.getString("price"));
+                    model.setParamsBillion(rs.getString("params_billion"));
+                    model.setLatencyMs(rs.getInt("latency_ms"));
+                    model.setInputModalities(rs.getString("input_modalities"));
+                    model.setOutputModalities(rs.getString("output_modalities"));
+                    model.setCategoryId(rs.getInt("category_id"));
+                    model.setIsActive(rs.getBoolean("is_active"));
+                    model.setCreatedAt(rs.getTimestamp("created_at"));
+                    model.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    models.add(model);
                 }
             }
-            
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                AIModel model = new AIModel();
-                model.setId(rs.getInt("id"));
-                model.setModelName(rs.getString("model_name"));
-                model.setProviderName(rs.getString("provider_name"));
-                model.setPurposeSummary(rs.getString("purpose_summary"));
-                model.setPrice(rs.getString("price"));
-                model.setParamsBillion(rs.getString("params_billion"));
-                model.setLatencyMs(rs.getInt("latency_ms"));
-                model.setInputModalities(rs.getString("input_modalities"));
-                model.setOutputModalities(rs.getString("output_modalities"));
-                model.setCategoryId(rs.getInt("category_id"));
-                model.setIsActive(rs.getBoolean("is_active"));
-                model.setCreatedAt(rs.getTimestamp("created_at"));
-                model.setUpdatedAt(rs.getTimestamp("updated_at"));
-                models.add(model);
-            }
-            
-            rs.close();
-            pstmt.close();
-        } catch (SQLException e) {
+        } catch (java.sql.SQLException e) {
             e.printStackTrace();
         }
         
@@ -193,57 +150,35 @@ public class AIModelDAO {
     public AIModel getModelById(int id) {
         String sql = "SELECT * FROM ai_models WHERE id = ?";
         
-        try {
-            PreparedStatement pstmt = conn.prepareStatement(sql);
-            pstmt.setInt(1, id);
-            ResultSet rs = pstmt.executeQuery();
+        try (java.sql.Connection conn = DBConnect.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
-            if (rs.next()) {
-                AIModel model = new AIModel();
-                model.setId(rs.getInt("id"));
-                model.setModelName(rs.getString("model_name"));
-                model.setProviderName(rs.getString("provider_name"));
-                model.setPurposeSummary(rs.getString("purpose_summary"));
-                model.setPrice(rs.getString("price"));
-                model.setParamsBillion(rs.getString("params_billion"));
-                model.setLatencyMs(rs.getInt("latency_ms"));
-                model.setInputModalities(rs.getString("input_modalities"));
-                model.setOutputModalities(rs.getString("output_modalities"));
-                model.setCategoryId(rs.getInt("category_id"));
-                model.setIsActive(rs.getBoolean("is_active"));
-                model.setCreatedAt(rs.getTimestamp("created_at"));
-                model.setUpdatedAt(rs.getTimestamp("updated_at"));
-                
-                rs.close();
-                pstmt.close();
-                return model;
+            pstmt.setInt(1, id);
+            
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    AIModel model = new AIModel();
+                    model.setId(rs.getInt("id"));
+                    model.setModelName(rs.getString("model_name"));
+                    model.setProviderName(rs.getString("provider_name"));
+                    model.setPurposeSummary(rs.getString("purpose_summary"));
+                    model.setPrice(rs.getString("price"));
+                    model.setParamsBillion(rs.getString("params_billion"));
+                    model.setLatencyMs(rs.getInt("latency_ms"));
+                    model.setInputModalities(rs.getString("input_modalities"));
+                    model.setOutputModalities(rs.getString("output_modalities"));
+                    model.setCategoryId(rs.getInt("category_id"));
+                    model.setIsActive(rs.getBoolean("is_active"));
+                    model.setCreatedAt(rs.getTimestamp("created_at"));
+                    model.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    return model;
+                }
             }
-        } catch (SQLException e) {
+        } catch (java.sql.SQLException e) {
             e.printStackTrace();
         }
         
         return null;
-    }
-    
-    // 전체 모델 수 가져오기
-    public int getTotalModelCount() {
-        String sql = "SELECT COUNT(*) FROM ai_models WHERE is_active = 1";
-        
-        try {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-            
-            if (rs.next()) {
-                int count = rs.getInt(1);
-                rs.close();
-                stmt.close();
-                return count;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        return 0;
     }
     
     // 모델 추가
@@ -252,8 +187,9 @@ public class AIModelDAO {
                     "latency_ms, input_modalities, output_modalities, category_id, is_active) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
-        try {
-            PreparedStatement pstmt = conn.prepareStatement(sql);
+        try (java.sql.Connection conn = DBConnect.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
             pstmt.setString(1, model.getModelName());
             pstmt.setString(2, model.getProviderName());
             pstmt.setString(3, model.getPurposeSummary());
@@ -263,28 +199,28 @@ public class AIModelDAO {
             pstmt.setString(7, model.getInputModalities());
             pstmt.setString(8, model.getOutputModalities());
             pstmt.setInt(9, model.getCategoryId());
-            pstmt.setBoolean(10, model.getIsActive());
+            pstmt.setBoolean(10, model.isActive());
             
             int result = pstmt.executeUpdate();
-            pstmt.close();
-            
             return result > 0;
-        } catch (SQLException e) {
+            
+        } catch (java.sql.SQLException e) {
             e.printStackTrace();
         }
         
         return false;
     }
     
-    // 모델 수정
+    // 모델 업데이트
     public boolean updateModel(AIModel model) {
         String sql = "UPDATE ai_models SET model_name = ?, provider_name = ?, purpose_summary = ?, " +
                     "price = ?, params_billion = ?, latency_ms = ?, input_modalities = ?, " +
-                    "output_modalities = ?, category_id = ?, is_active = ?, updated_at = NOW() " +
+                    "output_modalities = ?, category_id = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP " +
                     "WHERE id = ?";
         
-        try {
-            PreparedStatement pstmt = conn.prepareStatement(sql);
+        try (java.sql.Connection conn = DBConnect.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
             pstmt.setString(1, model.getModelName());
             pstmt.setString(2, model.getProviderName());
             pstmt.setString(3, model.getPurposeSummary());
@@ -294,14 +230,13 @@ public class AIModelDAO {
             pstmt.setString(7, model.getInputModalities());
             pstmt.setString(8, model.getOutputModalities());
             pstmt.setInt(9, model.getCategoryId());
-            pstmt.setBoolean(10, model.getIsActive());
+            pstmt.setBoolean(10, model.isActive());
             pstmt.setInt(11, model.getId());
             
             int result = pstmt.executeUpdate();
-            pstmt.close();
-            
             return result > 0;
-        } catch (SQLException e) {
+            
+        } catch (java.sql.SQLException e) {
             e.printStackTrace();
         }
         
@@ -310,20 +245,60 @@ public class AIModelDAO {
     
     // 모델 삭제 (비활성화)
     public boolean deleteModel(int id) {
-        String sql = "UPDATE ai_models SET is_active = 0, updated_at = NOW() WHERE id = ?";
+        String sql = "UPDATE ai_models SET is_active = 0 WHERE id = ?";
         
-        try {
-            PreparedStatement pstmt = conn.prepareStatement(sql);
+        try (java.sql.Connection conn = DBConnect.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
             pstmt.setInt(1, id);
             
             int result = pstmt.executeUpdate();
-            pstmt.close();
-            
             return result > 0;
-        } catch (SQLException e) {
+            
+        } catch (java.sql.SQLException e) {
             e.printStackTrace();
         }
         
         return false;
+    }
+    
+    // 전체 모델 수 가져오기
+    public int getTotalModelCount() {
+        String sql = "SELECT COUNT(*) FROM ai_models WHERE is_active = 1";
+        
+        try (java.sql.Connection conn = DBConnect.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return 0;
+    }
+    
+    // 카테고리별 모델 수 가져오기
+    public int getModelCountByCategory(int categoryId) {
+        String sql = "SELECT COUNT(*) FROM ai_models WHERE category_id = ? AND is_active = 1";
+        
+        try (java.sql.Connection conn = DBConnect.getConnection();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, categoryId);
+            
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return 0;
     }
 }
