@@ -194,6 +194,6 @@ sudo systemctl restart tomcat9
 
 ## 작성자
 
-- **박진영** · 동신대학교 컴퓨터공학과
+- **박진영** ·
 - GitHub: [zln02](https://github.com/zln02)
 
