@@ -45,11 +45,37 @@ AI/
 3. WAR 파일로 배포
 4. Tomcat 서버 시작
 
-## 주요 업데이트
-- 보안 기능 강화 (CSRF 보호, 보안 헤더)
-- UI/UX 개선 (다크 테마, 애니메이션)
-- 사용자 기능 확장 (프로필 이미지 업로드)
-- API 기능 개선 (검색, 추천 시스템)
+## 최근 업데이트 (2025-03-06)
+
+### 보안 기능 강화
+- **CSRFUtil.java**: CSRF 토큰 생성 및 검증 로직 개선
+- **SecurityHeadersFilter.java**: 보안 헤더 필터 강화 (CSP, HSTS, X-Frame-Options 등)
+- **DBConnect.java**: 데이터베이스 연결 보안 강화
+
+### UI/UX 개선
+- **다크 테마**: `dark-theme.css` 추가로 다크 모드 지원
+- **애니메이션**: `animations.js`로 부드러운 UI 애니메이션 구현
+- **헤더 개선**: `header.jsp` 네비게이션 UI 개선
+
+### 사용자 기능 확장
+- **마이페이지**: `mypage.jsp` 사용자 프로필 관리 기능 강화
+- **로그인/회원가입**: 보안 강화 및 UI 개선
+- **프로필 이미지**: `FileUploadUtil.java` 이미지 업로드 기능 개선
+
+### API 기능 개선
+- **검색 API**: `search.jsp` 검색 성능 최적화
+- **추천 시스템**: `recommend.jsp` AI 기반 추천 알고리즘 개선
+- **장바구니**: `cart-summary.jsp` 장바구니 기능 안정화
+- **주문 관리**: `order-delete.jsp`, `order-update.jsp` 주문 관리 기능 개선
+- **구독 관리**: `subscribe.jsp`, `subscription-update.jsp` 구독 기능 개선
+
+### 관리자 기능
+- **관리자 로그인**: `admin/auth/login.jsp` 보안 강화
+- **통계**: `sales-statistics.jsp` 매출 통계 기능 개선
+
+### 기타
+- **favicon.ico**: 웹사이트 아이콘 추가
+- **web.xml**: 서블릿 매핑 및 필터 설정 최적화
 
 ## 기여자
 - 개발팀
