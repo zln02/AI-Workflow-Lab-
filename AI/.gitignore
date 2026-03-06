@@ -1,0 +1,58 @@
+# Compiled classes
+*.class
+*.jar
+*.war
+
+# IDE files
+.idea/
+*.iml
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+
+# Logs
+*.log
+logs/
+
+# Database configuration with sensitive data
+database/*.properties
+database/*.xml
+database/config/
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules (if using npm)
+node_modules/
+
+# Build output
+target/
+build/
+out/
+
+# Backup files
+*.bak
+*.backup
+
+# Security files
+keystore.jks
+*.p12
+*.pem
+*.key
+*.crt
