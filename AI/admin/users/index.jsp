@@ -45,11 +45,11 @@
               <% for (User user : users) { %>
                 <tr>
                   <td><%= user.getId() %></td>
-                  <td><strong><%= user.getName() != null ? user.getName() : "-" %></strong></td>
+                  <td><strong><%= user.getDisplayName() != null ? user.getDisplayName() : "-" %></strong></td>
                   <td><%= user.getEmail() != null ? user.getEmail() : "-" %></td>
                   <td>
-                    <span class="badge <%= "ACTIVE".equals(user.getStatus()) ? "badge-success" : "badge-secondary" %>">
-                      <%= user.getStatus() != null && user.getStatus().equals("ACTIVE") ? "활성" : "비활성" %>
+                    <span class="badge <%= user.isActive() ? "badge-success" : "badge-secondary" %>">
+                      <%= user.isActive() ? "활성" : "비활성" %>
                     </span>
                   </td>
                   <td>
@@ -69,8 +69,8 @@
                   <td>
                     <div style="display: flex; gap: 8px;">
                       <button type="button" class="btn btn-sm" onclick="showUserDetail(<%= user.getId() %>)">상세보기</button>
-                      <button type="button" class="btn btn-sm" onclick="showEditUserModal(<%= user.getId() %>, '<%= user.getName() != null ? user.getName().replace("'", "\\'") : "" %>', '<%= user.getEmail() != null ? user.getEmail().replace("'", "\\'") : "" %>', '<%= user.getStatus() != null ? user.getStatus() : "ACTIVE" %>')">수정</button>
-                      <button type="button" class="btn btn-sm" style="background: #ff3b30; color: white;" onclick="deleteUser(<%= user.getId() %>, '<%= user.getName() != null ? user.getName().replace("'", "\\'") : "고객" %>')">삭제</button>
+                      <button type="button" class="btn btn-sm" onclick="showEditUserModal(<%= user.getId() %>, '<%= user.getDisplayName() != null ? user.getDisplayName().replace("'", "\\'") : "" %>', '<%= user.getEmail() != null ? user.getEmail().replace("'", "\\'") : "" %>', '<%= user.isActive() ? "ACTIVE" : "INACTIVE" %>')">수정</button>
+                      <button type="button" class="btn btn-sm" style="background: #ff3b30; color: white;" onclick="deleteUser(<%= user.getId() %>, '<%= user.getDisplayName() != null ? user.getDisplayName().replace("'", "\\'") : "고객" %>')">삭제</button>
                     </div>
                   </td>
                 </tr>
@@ -87,7 +87,7 @@
   <div class="admin-modal-content" style="max-width: 500px;">
     <div class="admin-modal-header">
       <h2>고객 추가</h2>
-      <button type="button" class="admin-modal-close" onclick="closeCreateUserModal()" aria-label="닫기">×</button>
+      <button type="button" class="admin-modal-close" onclick="closeCreateUserModal()" aria-label="닫기"><i class="bi bi-x"></i></button>
     </div>
     <div class="admin-modal-body">
       <form id="createUserForm" onsubmit="createUser(event)">
@@ -126,7 +126,7 @@
   <div class="admin-modal-content" style="max-width: 500px;">
     <div class="admin-modal-header">
       <h2>고객 수정</h2>
-      <button type="button" class="admin-modal-close" onclick="closeEditUserModal()" aria-label="닫기">×</button>
+      <button type="button" class="admin-modal-close" onclick="closeEditUserModal()" aria-label="닫기"><i class="bi bi-x"></i></button>
     </div>
     <div class="admin-modal-body">
       <form id="editUserForm" onsubmit="updateUser(event)">
@@ -161,7 +161,7 @@
   <div class="admin-modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
     <div class="admin-modal-header">
       <h2>고객 상세 정보</h2>
-      <button type="button" class="admin-modal-close" onclick="closeUserDetailModal()" aria-label="닫기">×</button>
+      <button type="button" class="admin-modal-close" onclick="closeUserDetailModal()" aria-label="닫기"><i class="bi bi-x"></i></button>
     </div>
     <div class="admin-modal-body" id="userDetailContent">
       <div style="text-align: center; padding: 40px;">
@@ -955,7 +955,7 @@ window.onclick = function(event) {
   <div class="admin-modal-content">
     <div class="admin-modal-header">
       <h2>구독 수정</h2>
-      <button type="button" class="admin-modal-close" onclick="closeEditSubscriptionModal()">×</button>
+      <button type="button" class="admin-modal-close" onclick="closeEditSubscriptionModal()"><i class="bi bi-x"></i></button>
     </div>
     <form onsubmit="saveSubscription(); return false;">
       <div class="form-group">
@@ -996,7 +996,7 @@ window.onclick = function(event) {
   <div class="admin-modal-content">
     <div class="admin-modal-header">
       <h2>주문 수정</h2>
-      <button type="button" class="admin-modal-close" onclick="closeEditOrderModal()">×</button>
+      <button type="button" class="admin-modal-close" onclick="closeEditOrderModal()"><i class="bi bi-x"></i></button>
     </div>
     <form onsubmit="saveOrder(); return false;">
       <div class="form-group">

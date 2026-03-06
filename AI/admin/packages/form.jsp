@@ -99,7 +99,7 @@
               <div class="form-group">
                 <label for="price_krw">KRW 가격 (자동 계산)</label>
                 <input type="text" id="price_krw" readonly value="" placeholder="0원">
-                <small class="helper-text">USD × 1350으로 자동 계산됩니다</small>
+                <small class="helper-text">USD x 1350으로 자동 계산됩니다</small>
               </div>
             </div>
             <input type="hidden" id="price" name="price" value="<%= pkg != null && pkg.getPrice() != null ? pkg.getPrice() : "" %>">
@@ -166,7 +166,7 @@
               <div class="form-group">
                 <label for="discount_price_krw">KRW 할인가 (자동 계산)</label>
                 <input type="text" id="discount_price_krw" readonly value="" placeholder="0원">
-                <small class="helper-text">USD 할인가 × 1350으로 자동 계산됩니다</small>
+                <small class="helper-text">USD 할인가 x 1350으로 자동 계산됩니다</small>
               </div>
             </div>
             <input type="hidden" id="discount_price" name="discount_price" value="<%= pkg != null && pkg.getDiscountPrice() != null ? pkg.getDiscountPrice() : "" %>">
