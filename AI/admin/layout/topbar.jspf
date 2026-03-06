@@ -22,7 +22,7 @@
       <span></span>
     </button>
     <div class="search-box">
-      <span class="search-icon">🔍</span>
+      <span class="search-icon"><i class="bi bi-search"></i></span>
       <input type="text" placeholder="검색..." class="search-input" id="searchInput">
     </div>
   </div>
@@ -37,8 +37,8 @@
       <% } %>
     </div>
     <a href="/AI/admin/auth/logout.jsp" class="btn-logout">
+      <i class="bi bi-box-arrow-right" style="font-size:.9rem;"></i>
       <span>로그아웃</span>
-      <span class="logout-icon">🚪</span>
     </a>
   </div>
 </header>

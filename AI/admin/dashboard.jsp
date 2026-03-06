@@ -53,61 +53,69 @@
       </header>
 
       <!-- KPI 카드 -->
-      <section class="admin-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.2rem;margin-bottom:2.5rem;">
-        <article style="text-align:center;">
-          <div style="font-size:2.2rem;margin-bottom:.6rem;">🔧</div>
-          <h2 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);margin-bottom:.25rem;">AI 도구</h2>
-          <span class="counter" style="font-size:2.75rem;font-weight:700;color:var(--accent-primary);"><%= toolCount %></span>
-          <p style="font-size:.78rem;color:var(--text-tertiary);margin-top:.4rem;">등록된 AI 도구 수</p>
+      <section class="kpi-grid">
+        <article class="kpi-card kpi-tools">
+          <div class="kpi-icon"><i class="bi bi-cpu-fill"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">AI 도구</span>
+            <span class="kpi-value"><%= toolCount %></span>
+            <span class="kpi-desc">등록된 AI 도구 수</span>
+          </div>
         </article>
-        <article style="text-align:center;">
-          <div style="font-size:2.2rem;margin-bottom:.6rem;">🧪</div>
-          <h2 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);margin-bottom:.25rem;">실습 프로젝트</h2>
-          <span class="counter" style="font-size:2.75rem;font-weight:700;color:var(--accent-primary);"><%= projectCount %></span>
-          <p style="font-size:.78rem;color:var(--text-tertiary);margin-top:.4rem;">등록된 랩 프로젝트 수</p>
+        <article class="kpi-card kpi-lab">
+          <div class="kpi-icon"><i class="bi bi-flask-fill"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">실습 프로젝트</span>
+            <span class="kpi-value"><%= projectCount %></span>
+            <span class="kpi-desc">등록된 랩 프로젝트 수</span>
+          </div>
         </article>
-        <article style="text-align:center;">
-          <div style="font-size:2.2rem;margin-bottom:.6rem;">👥</div>
-          <h2 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);margin-bottom:.25rem;">활성 사용자</h2>
-          <span class="counter" style="font-size:2.75rem;font-weight:700;color:var(--accent-primary);"><%= userCount %></span>
-          <p style="font-size:.78rem;color:var(--text-tertiary);margin-top:.4rem;">is_active = 1 회원 수</p>
+        <article class="kpi-card kpi-users">
+          <div class="kpi-icon"><i class="bi bi-people-fill"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">활성 사용자</span>
+            <span class="kpi-value"><%= userCount %></span>
+            <span class="kpi-desc">is_active 회원 수</span>
+          </div>
         </article>
-        <article style="text-align:center;">
-          <div style="font-size:2.2rem;margin-bottom:.6rem;">�</div>
-          <h2 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);margin-bottom:.25rem;">인기 카테고리</h2>
-          <span class="counter" style="font-size:1.5rem;font-weight:700;color:var(--accent-primary);word-break:break-word;"><%= topCategory %></span>
-          <p style="font-size:.78rem;color:var(--text-tertiary);margin-top:.4rem;">가장 많은 AI 도구 카테고리</p>
+        <article class="kpi-card kpi-category">
+          <div class="kpi-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">인기 카테고리</span>
+            <span class="kpi-value kpi-value-sm"><%= topCategory %></span>
+            <span class="kpi-desc">AI 도구 최다 카테고리</span>
+          </div>
         </article>
       </section>
 
       <!-- 빠른 관리 -->
       <section class="admin-notice" style="margin-bottom:2.5rem;">
         <h2 style="margin-bottom:1.25rem;">빠른 관리</h2>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
-          <a class="btn primary" href="/AI/admin/tools/index.jsp"
-             style="justify-content:center;padding:1.1rem;flex-direction:column;gap:.5rem;text-align:center;">
-            <span style="font-size:1.6rem;">🔧</span>AI 도구 관리
+        <div class="quick-links-grid">
+          <a class="quick-link-card quick-primary" href="/AI/admin/tools/index.jsp">
+            <i class="bi bi-cpu"></i>
+            <span>AI 도구 관리</span>
           </a>
-          <a class="btn" href="/AI/admin/lab/index.jsp"
-             style="justify-content:center;padding:1.1rem;flex-direction:column;gap:.5rem;text-align:center;">
-            <span style="font-size:1.6rem;">🧪</span>실습 랩 관리
+          <a class="quick-link-card" href="/AI/admin/lab/index.jsp">
+            <i class="bi bi-flask"></i>
+            <span>실습 랩 관리</span>
           </a>
-          <a class="btn" href="/AI/admin/users/index.jsp"
-             style="justify-content:center;padding:1.1rem;flex-direction:column;gap:.5rem;text-align:center;">
-            <span style="font-size:1.6rem;">👥</span>사용자 관리
+          <a class="quick-link-card" href="/AI/admin/users/index.jsp">
+            <i class="bi bi-people"></i>
+            <span>사용자 관리</span>
           </a>
-          <a class="btn" href="/AI/admin/packages/index.jsp"
-             style="justify-content:center;padding:1.1rem;flex-direction:column;gap:.5rem;text-align:center;">
-            <span style="font-size:1.6rem;">�</span>구독 플랜
+          <a class="quick-link-card" href="/AI/admin/packages/index.jsp">
+            <i class="bi bi-credit-card"></i>
+            <span>구독 플랜</span>
           </a>
-          <a class="btn" href="/AI/admin/categories/index.jsp"
-             style="justify-content:center;padding:1.1rem;flex-direction:column;gap:.5rem;text-align:center;">
-            <span style="font-size:1.6rem;">📁</span>카테고리
+          <a class="quick-link-card" href="/AI/admin/categories/index.jsp">
+            <i class="bi bi-folder2-open"></i>
+            <span>카테고리</span>
           </a>
           <% if (isSuperadmin) { %>
-          <a class="btn" href="/AI/admin/admins/index.jsp"
-             style="justify-content:center;padding:1.1rem;flex-direction:column;gap:.5rem;text-align:center;">
-            <span style="font-size:1.6rem;">�</span>관리자 관리
+          <a class="quick-link-card" href="/AI/admin/admins/index.jsp">
+            <i class="bi bi-shield-lock"></i>
+            <span>관리자 관리</span>
           </a>
           <% } %>
         </div>
@@ -141,10 +149,8 @@
                 <td><strong><%= rs2.getString("name") != null ? rs2.getString("name") : "-" %></strong></td>
                 <td><%= rs2.getString("category") != null ? rs2.getString("category") : "-" %></td>
                 <td><%= rs2.getString("difficulty_level") != null ? rs2.getString("difficulty_level") : "-" %></td>
-                <td>⭐ <%= rs2.getObject("rating") != null ? String.format("%.1f", rs2.getDouble("rating")) : "-" %></td>
-                <td><span style="padding:2px 10px;border-radius:20px;font-size:.8rem;
-                     background:<%= rs2.getBoolean("is_active") ? "rgba(34,197,94,.15)" : "rgba(239,68,68,.15)" %>;
-                     color:<%= rs2.getBoolean("is_active") ? "#22c55e" : "#ef4444" %>;">
+                <td><i class="bi bi-star-fill" style="color:#f59e0b;margin-right:3px;"></i><%= rs2.getObject("rating") != null ? String.format("%.1f", rs2.getDouble("rating")) : "-" %></td>
+                <td><span class="status-badge <%= rs2.getBoolean("is_active") ? "status-active" : "status-inactive" %>">
                   <%= rs2.getBoolean("is_active") ? "활성" : "비활성" %>
                 </span></td>
               </tr>

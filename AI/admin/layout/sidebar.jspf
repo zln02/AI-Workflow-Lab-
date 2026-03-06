@@ -7,7 +7,7 @@
 <nav class="admin-sidebar" id="adminSidebar">
   <div class="sidebar-header">
     <div class="brand">
-      <span class="brand-icon">🧪</span>
+      <span class="brand-icon"><i class="bi bi-lightning-charge-fill"></i></span>
       <span class="brand-text">AI Workflow Lab</span>
     </div>
     <button class="sidebar-toggle" id="sidebarToggle" aria-label="사이드바 토글">
@@ -19,35 +19,35 @@
   
   <div class="sidebar-menu">
     <a href="/AI/admin/dashboard.jsp" class="sidebar-item" data-path="/admin/dashboard">
-      <span class="sidebar-icon">🏠</span>
+      <span class="sidebar-icon"><i class="bi bi-speedometer2"></i></span>
       <span class="sidebar-text">대시보드</span>
     </a>
 
-    <div class="sidebar-section-label" style="padding:.5rem 1rem;font-size:.7rem;text-transform:uppercase;opacity:.5;">AI 콘텐츠</div>
+    <div class="sidebar-section-label">AI 콘텐츠</div>
     <a href="/AI/admin/tools/index.jsp" class="sidebar-item" data-path="/admin/tools">
-      <span class="sidebar-icon">🔧</span>
+      <span class="sidebar-icon"><i class="bi bi-cpu"></i></span>
       <span class="sidebar-text">AI 도구 관리</span>
     </a>
     <a href="/AI/admin/lab/index.jsp" class="sidebar-item" data-path="/admin/lab">
-      <span class="sidebar-icon">🧪</span>
+      <span class="sidebar-icon"><i class="bi bi-flask"></i></span>
       <span class="sidebar-text">실습 랩 관리</span>
     </a>
-    <div class="sidebar-section-label" style="padding:.5rem 1rem;font-size:.7rem;text-transform:uppercase;opacity:.5;">운영 관리</div>
+    <div class="sidebar-section-label">운영 관리</div>
     <a href="/AI/admin/users/index.jsp" class="sidebar-item" data-path="/admin/users">
-      <span class="sidebar-icon">👥</span>
+      <span class="sidebar-icon"><i class="bi bi-people"></i></span>
       <span class="sidebar-text">사용자 관리</span>
     </a>
     <a href="/AI/admin/packages/index.jsp" class="sidebar-item" data-path="/admin/packages">
-      <span class="sidebar-icon">�</span>
+      <span class="sidebar-icon"><i class="bi bi-credit-card"></i></span>
       <span class="sidebar-text">구독 플랜</span>
     </a>
     <a href="/AI/admin/categories/index.jsp" class="sidebar-item" data-path="/admin/categories">
-      <span class="sidebar-icon">📁</span>
+      <span class="sidebar-icon"><i class="bi bi-folder2-open"></i></span>
       <span class="sidebar-text">카테고리</span>
     </a>
     <% if (sidebarIsSuperadmin) { %>
     <a href="/AI/admin/admins/index.jsp" class="sidebar-item" data-path="/admin/admins">
-      <span class="sidebar-icon">👤</span>
+      <span class="sidebar-icon"><i class="bi bi-shield-lock"></i></span>
       <span class="sidebar-text">관리자 관리</span>
     </a>
     <% } %>
@@ -55,7 +55,7 @@
   
   <div class="sidebar-footer">
     <button class="theme-toggle" id="themeToggle" aria-label="다크모드 토글">
-      <span class="theme-icon">🌙</span>
+      <span class="theme-icon"><i class="bi bi-moon-stars"></i></span>
       <span class="theme-text">다크모드</span>
     </button>
   </div>

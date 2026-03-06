@@ -1,274 +1,199 @@
-# AI Navigator - AI 모델 마켓플레이스
+# AI Workflow Lab
 
-AI 모델을 탐색하고 구매할 수 있는 웹 기반 마켓플레이스 플랫폼입니다.
+> AI 도구 탐색부터 비즈니스 시나리오 기반 실습 프로젝트까지 — 실무 AI 역량을 키우는 통합 플랫폼
 
-## 📋 프로젝트 개요
+## 프로젝트 개요
 
-AI Navigator는 다양한 AI 모델을 한 곳에서 탐색, 비교, 구매할 수 있는 통합 플랫폼입니다. 사용자는 텍스트, 이미지, 비디오, 오디오, 임베딩 등 다양한 모달리티의 AI 모델을 검색하고 패키지 형태로 구매할 수 있습니다.
+AI Workflow Lab은 다양한 AI 도구를 목적에 맞게 탐색·비교하고, 실제 비즈니스 시나리오 기반의 실습 프로젝트를 수행하며 AI 실무 역량을 쌓을 수 있는 웹 애플리케이션입니다. 구독 플랜을 통해 토큰 기반 서비스를 이용할 수 있습니다.
 
-### 주요 기능
+### 핵심 기능
 
-- **AI 모델 탐색**: 카테고리 및 모달리티별 필터링
-- **패키지 구매**: 여러 모델을 묶은 패키지 상품 제공
-- **장바구니 및 결제**: 실시간 가격 계산 및 주문 관리
-- **마이페이지**: 구독 내역, 구매 내역, 주문 관리
-- **관리자 대시보드**: 모델, 패키지, 사용자 관리
+- **AI 도구 탐색기**: 카테고리·난이도·키워드 필터로 원하는 AI 도구 검색 및 비교
+- **실습 랩 (AI Lab)**: 실제 비즈니스 시나리오 기반 프로젝트 수행 (Tutorial / Real-world / Challenge)
+- **구독 플랜**: 토큰 기반 서비스 이용을 위한 플랜 선택 및 결제
+- **관리자 대시보드**: AI 도구·실습 프로젝트·사용자·구독 플랜 통합 관리
 
-## 🛠 기술 스택
+---
+
+## 기술 스택
 
 ### Backend
-- **Java**: JSP/Servlet 기반 웹 애플리케이션
-- **Tomcat 9**: 웹 애플리케이션 서버
-- **MySQL 8.0**: 관계형 데이터베이스
-- **JDBC**: 데이터베이스 연결 및 쿼리 실행
+| 기술 | 버전 | 용도 |
+|---|---|---|
+| Java (JSP/Servlet) | 11 | 웹 애플리케이션 |
+| Apache Tomcat | 9.x | 웹 서버 |
+| MySQL | 8.0 | 관계형 데이터베이스 |
+| HikariCP | 5.1.0 | 커넥션 풀링 |
+| Gson | 2.10.1 | JSON 직렬화 |
+| SLF4J | 1.7.x | 로깅 |
 
 ### Frontend
-- **HTML5/CSS3**: 반응형 웹 디자인
-- **JavaScript (ES6+)**: 클라이언트 사이드 로직
-- **Glassmorphism UI**: 현대적인 UI 디자인
+| 기술 | 버전 | 용도 |
+|---|---|---|
+| Bootstrap | 5.3.3 | UI 컴포넌트 |
+| Bootstrap Icons | 1.11.3 | 아이콘 |
+| GSAP | 3.x | 애니메이션 |
+| Axios | 최신 | HTTP 클라이언트 |
 
-### Architecture
-- **MVC Pattern**: 모델-뷰-컨트롤러 아키텍처
-- **DAO Pattern**: 데이터 접근 객체 패턴
-- **Session Management**: 세션 기반 인증 및 상태 관리
+### 아키텍처
+- **MVC + DAO 패턴**: 명확한 관심사 분리
+- **RESTful Servlet**: `/api/tools` JSON API
+- **세션 기반 인증**: 사용자·관리자 분리 인증
+- **Glassmorphism UI**: 다크모드 중심 현대적 디자인
 
-### Security
-- **CSRF Protection**: CSRF 토큰 기반 보안
-- **Role-based Access Control**: 역할 기반 접근 제어
-- **Password Hashing**: 비밀번호 해싱 (BCrypt)
+---
 
-## 📁 프로젝트 구조
+## 프로젝트 구조
 
 ```
 ROOT/
 ├── AI/
-│   ├── admin/              # 관리자 페이지
-│   │   ├── auth/           # 관리자 인증
-│   │   ├── models/         # 모델 관리
-│   │   ├── packages/       # 패키지 관리
-│   │   ├── categories/     # 카테고리 관리
-│   │   ├── providers/      # 제공자 관리
-│   │   ├── users/          # 사용자 관리
-│   │   ├── pricing/        # 요금제 관리
-│   │   └── statistics/     # 통계 대시보드
-│   ├── user/               # 사용자 페이지
-│   │   ├── home.jsp        # 홈페이지
-│   │   ├── models.jsp      # 모델 목록
-│   │   ├── modelDetail.jsp # 모델 상세
-│   │   ├── package.jsp     # 패키지 목록
-│   │   ├── cart.jsp        # 장바구니
-│   │   ├── checkout.jsp    # 결제 페이지
-│   │   ├── mypage.jsp      # 마이페이지
-│   │   ├── login.jsp        # 로그인
-│   │   └── signup.jsp       # 회원가입
-│   ├── api/                # API 엔드포인트
-│   │   ├── search.jsp       # 검색 API
-│   │   ├── models.jsp      # 모델 목록 API
-│   │   ├── packages.jsp     # 패키지 목록 API
-│   │   └── cart-summary.jsp # 장바구니 요약 API
-│   ├── assets/             # 정적 리소스
-│   │   ├── css/            # 스타일시트
-│   │   ├── js/             # JavaScript 파일
-│   │   └── img/            # 이미지 파일
-│   ├── partials/           # 공통 컴포넌트
-│   │   ├── header.jsp      # 헤더
-│   │   └── footer.jsp      # 푸터
-│   └── database/           # 데이터베이스 스키마
+│   ├── admin/                  # 관리자 페이지
+│   │   ├── auth/               # 로그인/로그아웃
+│   │   ├── dashboard.jsp       # 관리자 대시보드
+│   │   ├── tools/              # AI 도구 관리
+│   │   ├── lab/                # 실습 랩 관리
+│   │   ├── users/              # 사용자 관리
+│   │   ├── packages/           # 구독 플랜 관리
+│   │   ├── categories/         # 카테고리 관리
+│   │   ├── admins/             # 관리자 계정 관리
+│   │   └── layout/             # 공통 레이아웃 (sidebar, topbar 등)
+│   ├── user/                   # 사용자 페이지
+│   │   ├── home.jsp            # 메인 홈
+│   │   ├── tools/
+│   │   │   └── navigator.jsp   # AI 도구 탐색기
+│   │   ├── lab/
+│   │   │   ├── index.jsp       # 실습 랩 목록
+│   │   │   └── detail.jsp      # 실습 프로젝트 상세
+│   │   ├── package.jsp         # 구독 플랜 목록
+│   │   ├── checkout.jsp        # 결제
+│   │   ├── mypage.jsp          # 마이페이지
+│   │   ├── login.jsp           # 로그인
+│   │   └── signup.jsp          # 회원가입
+│   ├── partials/               # 공통 컴포넌트
+│   │   ├── header.jsp
+│   │   ├── footer.jsp
+│   │   └── key-visual.jsp
+│   ├── assets/
+│   │   ├── css/                # 스타일시트
+│   │   ├── js/                 # JavaScript
+│   │   └── img/                # 이미지·아이콘
+│   └── database/
+│       ├── schema.sql          # 기존 스키마
+│       └── ai_workflow_lab_schema.sql  # AI Workflow Lab 스키마
 ├── WEB-INF/
-│   └── classes/
-│       ├── dao/            # 데이터 접근 객체
-│       ├── model/          # 데이터 모델
-│       ├── service/        # 비즈니스 로직
-│       ├── util/           # 유틸리티 클래스
-│       ├── security/       # 보안 관련 클래스
-│       ├── filter/         # 필터 클래스
-│       └── db/             # 데이터베이스 연결
-├── intro.jsp               # 프로젝트 소개 페이지
-└── README.md               # 이 파일
+│   ├── src/                    # Java 소스
+│   │   ├── dao/                # AIToolDAO, LabProjectDAO, UserDAO 등
+│   │   ├── model/              # AITool, LabProject, User 등
+│   │   ├── servlet/            # AIToolServlet
+│   │   ├── filter/             # SecurityHeadersFilter 등
+│   │   ├── util/               # PasswordUtil, ValidationUtil
+│   │   └── db/                 # DBConnect (HikariCP)
+│   ├── classes/                # 컴파일된 .class 파일
+│   ├── lib/                    # JAR 파일
+│   │   ├── HikariCP-5.1.0.jar
+│   │   ├── gson-2.10.1.jar
+│   │   ├── mysql-connector-j-9.5.0.jar
+│   │   ├── slf4j-api.jar
+│   │   └── slf4j-simple.jar
+│   └── web.xml
+└── README.md
 ```
 
-## 🚀 설치 및 실행
+---
+
+## 설치 및 실행
 
 ### 필수 요구사항
 
-- Java 8 이상
+- Java 11 이상
 - Apache Tomcat 9.0 이상
 - MySQL 8.0 이상
-- Maven (선택사항)
 
 ### 1. 데이터베이스 설정
 
-#### 환경 변수 설정
-
-프로젝트는 환경 변수를 통해 데이터베이스 연결 정보를 관리합니다.
-
 ```bash
-# 환경 변수 설정 (Linux/Mac)
-export DB_HOST=your-db-host
-export DB_PORT=3306
-export DB_NAME=your-db-name
-export DB_USER=your-db-user
-export DB_PASSWORD=your-db-password
-
-# 또는 Tomcat 설정 파일에 추가
-# /etc/tomcat9/tomcat9.conf 또는 setenv.sh
-export DB_HOST=your-db-host
-export DB_PORT=3306
-export DB_NAME=your-db-name
-export DB_USER=your-db-user
-export DB_PASSWORD=your-db-password
-```
-
-#### 데이터베이스 스키마 생성
-
-```bash
-# MySQL에 접속하여 스키마 생성
+# MySQL 접속
 mysql -u root -p
 
 # 데이터베이스 생성
 CREATE DATABASE ai_navigator CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-# 스키마 파일 실행
-SOURCE /path/to/AI/database/schema.sql;
+# 스키마 적용
+USE ai_navigator;
+SOURCE /path/to/AI/database/ai_workflow_lab_schema.sql;
 ```
 
-### 2. 프로젝트 빌드
+### 2. 환경 변수 설정
 
 ```bash
-# 프로젝트 디렉토리로 이동
+# /etc/tomcat9/tomcat9.conf 또는 setenv.sh
+export DB_HOST=localhost
+export DB_PORT=3306
+export DB_NAME=ai_navigator
+export DB_USER=your_user
+export DB_PASSWORD=your_password
+```
+
+### 3. Java 클래스 컴파일
+
+```bash
 cd /var/lib/tomcat9/webapps/ROOT
 
-# Java 클래스 컴파일 (필요한 경우)
-javac -cp "$CATALINA_HOME/lib/*:WEB-INF/classes" \
-  WEB-INF/classes/**/*.java
-```
-
-### 3. Tomcat 배포
-
-```bash
-# WAR 파일로 패키징 (선택사항)
-jar -cvf ai-navigator.war *
-
-# 또는 직접 ROOT 디렉토리에 배포
-# Tomcat이 자동으로 감지하여 배포합니다
+javac -encoding UTF-8 \
+  -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*" \
+  -d WEB-INF/classes \
+  WEB-INF/src/**/*.java
 ```
 
 ### 4. Tomcat 시작
 
 ```bash
-# Tomcat 시작
-sudo systemctl start tomcat9
-
-# 또는 직접 실행
-$CATALINA_HOME/bin/startup.sh
+sudo systemctl restart tomcat9
 ```
 
 ### 5. 접속 확인
 
-- **사용자 페이지**: http://localhost:8080/AI/user/home.jsp
-- **관리자 페이지**: http://localhost:8080/AI/admin/auth/login.jsp
-- **프로젝트 소개**: http://localhost:8080/intro.jsp
-
-## 🔐 보안 설정
-
-### CSRF 보호
-
-모든 POST 요청은 CSRF 토큰 검증을 거칩니다. 세션에 자동으로 CSRF 토큰이 생성됩니다.
-
-### 비밀번호 해싱
-
-사용자 비밀번호는 BCrypt 알고리즘으로 해싱되어 저장됩니다.
-
-### 세션 관리
-
-- 세션 타임아웃: 30분 (기본값)
-- 세션 쿠키: HttpOnly, Secure 플래그 설정 권장
-
-## 📝 주요 파일 설명
-
-### JSP 파일
-
-- **home.jsp**: 메인 홈페이지, 추천 모델 및 패키지 표시
-- **models.jsp**: 전체 AI 모델 목록 및 필터링
-- **modelDetail.jsp**: 모델 상세 정보 페이지
-- **cart.jsp**: 장바구니 관리
-- **checkout.jsp**: 결제 페이지
-- **mypage.jsp**: 사용자 마이페이지
-
-### Java 클래스
-
-- **DBConnect**: 데이터베이스 연결 관리
-- **AIModelDAO**: AI 모델 데이터 접근
-- **PackageDAO**: 패키지 데이터 접근
-- **UserDAO**: 사용자 데이터 접근
-- **CSRFUtil**: CSRF 토큰 관리
-- **PasswordUtils**: 비밀번호 해싱 유틸리티
-
-## 🧪 테스트
-
-### 데이터베이스 연결 테스트
-
-```java
-import db.DBConnect;
-import java.sql.Connection;
-
-Connection conn = DBConnect.getConnection();
-if (conn != null) {
-    System.out.println("데이터베이스 연결 성공");
-    conn.close();
-}
-```
-
-## 🐛 문제 해결
-
-### 데이터베이스 연결 실패
-
-1. 환경 변수가 올바르게 설정되었는지 확인
-2. MySQL 서버가 실행 중인지 확인
-3. 방화벽 설정 확인
-4. 데이터베이스 사용자 권한 확인
-
-### 세션 문제
-
-1. Tomcat 세션 설정 확인
-2. 쿠키 설정 확인
-3. 세션 타임아웃 설정 확인
-
-## 📄 라이선스
-
-이 프로젝트는 교육 목적으로 제작되었습니다.
-
-## 👤 작성자
-
-- **이름**: 박진영
-- **소속**: 동신대학교 컴퓨터공학과
-
-## 🙏 감사의 말
-
-이 프로젝트는 포트폴리오 목적으로 제작되었으며, 실제 운영 환경에서 사용하기 전에 추가적인 보안 검토 및 테스트가 필요합니다.
-
-## 📞 문의
-
-프로젝트 관련 문의사항이 있으시면 이슈를 등록해주세요.
-
-## 🔄 최근 업데이트
-
-### 리팩토링 완료 사항
-
-- ✅ **코드 가독성 개선**: JSP 및 Java 파일 리팩토링
-- ✅ **보안 강화**: XSS 방지 함수 개선, CSRF 보호 강화
-- ✅ **환경 변수 지원**: DBConnect 클래스에 환경 변수 지원 추가
-- ✅ **문서화**: README.md 및 .gitignore 파일 작성
-- ✅ **코드 정리**: 중복 코드 제거, 함수 분리
-
-### 주요 변경사항
-
-1. **`_common.jsp`**: XSS 방지 함수 개선 및 유틸리티 함수 추가
-2. **`home.jsp`**: 모달리티 결정 로직 함수화, Provider 로고 매핑 함수화
-3. **`DBConnect.java`**: 하드코딩된 비밀번호 제거, 환경 변수 지원
-4. **`AIModelDAO.java`**: JavaDoc 주석 추가, 입력 검증 강화
+| 경로 | 설명 |
+|---|---|
+| `http://localhost:8080/` | 메인 홈 (리다이렉트) |
+| `http://localhost:8080/AI/user/home.jsp` | 사용자 홈 |
+| `http://localhost:8080/AI/user/tools/navigator.jsp` | AI 도구 탐색기 |
+| `http://localhost:8080/AI/user/lab/index.jsp` | 실습 랩 |
+| `http://localhost:8080/AI/admin/auth/login.jsp` | 관리자 로그인 |
+| `http://localhost:8080/AI/admin/dashboard.jsp` | 관리자 대시보드 |
 
 ---
 
-**참고**: 이 프로젝트는 과제용 웹사이트입니다. 실제 서비스 운영 시 추가적인 보안 강화 및 성능 최적화가 필요합니다.
+## 주요 Java 클래스
+
+| 클래스 | 역할 |
+|---|---|
+| `db.DBConnect` | HikariCP 커넥션 풀 관리 |
+| `dao.AIToolDAO` | AI 도구 CRUD, 검색, 추천 |
+| `dao.LabProjectDAO` | 실습 프로젝트 CRUD, 필터링 |
+| `dao.UserDAO` | 사용자 CRUD, 인증 |
+| `servlet.AIToolServlet` | `/api/tools` REST API |
+| `filter.SecurityHeadersFilter` | 보안 헤더 필터 |
+| `util.PasswordUtil` | 비밀번호 해싱 |
+
+---
+
+## 보안
+
+- **역할 기반 접근 제어**: 사용자 / 관리자 / Superadmin 분리
+- **세션 인증**: 관리자 페이지 접근 시 세션 검증
+- **보안 헤더**: `X-Content-Type-Options`, `X-Frame-Options`, `CSP` 등 자동 적용
+- **환경 변수 DB 설정**: DB 자격증명 하드코딩 금지
+
+---
+
+## 라이선스
+
+이 프로젝트는 포트폴리오 목적으로 제작되었습니다.
+
+## 작성자
+
+- **박진영** · 동신대학교 컴퓨터공학과
+- GitHub: [zln02](https://github.com/zln02)
 
