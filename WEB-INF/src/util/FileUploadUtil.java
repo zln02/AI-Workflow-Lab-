@@ -72,9 +72,19 @@ public class FileUploadUtil {
         if (fileName == null || fileName.trim().isEmpty()) {
             return;
         }
-        
+
+        // Path Traversal 방지: 파일명에 경로 구분자 포함 여부 확인
+        if (fileName.contains("/") || fileName.contains("\\") || fileName.contains("..")) {
+            return;
+        }
+
         try {
-            Path filePath = Paths.get(UPLOAD_DIR, PROFILE_IMAGE_DIR, fileName);
+            Path uploadBase = Paths.get(UPLOAD_DIR, PROFILE_IMAGE_DIR).toRealPath();
+            Path filePath = uploadBase.resolve(fileName).normalize();
+            // 업로드 디렉토리 외부로 벗어나는지 확인
+            if (!filePath.startsWith(uploadBase)) {
+                return;
+            }
             Files.deleteIfExists(filePath);
         } catch (IOException e) {
             e.printStackTrace();

@@ -6,13 +6,28 @@
   <welcome-file-list>
     <welcome-file>AI/user/home.jsp</welcome-file>
   </welcome-file-list>
+
+  <!-- JSP 컴파일러를 Java 11로 설정 (var 키워드 등 지원) -->
+  <servlet>
+    <servlet-name>jsp</servlet-name>
+    <servlet-class>org.apache.jasper.servlet.JspServlet</servlet-class>
+    <init-param>
+      <param-name>compilerSourceVM</param-name>
+      <param-value>11</param-value>
+    </init-param>
+    <init-param>
+      <param-name>compilerTargetVM</param-name>
+      <param-value>11</param-value>
+    </init-param>
+    <load-on-startup>3</load-on-startup>
+  </servlet>
   
   <!-- 세션 타임아웃 설정 (30분) -->
   <session-config>
     <session-timeout>30</session-timeout>
     <cookie-config>
       <http-only>true</http-only>
-      <secure>false</secure>
+      <secure>true</secure>
     </cookie-config>
     <tracking-mode>COOKIE</tracking-mode>
   </session-config>

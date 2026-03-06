@@ -2,6 +2,7 @@ package util;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 
@@ -18,7 +19,7 @@ public class CSRFUtil {
      * @return 생성된 토큰
      */
     public static String generateToken() {
-        byte[] randomBytes = new byte(32);
+        byte[] randomBytes = new byte[32];
         secureRandom.nextBytes(randomBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
     }
@@ -47,6 +48,18 @@ public class CSRFUtil {
         }
         return (String) session.getAttribute(CSRF_TOKEN_SESSION_KEY);
     }
+
+    /**
+     * 세션에서 CSRF 토큰 가져오기 (HttpSession 오버로드)
+     * @param session HttpSession
+     * @return 토큰
+     */
+    public static String getToken(HttpSession session) {
+        if (session == null) {
+            return null;
+        }
+        return (String) session.getAttribute(CSRF_TOKEN_SESSION_KEY);
+    }
     
     /**
      * CSRF 토큰 검증
@@ -61,7 +74,7 @@ public class CSRFUtil {
             return false;
         }
         
-        return sessionToken.equals(requestToken);
+        return MessageDigest.isEqual(sessionToken.getBytes(), requestToken.getBytes());
     }
     
     /**

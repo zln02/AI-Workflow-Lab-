@@ -61,8 +61,9 @@ public class AIToolServlet extends HttpServlet {
                 out.print(gson.toJson(new ErrorResponse("Not Found", "Invalid endpoint")));
             }
         } catch (Exception e) {
+            e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            out.print(gson.toJson(new ErrorResponse("Internal Server Error", e.getMessage())));
+            out.print(gson.toJson(new ErrorResponse("Internal Server Error", "서버 오류가 발생했습니다.")));
         }
     }
     

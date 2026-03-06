@@ -32,20 +32,32 @@ public class UsersServlet extends HttpServlet {
         gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
     }
     
+    private boolean isAdmin(HttpServletRequest request) {
+        javax.servlet.http.HttpSession s = request.getSession(false);
+        return s != null && s.getAttribute("admin") != null;
+    }
+
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         PrintWriter out = response.getWriter();
-        
+
+        if (!isAdmin(request)) {
+            ApiResponse<Object> apiResponse = ApiResponse.error("관리자 권한이 필요합니다.");
+            response.setStatus(403);
+            out.print(gson.toJson(apiResponse));
+            return;
+        }
+
         try {
             String pathInfo = request.getPathInfo();
             
             if (pathInfo == null || pathInfo.equals("/")) {
                 // 전체 사용자 목록 (관리자용)
-                List<User> users = userDAO.getAllUsers();
+                List<User> users = userDAO.findAll();
                 ApiResponse<List<User>> apiResponse = ApiResponse.success(users);
                 out.print(gson.toJson(apiResponse));
                 
@@ -53,7 +65,7 @@ public class UsersServlet extends HttpServlet {
                 // 특정 사용자 정보
                 try {
                     int userId = Integer.parseInt(pathInfo.substring(1));
-                    User user = userDAO.getUserById(userId);
+                    User user = userDAO.findById(userId);
                     
                     if (user != null) {
                         // 비밀번호 해시는 제외하고 응답
@@ -81,13 +93,20 @@ public class UsersServlet extends HttpServlet {
     }
     
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         PrintWriter out = response.getWriter();
-        
+
+        if (!isAdmin(request)) {
+            ApiResponse<Object> apiResponse = ApiResponse.error("관리자 권한이 필요합니다.");
+            response.setStatus(403);
+            out.print(gson.toJson(apiResponse));
+            return;
+        }
+
         try {
             // 사용자 생성 로직
             String email = request.getParameter("email");
@@ -117,7 +136,7 @@ public class UsersServlet extends HttpServlet {
             newUser.setFullName(name);
             newUser.setActive(true);
             
-            boolean created = userDAO.createUser(newUser);
+            boolean created = userDAO.create(newUser);
             
             if (created) {
                 newUser.setPasswordHash(null); // 응답에서 비밀번호 제거
@@ -139,16 +158,23 @@ public class UsersServlet extends HttpServlet {
     }
     
     @Override
-    protected void doPut(HttpServletRequest request, HttpServletResponse response) 
+    protected void doPut(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         PrintWriter out = response.getWriter();
-        
+
+        if (!isAdmin(request)) {
+            ApiResponse<Object> apiResponse = ApiResponse.error("관리자 권한이 필요합니다.");
+            response.setStatus(403);
+            out.print(gson.toJson(apiResponse));
+            return;
+        }
+
         try {
             String pathInfo = request.getPathInfo();
-            
+
             if (pathInfo == null || !pathInfo.startsWith("/")) {
                 ApiResponse<Object> apiResponse = ApiResponse.badRequest("잘못된 요청 경로입니다.");
                 response.setStatus(400);
@@ -157,7 +183,7 @@ public class UsersServlet extends HttpServlet {
             }
             
             int userId = Integer.parseInt(pathInfo.substring(1));
-            User user = userDAO.getUserById(userId);
+            User user = userDAO.findById(userId);
             
             if (user == null) {
                 ApiResponse<Object> apiResponse = ApiResponse.notFound("사용자를 찾을 수 없습니다.");
@@ -175,7 +201,7 @@ public class UsersServlet extends HttpServlet {
             if (email != null) user.setEmail(email);
             if (status != null) user.setActive("active".equalsIgnoreCase(status));
             
-            boolean updated = userDAO.updateUser(user);
+            boolean updated = userDAO.update(user);
             
             if (updated) {
                 user.setPasswordHash(null); // 응답에서 비밀번호 제거
@@ -200,16 +226,23 @@ public class UsersServlet extends HttpServlet {
     }
     
     @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response) 
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         PrintWriter out = response.getWriter();
-        
+
+        if (!isAdmin(request)) {
+            ApiResponse<Object> apiResponse = ApiResponse.error("관리자 권한이 필요합니다.");
+            response.setStatus(403);
+            out.print(gson.toJson(apiResponse));
+            return;
+        }
+
         try {
             String pathInfo = request.getPathInfo();
-            
+
             if (pathInfo == null || !pathInfo.startsWith("/")) {
                 ApiResponse<Object> apiResponse = ApiResponse.badRequest("잘못된 요청 경로입니다.");
                 response.setStatus(400);
@@ -218,7 +251,7 @@ public class UsersServlet extends HttpServlet {
             }
             
             int userId = Integer.parseInt(pathInfo.substring(1));
-            User user = userDAO.getUserById(userId);
+            User user = userDAO.findById(userId);
             
             if (user == null) {
                 ApiResponse<Object> apiResponse = ApiResponse.notFound("사용자를 찾을 수 없습니다.");
@@ -227,7 +260,7 @@ public class UsersServlet extends HttpServlet {
                 return;
             }
             
-            boolean deleted = userDAO.deleteUser(userId);
+            boolean deleted = userDAO.deactivate(userId);
             
             if (deleted) {
                 ApiResponse<Object> apiResponse = ApiResponse.success("사용자가 삭제되었습니다.", null);
