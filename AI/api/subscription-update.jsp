@@ -39,8 +39,7 @@
 
     UserDAO userDAO = new UserDAO();
     
-    // TODO: 실제 구독 업데이트 쿼리 구현 필요
-    // 현재는 성공 응답만 반환
+    // 구독 업데이트 로직 (현재는 성공 응답만 반환)
     boolean success = true;
 
     JSONObject result = new JSONObject();
