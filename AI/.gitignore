@@ -20,6 +20,7 @@ logs/
 database/*.properties
 database/*.xml
 database/config/
+database/seed/seed_admins.sql
 
 # Environment files
 .env
