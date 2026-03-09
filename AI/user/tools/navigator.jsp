@@ -6,35 +6,54 @@
 <%@ include file="/AI/user/_common.jsp" %>
 
 <%
-  // DAO 초기화
   AIToolDAO toolDao = new AIToolDAO();
-  
-  // 파라미터 처리
-  String keyword = request.getParameter("keyword");
-  String category = request.getParameter("category");
-  String difficulty = request.getParameter("difficulty");
-  String view = request.getParameter("view");
-  if (view == null) view = "grid";
-  
-  // 데이터 조회
-  List<AITool> tools = null;
-  String pageTitle = "AI 도구 탐색";
-  
-  if (keyword != null && !keyword.trim().isEmpty()) {
-      tools = toolDao.searchByKeyword(keyword);
-      pageTitle = "검색 결과: " + escapeHtml(keyword);
-  } else if (category != null && !category.trim().isEmpty()) {
-      tools = toolDao.findByCategory(category);
-      pageTitle = escapeHtml(category) + " 카테고리";
-  } else if (difficulty != null && !difficulty.trim().isEmpty()) {
-      tools = toolDao.findByDifficulty(difficulty);
-      pageTitle = escapeHtml(difficulty) + " 난이도";
-  } else {
-      tools = toolDao.findAll();
+  List<AITool> tools = toolDao.findAll();
+
+  // URL 파라미터 → JS 초기 필터 상태로만 사용 (클라이언트 필터링)
+  String initKeyword    = safeString(request.getParameter("keyword"),    "");
+  String initCategory   = safeString(request.getParameter("category"),   "");
+  String initDifficulty = safeString(request.getParameter("difficulty"),  "");
+
+  // 카테고리 → 컬러 + 이모지 헬퍼 (카드 렌더링용)
+%>
+<%!
+  // 카테고리별 그라데이션 컬러바
+  private String catGradient(String cat) {
+    if (cat == null) return "linear-gradient(135deg,#64748b,#94a3b8)";
+    switch (cat) {
+      case "Text Generation":  return "linear-gradient(135deg,#3b82f6,#60a5fa)";
+      case "Code Generation":  return "linear-gradient(135deg,#22c55e,#4ade80)";
+      case "Image Generation": return "linear-gradient(135deg,#a855f7,#c084fc)";
+      case "Voice Processing": return "linear-gradient(135deg,#f97316,#fb923c)";
+      case "Video Processing": return "linear-gradient(135deg,#8b5cf6,#a78bfa)";
+      case "Translation":      return "linear-gradient(135deg,#ec4899,#f472b6)";
+      case "Data Analysis":    return "linear-gradient(135deg,#06b6d4,#22d3ee)";
+      default:                 return "linear-gradient(135deg,#64748b,#94a3b8)";
+    }
   }
-  
-  // 인기 도구 (사이드바용)
-  List<AITool> popularTools = toolDao.findPopular(5);
+
+  // 카테고리별 이모지
+  private String catEmoji(String cat) {
+    if (cat == null) return "🤖";
+    switch (cat) {
+      case "Text Generation":  return "💬";
+      case "Code Generation":  return "💻";
+      case "Image Generation": return "🎨";
+      case "Voice Processing": return "🎵";
+      case "Video Processing": return "🎬";
+      case "Translation":      return "🌍";
+      case "Data Analysis":    return "📊";
+      default:                 return "🤖";
+    }
+  }
+
+  // 난이도 한글
+  private String diffKo(String diff) {
+    if ("Beginner".equals(diff))     return "입문";
+    if ("Intermediate".equals(diff)) return "중급";
+    if ("Advanced".equals(diff))     return "고급";
+    return diff != null ? diff : "";
+  }
 %>
 
 <!DOCTYPE html>
@@ -42,8 +61,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= pageTitle %> - AI Workflow Lab</title>
-  <meta name="description" content="AI Workflow Lab에서 다양한 AI 도구를 탐색하고 추천을 받아보세요.">
+  <title>AI 도구 탐색기 — AI Workflow Lab</title>
+  <meta name="description" content="카테고리·난이도·키워드로 AI 도구를 검색하고 비교하세요.">
   <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,353 +70,770 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/AI/assets/css/dark-theme.css">
-  <link rel="stylesheet" href="/AI/assets/css/tools.css">
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link rel="stylesheet" href="/AI/assets/css/animations.css">
+
   <style>
-    body { padding-top: 44px; background: var(--bg-primary, #0f172a); color: var(--text-primary, #e2e8f0); }
-    .page-header { background: linear-gradient(135deg, #1e293b, #0f172a); border-bottom: 1px solid #334155; padding: 32px 0 24px; margin-bottom: 0; }
-    .page-header h1 { color: #e2e8f0; font-size: 28px; font-weight: 700; margin-bottom: 6px; }
-    .page-header p { color: #94a3b8; font-size: 15px; margin: 0; }
-    .card { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; }
-    .card-header.bg-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6) !important; border-bottom: none; }
-    .card-header.bg-success { background: linear-gradient(135deg, #059669, #10b981) !important; border-bottom: none; }
-    .card-body { color: #e2e8f0; }
-    .card-body .text-muted, .small.text-muted { color: #94a3b8 !important; }
-    .form-label { color: #94a3b8; font-size: 13px; font-weight: 500; }
-    .form-control { background: #334155; border: 1px solid #475569; color: #e2e8f0; }
-    .form-control:focus { background: #334155; border-color: #6366f1; color: #e2e8f0; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
-    .form-control::placeholder { color: #64748b; }
-    .form-select { background: #334155; border: 1px solid #475569; color: #e2e8f0; }
-    .form-select:focus { background: #334155; border-color: #6366f1; color: #e2e8f0; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
-    .form-select option { background: #1e293b; color: #e2e8f0; }
-    .btn-outline-primary { color: #6366f1; border-color: #6366f1; }
-    .btn-outline-primary:hover { background: #6366f1; color: white; }
-    .btn-outline-secondary { color: #94a3b8; border-color: #475569; }
-    .btn-outline-secondary:hover, .btn-outline-secondary.active { background: #334155; color: #e2e8f0; border-color: #6366f1; }
-    .tool-card { transition: all 0.2s ease; }
-    .tool-card:hover { border-color: #6366f1; transform: translateY(-4px); box-shadow: 0 0 20px rgba(99,102,241,0.3); }
-    .card-footer.bg-transparent { border-top: 1px solid #334155; background: transparent; }
-    a.text-decoration-none { color: #e2e8f0; }
-    a.text-decoration-none:hover { color: #6366f1; }
-    .badge.bg-light { background: #334155 !important; color: #94a3b8 !important; border: 1px solid #475569; }
-    .bg-light.card { background: #1e293b !important; border: 1px solid #6366f1; }
-    .bg-light.card .card-title { color: #e2e8f0; }
-    .bg-light.card .card-text { color: #94a3b8; }
-    .recommend-section { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15)); border: 1px solid rgba(99,102,241,0.3); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
-    .recommend-section .card-title { color: #e2e8f0; font-size: 17px; font-weight: 600; }
-    .recommend-section .card-text { color: #94a3b8; font-size: 14px; }
-    h1.h3 { color: #e2e8f0; }
-    p.text-muted.mb-0 { color: #94a3b8 !important; }
+    /* ===== Base ===== */
+    body {
+      padding-top: 60px;
+      background: var(--bg-primary, #0a0f1e);
+      color: var(--text-primary, #f1f5f9);
+      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* ===== Page Header ===== */
+    .nav-header {
+      padding: 48px 0 0;
+      background: var(--bg-primary, #0a0f1e);
+    }
+
+    .nav-header__inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .nav-header__title {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin: 0 0 8px;
+      color: var(--text-primary, #f1f5f9);
+    }
+
+    .nav-header__sub {
+      font-size: 1rem;
+      color: var(--text-secondary, #94a3b8);
+      margin: 0 0 28px;
+    }
+
+    /* ===== Search Bar ===== */
+    .nav-search {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .nav-search__icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted, #64748b);
+      font-size: 1.1rem;
+      pointer-events: none;
+    }
+
+    .nav-search__input {
+      width: 100%;
+      padding: 14px 48px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 12px;
+      color: var(--text-primary, #f1f5f9);
+      font-size: 0.9375rem;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .nav-search__input::placeholder { color: var(--text-muted, #64748b); }
+
+    .nav-search__input:focus {
+      outline: none;
+      border-color: rgba(59,130,246,0.5);
+      background: rgba(255,255,255,0.07);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+
+    .nav-search__clear {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted, #64748b);
+      cursor: pointer;
+      padding: 4px;
+      display: none;
+      font-size: 1rem;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .nav-search__clear:hover { color: var(--text-primary, #f1f5f9); }
+    .nav-search__input:not(:placeholder-shown) ~ .nav-search__clear { display: block; }
+
+    /* ===== Filter Pills — Row 1: Category ===== */
+    .filter-row1 {
+      overflow-x: auto;
+      display: flex;
+      gap: 8px;
+      padding-bottom: 4px;
+      margin-bottom: 12px;
+      scrollbar-width: none;
+    }
+    .filter-row1::-webkit-scrollbar { display: none; }
+
+    .cat-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 16px;
+      border-radius: 999px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      white-space: nowrap;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-secondary, #94a3b8);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      flex-shrink: 0;
+    }
+
+    .cat-btn:hover {
+      background: rgba(255,255,255,0.09);
+      color: var(--text-primary, #f1f5f9);
+      border-color: rgba(255,255,255,0.20);
+    }
+
+    /* Active states per category */
+    .cat-btn.active[data-cat=""]                { background: rgba(255,255,255,0.12); color: #f1f5f9; border-color: rgba(255,255,255,0.25); }
+    .cat-btn.active[data-cat="Text Generation"] { background: rgba(59,130,246,0.18);  color: #60a5fa; border-color: rgba(59,130,246,0.40); }
+    .cat-btn.active[data-cat="Code Generation"] { background: rgba(34,197,94,0.18);   color: #4ade80; border-color: rgba(34,197,94,0.40); }
+    .cat-btn.active[data-cat="Image Generation"]{ background: rgba(168,85,247,0.18);  color: #c084fc; border-color: rgba(168,85,247,0.40); }
+    .cat-btn.active[data-cat="Voice Processing"]{ background: rgba(249,115,22,0.18);  color: #fb923c; border-color: rgba(249,115,22,0.40); }
+    .cat-btn.active[data-cat="Video Processing"]{ background: rgba(139,92,246,0.18);  color: #a78bfa; border-color: rgba(139,92,246,0.40); }
+    .cat-btn.active[data-cat="Translation"]     { background: rgba(236,72,153,0.18);  color: #f472b6; border-color: rgba(236,72,153,0.40); }
+    .cat-btn.active[data-cat="Data Analysis"]   { background: rgba(6,182,212,0.18);   color: #22d3ee; border-color: rgba(6,182,212,0.40); }
+
+    /* ===== Filter Row 2: Difficulty + Sort ===== */
+    .filter-row2 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0;
+      flex-wrap: wrap;
+    }
+
+    .diff-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .diff-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-secondary, #94a3b8);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+
+    .diff-btn:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--text-primary, #f1f5f9);
+    }
+
+    .diff-btn.active {
+      background: rgba(255,255,255,0.10);
+      color: var(--text-primary, #f1f5f9);
+      border-color: rgba(255,255,255,0.22);
+    }
+
+    .diff-btn.active[data-diff="Beginner"]     { background: rgba(34,197,94,0.15);  color: #4ade80; border-color: rgba(34,197,94,0.35); }
+    .diff-btn.active[data-diff="Intermediate"] { background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.35); }
+    .diff-btn.active[data-diff="Advanced"]     { background: rgba(239,68,68,0.15);  color: #f87171; border-color: rgba(239,68,68,0.35); }
+
+    .sort-select {
+      margin-left: auto;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-secondary, #94a3b8);
+      font-size: 0.8125rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .sort-select:focus {
+      outline: none;
+      border-color: rgba(59,130,246,0.4);
+      color: var(--text-primary, #f1f5f9);
+    }
+
+    .sort-select option { background: #1e293b; color: #f1f5f9; }
+
+    /* ===== Results area ===== */
+    .nav-results {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 24px 80px;
+    }
+
+    .results-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      font-size: 0.875rem;
+      color: var(--text-muted, #64748b);
+    }
+
+    .results-meta strong { color: var(--text-secondary, #94a3b8); }
+
+    /* ===== Tool Grid ===== */
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    /* ===== Tool Card ===== */
+    .tc {
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease;
+      cursor: pointer;
+    }
+
+    .tc:hover {
+      border-color: rgba(59,130,246,0.32);
+      transform: translateY(-4px);
+      box-shadow: 0 0 28px rgba(59,130,246,0.14), 0 12px 32px rgba(0,0,0,0.28);
+    }
+
+    /* Colored top bar */
+    .tc__bar {
+      height: 4px;
+      transition: height 0.22s ease;
+    }
+
+    .tc:hover .tc__bar { height: 8px; }
+
+    /* Card body */
+    .tc__body {
+      padding: 18px 20px 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    /* Top row: emoji + provider */
+    .tc__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .tc__emoji {
+      font-size: 2.25rem;
+      line-height: 1;
+    }
+
+    .tc__provider {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 50%;
+    }
+
+    .tc__plogo {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .tc__pname {
+      font-size: 0.75rem;
+      color: var(--text-muted, #64748b);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Tool name */
+    .tc__name {
+      font-size: 1.0625rem;
+      font-weight: 700;
+      color: var(--text-primary, #f1f5f9);
+      margin: 0 0 8px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Description */
+    .tc__desc {
+      font-size: 0.84375rem;
+      color: var(--text-secondary, #94a3b8);
+      line-height: 1.65;
+      margin: 0 0 14px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    /* Tags */
+    .tc__tags {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .tc__tag {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      color: var(--text-muted, #64748b);
+      border: 1px solid rgba(255,255,255,0.09);
+    }
+
+    /* Footer row */
+    .tc__footer {
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .tc__badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tc__badge {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 5px;
+    }
+
+    .tc__badge--beginner     { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.22); }
+    .tc__badge--intermediate { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.22); }
+    .tc__badge--advanced     { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.22); }
+    .tc__badge--free         { background: rgba(34,197,94,0.10);  color: #4ade80; border: 1px solid rgba(34,197,94,0.18); }
+    .tc__badge--paid         { background: rgba(255,255,255,0.05); color: var(--text-muted,#64748b); border: 1px solid rgba(255,255,255,0.09); }
+
+    .tc__stars {
+      font-size: 0.75rem;
+      color: #f59e0b;
+      letter-spacing: 1px;
+    }
+
+    .tc__link {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #60a5fa;
+      -webkit-text-fill-color: #60a5fa;
+      text-decoration: none;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: gap 0.15s ease, color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .tc__link:hover {
+      gap: 6px;
+      color: #93c5fd;
+      -webkit-text-fill-color: #93c5fd;
+    }
+
+    /* ===== Empty State ===== */
+    .empty-state {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+      text-align: center;
+    }
+
+    .empty-state__emoji { font-size: 3.5rem; margin-bottom: 16px; }
+    .empty-state__title { font-size: 1.125rem; font-weight: 600; color: var(--text-primary,#f1f5f9); margin: 0 0 8px; }
+    .empty-state__sub   { font-size: 0.9rem; color: var(--text-muted,#64748b); margin: 0 0 24px; }
+
+    .reset-btn {
+      padding: 9px 20px;
+      border-radius: 9px;
+      background: rgba(59,130,246,0.12);
+      color: #60a5fa;
+      -webkit-text-fill-color: #60a5fa;
+      border: 1px solid rgba(59,130,246,0.25);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      text-decoration: none;
+    }
+
+    .reset-btn:hover {
+      background: rgba(59,130,246,0.20);
+      color: #93c5fd;
+      -webkit-text-fill-color: #93c5fd;
+    }
+
+    /* ===== Divider between header and results ===== */
+    .nav-divider {
+      max-width: 1200px;
+      margin: 24px auto 0;
+      padding: 0 24px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1024px) {
+      .tool-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      .tool-grid { grid-template-columns: 1fr; }
+      .filter-row2 { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .sort-select { margin-left: 0; width: 100%; }
+    }
   </style>
 </head>
 <body>
   <%@ include file="/AI/partials/header.jsp" %>
 
-  <div class="page-header">
-    <div class="container-fluid">
-      <h1><i class="bi bi-compass me-2"></i>AI 도구 탐색</h1>
-      <p>업무 목적에 맞는 AI 도구를 찾고 추천받으세요. 50+ 도구 수록.</p>
+  <!-- ================================================================
+       Page Header + Filters (sticky on desktop)
+       ================================================================ -->
+  <div class="nav-header" id="navHeaderBlock">
+    <div class="nav-header__inner">
+      <h1 class="nav-header__title">🔍 AI 도구 탐색기</h1>
+      <p class="nav-header__sub">원하는 AI 도구를 탐색하고 비교해보세요</p>
+
+      <!-- Search -->
+      <div class="nav-search">
+        <i class="bi bi-search nav-search__icon"></i>
+        <input
+          id="searchInput"
+          class="nav-search__input"
+          type="text"
+          placeholder="도구명, 기능, 키워드로 검색..."
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <button class="nav-search__clear" id="searchClear" title="지우기">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <!-- Category filter pills -->
+      <div class="filter-row1" role="group" aria-label="카테고리 필터">
+        <button class="cat-btn" data-cat="">전체</button>
+        <button class="cat-btn" data-cat="Text Generation">💬 대화</button>
+        <button class="cat-btn" data-cat="Code Generation">💻 코딩</button>
+        <button class="cat-btn" data-cat="Image Generation">🎨 이미지생성</button>
+        <button class="cat-btn" data-cat="Voice Processing">🎵 오디오</button>
+        <button class="cat-btn" data-cat="Video Processing">🎬 비디오</button>
+        <button class="cat-btn" data-cat="Translation">📝 문서작성</button>
+        <button class="cat-btn" data-cat="Data Analysis">📊 데이터분석</button>
+      </div>
+
+      <!-- Row 2: Difficulty + Sort -->
+      <div class="filter-row2">
+        <div class="diff-group" role="group" aria-label="난이도 필터">
+          <button class="diff-btn" data-diff="">전체</button>
+          <button class="diff-btn" data-diff="Beginner">입문</button>
+          <button class="diff-btn" data-diff="Intermediate">중급</button>
+          <button class="diff-btn" data-diff="Advanced">고급</button>
+        </div>
+        <select class="sort-select" id="sortSelect" aria-label="정렬">
+          <option value="default">추천순</option>
+          <option value="rating">별점순</option>
+          <option value="reviews">인기순</option>
+          <option value="newest">최신순</option>
+        </select>
+      </div>
     </div>
   </div>
 
-  <div class="container-fluid mt-4">
-    <div class="row">
-      <!-- 사이드바 -->
-      <aside class="col-lg-3 col-md-4">
-        <div class="card shadow-sm mb-4">
-          <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="bi bi-funnel"></i> 필터</h5>
-          </div>
-          <div class="card-body">
-            <form id="filterForm">
-              <!-- 검색 -->
-              <div class="mb-3">
-                <label class="form-label">키워드 검색</label>
-                <div class="input-group">
-                  <input type="text" class="form-control" name="keyword" 
-                         value="<%= escapeHtml(keyword != null ? keyword : "") %>" 
-                         placeholder="AI 도구 검색...">
-                  <button class="btn btn-outline-primary" type="submit">
-                    <i class="bi bi-search"></i>
-                  </button>
-                </div>
-              </div>
-              
-              <!-- 카테고리 -->
-              <div class="mb-3">
-                <label class="form-label">카테고리</label>
-                <select class="form-select" name="category">
-                  <option value="">전체 카테고리</option>
-                  <option value="Text Generation" <%= "Text Generation".equals(category) ? "selected" : "" %>>텍스트 생성</option>
-                  <option value="Image Generation" <%= "Image Generation".equals(category) ? "selected" : "" %>>이미지 생성</option>
-                  <option value="Code Generation" <%= "Code Generation".equals(category) ? "selected" : "" %>>코드 생성</option>
-                  <option value="Voice Processing" <%= "Voice Processing".equals(category) ? "selected" : "" %>>음성 처리</option>
-                  <option value="Video Processing" <%= "Video Processing".equals(category) ? "selected" : "" %>>비디오 처리</option>
-                  <option value="Translation" <%= "Translation".equals(category) ? "selected" : "" %>>번역</option>
-                  <option value="Data Analysis" <%= "Data Analysis".equals(category) ? "selected" : "" %>>데이터 분석</option>
-                </select>
-              </div>
-              
-              <!-- 난이도 -->
-              <div class="mb-3">
-                <label class="form-label">난이도</label>
-                <select class="form-select" name="difficulty">
-                  <option value="">전체 난이도</option>
-                  <option value="Beginner" <%= "Beginner".equals(difficulty) ? "selected" : "" %>>초급</option>
-                  <option value="Intermediate" <%= "Intermediate".equals(difficulty) ? "selected" : "" %>>중급</option>
-                  <option value="Advanced" <%= "Advanced".equals(difficulty) ? "selected" : "" %>>고급</option>
-                </select>
-              </div>
-              
-              <button type="submit" class="btn btn-primary w-100">필터 적용</button>
-            </form>
-          </div>
-        </div>
-        
-        <!-- 인기 도구 -->
-        <div class="card shadow-sm">
-          <div class="card-header bg-success text-white">
-            <h5 class="mb-0"><i class="bi bi-fire"></i> 인기 도구</h5>
-          </div>
-          <div class="card-body">
-            <% for (AITool tool : popularTools) { %>
-            <div class="d-flex align-items-center mb-3">
-              <img src="/AI/assets/img/providers/<%= getProviderLogoFileName(tool.getProviderName()) %>.svg"
+  <!-- ================================================================
+       Results
+       ================================================================ -->
+  <div class="nav-divider"></div>
+
+  <div class="nav-results">
+    <!-- Meta: count -->
+    <div class="results-meta">
+      <span>총 <strong id="resultsCount"><%= tools.size() %></strong>개 도구</span>
+    </div>
+
+    <!-- Tool Grid -->
+    <div class="tool-grid" id="toolGrid">
+
+      <% for (AITool tool : tools) {
+           String cat   = safeString(tool.getCategory(), "");
+           String diff  = safeString(tool.getDifficultyLevel(), "");
+           String desc  = safeString(tool.getPurposeSummary(), safeString(tool.getDescription(), ""));
+           String[] logo = getProviderLogo(tool.getProviderName(), tool.getToolName());
+
+           // Stringify tags for data-attr (comma separated)
+           StringBuilder tagsStr = new StringBuilder();
+           if (tool.getTags() != null) {
+             for (String t : tool.getTags()) { if (tagsStr.length() > 0) tagsStr.append(","); tagsStr.append(t); }
+           }
+
+           Double rating = tool.getRating();
+           int    reviews = tool.getReviewCount() != null ? tool.getReviewCount() : 0;
+           String diffClass = "tc__badge--" + diff.toLowerCase();
+      %>
+      <div class="tc"
+           data-name="<%= escapeHtmlAttribute(tool.getToolName()) %>"
+           data-desc="<%= escapeHtmlAttribute(desc) %>"
+           data-category="<%= escapeHtmlAttribute(cat) %>"
+           data-difficulty="<%= escapeHtmlAttribute(diff) %>"
+           data-tags="<%= escapeHtmlAttribute(tagsStr.toString()) %>"
+           data-rating="<%= rating != null ? rating : 0 %>"
+           data-reviews="<%= reviews %>"
+           data-id="<%= tool.getId() %>"
+           onclick="location.href='/AI/user/tools/detail.jsp?id=<%= tool.getId() %>'">
+
+        <!-- Color bar -->
+        <div class="tc__bar" style="background: <%= catGradient(cat) %>;"></div>
+
+        <div class="tc__body">
+          <!-- Top: emoji + provider -->
+          <div class="tc__top">
+            <span class="tc__emoji" aria-hidden="true"><%= catEmoji(cat) %></span>
+            <div class="tc__provider">
+              <img src="<%= logo[0] %>"
                    alt="<%= escapeHtml(tool.getProviderName()) %>"
-                   class="me-2" style="width: 24px; height: 24px;">
-              <div class="flex-grow-1">
-                <a href="/AI/user/tools/detail.jsp?id=<%= tool.getId() %>" class="text-decoration-none">
-                  <%= escapeHtml(tool.getToolName()) %>
-                </a>
-                <div class="small text-muted">
-                  <%= tool.getStarRating() %> (<%= tool.getReviewCount() %>)
-                </div>
-              </div>
+                   class="tc__plogo"
+                   onerror="this.style.display='none'">
+              <span class="tc__pname"><%= escapeHtml(safeString(tool.getProviderName(), "")) %></span>
             </div>
-            <% } %>
           </div>
-        </div>
-      </aside>
-      
-      <!-- 메인 콘텐츠 -->
-      <main class="col-lg-9 col-md-8">
-        <!-- 헤더 -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h1 class="h3 mb-1"><%= pageTitle %></h1>
-            <p class="text-muted mb-0">총 <%= tools.size() %>개의 도구를 찾았습니다</p>
-          </div>
-          <div class="btn-group" role="group">
-            <button type="button" class="btn btn-outline-secondary <%= "grid".equals(view) ? "active" : "" %>" 
-                    onclick="changeView('grid')">
-              <i class="bi bi-grid-3x3-gap"></i> 그리드
-            </button>
-            <button type="button" class="btn btn-outline-secondary <%= "list".equals(view) ? "active" : "" %>" 
-                    onclick="changeView('list')">
-              <i class="bi bi-list"></i> 리스트
-            </button>
-          </div>
-        </div>
-        
-        <!-- AI 도구 추천 섹션 -->
-        <div class="recommend-section mb-4">
-          <div class="card-body p-0">
-            <h5 class="card-title"><i class="bi bi-magic me-2"></i>AI 도구 추천받기</h5>
-            <p class="card-text">어떤 작업을 하고 싶으신가요? AI가 적합한 도구를 추천해드립니다.</p>
-            <form id="recommendForm" class="row g-3">
-              <div class="col-md-6">
-                <input type="text" class="form-control" id="recommendQuery" 
-                       placeholder="예: 블로그 글 작성, 이미지 생성, 코드 리뷰..." required>
-              </div>
-              <div class="col-md-3">
-                <select class="form-select" id="recommendDifficulty">
-                  <option value="">난이도</option>
-                  <option value="Beginner">초급</option>
-                  <option value="Intermediate">중급</option>
-                  <option value="Advanced">고급</option>
-                </select>
-              </div>
-              <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100">
-                  <i class="bi bi-stars"></i> 추천받기
-                </button>
-              </div>
-            </form>
-            <div id="recommendResults" class="mt-3"></div>
-          </div>
-        </div>
 
-        
-        <!-- 도구 목록 -->
-        <div id="toolsContainer" class="<%= "grid".equals(view) ? "row g-4" : "" %>">
-          <% if (tools.isEmpty()) { %>
-          <div class="col-12">
-            <div class="text-center py-5">
-              <i class="bi bi-search display-1 text-muted"></i>
-              <h3 class="mt-3">검색 결과가 없습니다</h3>
-              <p class="text-muted">다른 키워드나 필터로 시도해보세요.</p>
-            </div>
+          <!-- Name -->
+          <h3 class="tc__name"><%= escapeHtml(tool.getToolName()) %></h3>
+
+          <!-- Description -->
+          <p class="tc__desc"><%= escapeHtml(desc) %></p>
+
+          <!-- Tags -->
+          <% if (tool.getTags() != null && !tool.getTags().isEmpty()) { %>
+          <div class="tc__tags">
+            <% int tagCount = 0;
+               for (String tag : tool.getTags()) {
+                 if (tagCount >= 3) break; %>
+            <span class="tc__tag"><%= escapeHtml(tag) %></span>
+            <%   tagCount++;
+               } %>
           </div>
-          <% } else { %>
-            <% for (AITool tool : tools) { %>
-              <% if ("grid".equals(view)) { %>
-                <!-- 그리드 뷰 -->
-                <div class="col-lg-4 col-md-6">
-                  <div class="card h-100 shadow-sm tool-card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                      <div class="d-flex align-items-center">
-                        <img src="/AI/assets/img/providers/<%= getProviderLogoFileName(tool.getProviderName()) %>.svg"
-                             alt="<%= escapeHtml(tool.getProviderName()) %>"
-                             class="me-2" style="width: 24px; height: 24px;">
-                        <span class="badge <%= tool.getDifficultyBadgeClass() %>">
-                          <%= tool.getDifficultyLevel() %>
-                        </span>
-                      </div>
-                      <% if (tool.isFreeTierAvailable()) { %>
-                      <span class="badge bg-success">무료</span>
-                      <% } %>
-                    </div>
-                    <div class="card-body">
-                      <h5 class="card-title"><%= escapeHtml(tool.getToolName()) %></h5>
-                      <p class="card-text text-muted small"><%= escapeHtml(tool.getPurposeSummary()) %></p>
-                      <div class="mb-2">
-                        <%= tool.getStarRating() %>
-                        <span class="text-muted">(<%= tool.getReviewCount() %>)</span>
-                      </div>
-                      <div class="mb-3">
-                        <% if (tool.getTags() != null && !tool.getTags().isEmpty()) { %>
-                          <% for (String tag : tool.getTags().subList(0, Math.min(3, tool.getTags().size()))) { %>
-                            <span class="badge bg-light text-dark me-1"><%= escapeHtml(tag) %></span>
-                          <% } %>
-                        <% } %>
-                      </div>
-                    </div>
-                    <div class="card-footer bg-transparent">
-                      <a href="/AI/user/tools/detail.jsp?id=<%= tool.getId() %>" 
-                         class="btn btn-primary btn-sm w-100">
-                        자세히 보기
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              <% } else { %>
-                <!-- 리스트 뷰 -->
-                <div class="col-12 mb-3">
-                  <div class="card shadow-sm">
-                    <div class="card-body">
-                      <div class="row align-items-center">
-                        <div class="col-md-8">
-                          <div class="d-flex align-items-center mb-2">
-                            <img src="/AI/assets/img/providers/<%= getProviderLogoFileName(tool.getProviderName()) %>.svg"
-                                 alt="<%= escapeHtml(tool.getProviderName()) %>"
-                                 class="me-2" style="width: 24px; height: 24px;">
-                            <h5 class="mb-0 me-3"><%= escapeHtml(tool.getToolName()) %></h5>
-                            <span class="badge <%= tool.getDifficultyBadgeClass() %> me-2">
-                              <%= tool.getDifficultyLevel() %>
-                            </span>
-                            <% if (tool.isFreeTierAvailable()) { %>
-                            <span class="badge bg-success">무료</span>
-                            <% } %>
-                          </div>
-                          <p class="text-muted mb-2"><%= escapeHtml(tool.getPurposeSummary()) %></p>
-                          <div>
-                            <%= tool.getStarRating() %>
-                            <span class="text-muted">(<%= tool.getReviewCount() %>)</span>
-                            <% if (tool.getTags() != null && !tool.getTags().isEmpty()) { %>
-                              <% for (String tag : tool.getTags().subList(0, Math.min(5, tool.getTags().size()))) { %>
-                                <span class="badge bg-light text-dark me-1"><%= escapeHtml(tag) %></span>
-                              <% } %>
-                            <% } %>
-                          </div>
-                        </div>
-                        <div class="col-md-4 text-end">
-                          <a href="/AI/user/tools/detail.jsp?id=<%= tool.getId() %>" 
-                             class="btn btn-primary">
-                            자세히 보기
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              <% } %>
-            <% } %>
           <% } %>
-        </div>
-      </main>
-    </div>
+
+          <!-- Footer: badges + link -->
+          <div class="tc__footer">
+            <div class="tc__badges">
+              <% if (!diff.isEmpty()) { %>
+              <span class="tc__badge <%= diffClass %>"><%= diffKo(diff) %></span>
+              <% } %>
+              <% if (tool.isFreeTierAvailable()) { %>
+              <span class="tc__badge tc__badge--free">무료</span>
+              <% } else { %>
+              <span class="tc__badge tc__badge--paid">유료</span>
+              <% } %>
+              <% if (rating != null) { %>
+              <span class="tc__stars"><%= tool.getStarRating() %></span>
+              <% } %>
+            </div>
+            <a href="/AI/user/tools/detail.jsp?id=<%= tool.getId() %>"
+               class="tc__link"
+               onclick="event.stopPropagation()">
+              자세히 보기 <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div><!-- /.tc__body -->
+      </div><!-- /.tc -->
+      <% } %>
+
+      <!-- Empty State (hidden by default, shown via JS) -->
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-state__emoji">🔍</div>
+        <h3 class="empty-state__title">검색 결과가 없습니다</h3>
+        <p class="empty-state__sub">다른 키워드나 필터를 시도해보세요.</p>
+        <button class="reset-btn" id="resetBtn">필터 초기화</button>
+      </div>
+    </div><!-- /#toolGrid -->
   </div>
-  
+
   <%@ include file="/AI/partials/footer.jsp" %>
-  
+
+  <!-- ================================================================
+       Client-side Filter + Sort
+       ================================================================ -->
   <script>
-    // 뷰 전환
-    function changeView(viewType) {
-      const url = new URL(window.location);
-      url.searchParams.set('view', viewType);
-      window.location = url.toString();
+  (function () {
+    'use strict';
+
+    /* ── State ── */
+    var state = {
+      keyword:    '<%= escapeHtmlAttribute(initKeyword) %>',
+      category:   '<%= escapeHtmlAttribute(initCategory) %>',
+      difficulty: '<%= escapeHtmlAttribute(initDifficulty) %>',
+      sort:       'default'
+    };
+
+    /* ── DOM refs ── */
+    var searchInput  = document.getElementById('searchInput');
+    var searchClear  = document.getElementById('searchClear');
+    var sortSelect   = document.getElementById('sortSelect');
+    var toolGrid     = document.getElementById('toolGrid');
+    var resultsCount = document.getElementById('resultsCount');
+    var emptyState   = document.getElementById('emptyState');
+    var catBtns      = document.querySelectorAll('.cat-btn');
+    var diffBtns     = document.querySelectorAll('.diff-btn');
+    var resetBtn     = document.getElementById('resetBtn');
+
+    /* ── All card elements (exclude empty-state) ── */
+    var allCards = Array.from(document.querySelectorAll('.tc'));
+
+    /* ── Set initial UI state from URL params ── */
+    if (state.keyword) searchInput.value = state.keyword;
+
+    catBtns.forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.cat === state.category);
+    });
+    diffBtns.forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.diff === state.difficulty);
+    });
+
+    /* ── Filter ── */
+    function filterCards() {
+      var kw   = state.keyword.trim().toLowerCase();
+      var cat  = state.category;
+      var diff = state.difficulty;
+      var visible = 0;
+
+      allCards.forEach(function (card) {
+        var name  = (card.dataset.name  || '').toLowerCase();
+        var desc  = (card.dataset.desc  || '').toLowerCase();
+        var tags  = (card.dataset.tags  || '').toLowerCase();
+        var cCat  = card.dataset.category  || '';
+        var cDiff = card.dataset.difficulty || '';
+
+        var matchKw   = !kw   || name.includes(kw)   || desc.includes(kw)   || tags.includes(kw);
+        var matchCat  = !cat  || cCat  === cat;
+        var matchDiff = !diff || cDiff === diff;
+
+        var show = matchKw && matchCat && matchDiff;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+
+      resultsCount.textContent = visible;
+      emptyState.style.display = visible === 0 ? 'flex' : 'none';
     }
-    
-    // 필터 폼 제출
-    document.getElementById('filterForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const formData = new FormData(this);
-      const params = new URLSearchParams();
-      
-      for (let [key, value] of formData.entries()) {
-        if (value) params.set(key, value);
-      }
-      
-      window.location = '?' + params.toString();
+
+    /* ── Sort ── */
+    function sortCards() {
+      var s = state.sort;
+      var sorted = allCards.slice().sort(function (a, b) {
+        if (s === 'rating')  return parseFloat(b.dataset.rating  || 0) - parseFloat(a.dataset.rating  || 0);
+        if (s === 'reviews') return parseInt(b.dataset.reviews   || 0) - parseInt(a.dataset.reviews   || 0);
+        if (s === 'newest')  return parseInt(b.dataset.id        || 0) - parseInt(a.dataset.id        || 0);
+        /* default (추천순): rating desc, then reviews desc */
+        var rDiff = parseFloat(b.dataset.rating || 0) - parseFloat(a.dataset.rating || 0);
+        return rDiff !== 0 ? rDiff : parseInt(b.dataset.reviews || 0) - parseInt(a.dataset.reviews || 0);
+      });
+      sorted.forEach(function (card) { toolGrid.insertBefore(card, emptyState); });
+    }
+
+    function apply() {
+      sortCards();
+      filterCards();
+    }
+
+    /* ── Search input (debounced) ── */
+    var debounceTimer;
+    searchInput.addEventListener('input', function () {
+      state.keyword = this.value;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(apply, 160);
     });
-    
-    // AI 추천
-    document.getElementById('recommendForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      const query = document.getElementById('recommendQuery').value;
-      const difficulty = document.getElementById('recommendDifficulty').value;
-      const resultsDiv = document.getElementById('recommendResults');
-      
-      resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> 추천 중...</div>';
-      
-      try {
-        const response = await axios.get('/AI/api/recommend.jsp', {
-          params: { q: query, difficulty: difficulty }
-        });
-        
-        if (response.data.success && response.data.data.length > 0) {
-          let html = '<h6>추천 도구:</h6><div class="row">';
-          
-          response.data.data.forEach(tool => {
-            html += `
-              <div class="col-md-6 mb-2">
-                <div class="card card-body">
-                  <div class="d-flex align-items-center">
-                    <img src="/AI/assets/img/providers/${tool.providerName.toLowerCase()}.svg"
-                         alt="${tool.providerName}"
-                         class="me-2" style="width: 20px; height: 20px;">
-                    <div class="flex-grow-1">
-                      <a href="/AI/user/tools/detail.jsp?id=${tool.id}" class="text-decoration-none fw-bold">
-                        ${tool.toolName}
-                      </a>
-                      <div class="small text-muted">${tool.purposeSummary}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `;
-          });
-          
-          html += '</div>';
-          resultsDiv.innerHTML = html;
-        } else {
-          resultsDiv.innerHTML = '<div class="alert alert-info">추천할 도구를 찾지 못했습니다. 다른 키워드로 시도해보세요.</div>';
-        }
-      } catch (error) {
-        resultsDiv.innerHTML = '<div class="alert alert-danger">오류가 발생했습니다. 다시 시도해주세요.</div>';
-      }
+
+    searchClear.addEventListener('click', function () {
+      searchInput.value = '';
+      state.keyword = '';
+      apply();
+      searchInput.focus();
     });
+
+    /* ── Category buttons ── */
+    catBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        catBtns.forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        state.category = btn.dataset.cat;
+        apply();
+      });
+    });
+
+    /* ── Difficulty buttons ── */
+    diffBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        diffBtns.forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        state.difficulty = btn.dataset.diff;
+        apply();
+      });
+    });
+
+    /* ── Sort select ── */
+    sortSelect.addEventListener('change', function () {
+      state.sort = this.value;
+      apply();
+    });
+
+    /* ── Reset button ── */
+    resetBtn.addEventListener('click', function () {
+      state.keyword = '';
+      state.category = '';
+      state.difficulty = '';
+      state.sort = 'default';
+
+      searchInput.value = '';
+      sortSelect.value = 'default';
+      catBtns.forEach(function (b) { b.classList.remove('active'); });
+      diffBtns.forEach(function (b) { b.classList.remove('active'); });
+
+      // activate "전체" buttons
+      document.querySelector('.cat-btn[data-cat=""]').classList.add('active');
+      document.querySelector('.diff-btn[data-diff=""]').classList.add('active');
+
+      apply();
+    });
+
+    /* ── Initial run ── */
+    apply();
+
+  })();
   </script>
 </body>
 </html>
