@@ -1,288 +1,45 @@
-/* ============================================
-   GSAP Animations & Scroll Effects
-   Apple Style Reveal & Parallax
-   ============================================ */
+/* ============================================================
+   AI Workflow Lab — Animations & GSAP Support
+   ============================================================ */
 
-/* ============================================
-   Key Visual Section - Apple Mac Style
-   풀스크린 비디오 + 중앙 정렬 텍스트/검색창
-   ============================================ */
+/* ===== Key Visual / KV (alias for landing.css kv-section) ===== */
+/* Kept for compatibility – actual styles live in landing.css */
 
-.kv-section {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  min-height: 100vh;
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ===== Fade In ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.kv-section video {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  z-index: -1;
+.fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
-.kv-fallback {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(139, 92, 246, 0.2));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 4rem;
-  z-index: -1;
+/* ===== Float (used on hero images) ===== */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-14px); }
 }
 
-.kv-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  width: 100%;
-  text-align: center;
-  padding: 0 22px;
-}
+/* ===== Parallax support ===== */
+.parallax-container { position: relative; overflow: hidden; }
+.parallax-element { will-change: transform; }
 
-.kv-copy {
-  margin-bottom: 48px;
-}
-
-.kv-title {
-  font-size: 64px;
-  line-height: 1.0625;
-  font-weight: 600;
-  letter-spacing: -0.009em;
-  color: #ffffff;
-  margin: 0 0 12px 0;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.kv-subtitle {
-  font-size: 28px;
-  line-height: 1.14286;
-  font-weight: 400;
-  letter-spacing: 0.007em;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.kv-search {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* Apple Style Search Bar */
-.kv-search .search-bar {
-  display: flex;
-  align-items: center;
-  width: min(90%, 600px);
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 12px;
-  padding: 4px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border: 0.5px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.3s ease;
-}
-
-.kv-search .search-bar:focus-within {
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  transform: translateY(-2px);
-}
-
-.kv-search .search-bar input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  padding: 16px 20px;
-  font-size: 17px;
-  line-height: 1.47059;
-  font-weight: 400;
-  color: #1d1d1f;
-  outline: none;
-  min-width: 0;
-}
-
-.kv-search .search-bar input::placeholder {
-  color: rgba(0, 0, 0, 0.4);
-}
-
-.kv-search .search-bar button {
-  padding: 12px 24px;
-  background: #0071e3;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-size: 17px;
-  font-weight: 400;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  margin-left: 8px;
-}
-
-.kv-search .search-bar button:hover {
-  background: #0077ed;
-  transform: scale(1.02);
-}
-
-.kv-search .search-bar button:active {
-  transform: scale(0.98);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .kv-title {
-    font-size: 40px;
-    line-height: 1.1;
-  }
-  
-  .kv-subtitle {
-    font-size: 21px;
-    line-height: 1.381;
-  }
-  
-  .kv-copy {
-    margin-bottom: 32px;
-  }
-  
-  .kv-search .search-bar {
-    flex-direction: column;
-    width: min(90%, 100%);
-    padding: 12px;
-    gap: 12px;
-  }
-  
-  .kv-search .search-bar input {
-    width: 100%;
-    padding: 14px 16px;
-  }
-  
-  .kv-search .search-bar button {
-    width: 100%;
-    margin-left: 0;
-    padding: 14px 24px;
-  }
-}
-
-@media (max-width: 480px) {
-  .kv-title {
-    font-size: 32px;
-  }
-  
-  .kv-subtitle {
-    font-size: 19px;
-  }
-}
-
-/* GSAP Stagger Animation Base */
+/* ===== GSAP stagger base state ===== */
 .gsap-stagger > * {
   opacity: 0;
   transform: translateY(20px);
 }
 
-.gsap-stagger.revealed > * {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Intent Grid Layout */
-.intent-grid {
-  margin: var(--spacing-xl) 0;
-}
-
-.intent-grid h2 {
-  text-align: center;
-  margin-bottom: var(--spacing-lg);
-}
-
-.cat-row {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-bottom: var(--spacing-lg);
-}
-
-.cat-chip {
-  display: inline-block;
-  padding: 8px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  font-size: 14px;
-  line-height: 1.42859;
-  color: var(--text);
-  transition: all var(--transition-base);
-}
-
-.cat-chip:hover {
-  background: var(--accent);
-  color: #ffffff;
-  border-color: var(--accent);
-}
-
-/* Model Grid & Package Grid */
-.model-grid,
-.pack-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-lg);
-}
-
-/* Fade In Animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.fade-in {
-  animation: fadeIn 0.6s ease-out;
-}
-
-/* Parallax Container */
-.parallax-container {
-  position: relative;
-  overflow: hidden;
-}
-
-.parallax-element {
-  will-change: transform;
-}
-
-/* Scroll Reveal */
+/* ===== Scroll Reveal ===== */
 .scroll-reveal {
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  transform: translateY(28px);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .scroll-reveal.revealed {
@@ -290,103 +47,65 @@
   transform: translateY(0);
 }
 
-/* Loading States */
+/* ===== Shimmer (loading state) ===== */
 .loading-shimmer {
   background: linear-gradient(
     90deg,
-    var(--surface) 0%,
-    rgba(245, 245, 247, 0.5) 50%,
-    var(--surface) 100%
+    rgba(255,255,255,0.03) 0%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.03) 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  animation: shimmer 1.6s ease-in-out infinite;
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
+  0%   { background-position:  200% 0; }
   100% { background-position: -200% 0; }
 }
 
-/* Toast Notification */
-.toast-container {
-  position: fixed;
-  top: 80px;
-  right: 22px;
-  z-index: 10000;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  pointer-events: none;
-}
-
-.toast {
-  background: var(--card);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-sm) var(--spacing-md);
-  box-shadow: 0 4px 16px var(--shadow-hover);
-  min-width: 300px;
-  max-width: 400px;
-  pointer-events: all;
-  animation: toastSlideIn 0.3s ease-out;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.toast.success {
-  border-left: 4px solid #34c759;
-}
-
-.toast.error {
-  border-left: 4px solid #ff3b30;
-}
-
-.toast.warning {
-  border-left: 4px solid #ff9500;
-}
-
-.toast.info {
-  border-left: 4px solid var(--accent);
-}
-
+/* ===== Toast notification ===== */
 @keyframes toastSlideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(110%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
 }
 
-.toast-message {
-  flex: 1;
-  font-size: 14px;
-  line-height: 1.42859;
-  color: var(--text);
+/* ===== Modal entrance ===== */
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.94) translateY(14px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
 
-.toast-close {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 4px;
-  font-size: 18px;
-  line-height: 1;
-  transition: color var(--transition-base);
+/* ===== Pulse glow (for accent elements) ===== */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 16px rgba(59, 130, 246, 0.3); }
+  50%       { box-shadow: 0 0 32px rgba(59, 130, 246, 0.6); }
 }
 
-.toast-close:hover {
-  color: var(--text);
+.pulse-glow { animation: pulseGlow 2.5s ease-in-out infinite; }
+
+/* ===== Gradient shimmer on text ===== */
+@keyframes gradientShift {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
 }
 
-/* Lock Overlay (Packages 필터) */
+.animate-gradient {
+  background: linear-gradient(270deg, #3b82f6, #8b5cf6, #3b82f6);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease infinite;
+}
+
+/* ===== Spin ===== */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== Lock Overlay ===== */
 .pack-grid.locked {
-  filter: blur(2px);
-  position: relative;
+  filter: blur(3px);
   pointer-events: none;
   user-select: none;
 }
@@ -397,27 +116,13 @@
   display: grid;
   place-items: center;
   font-weight: 600;
-  font-size: 17px;
-  line-height: 1.47059;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(6px);
+  font-size: 1rem;
+  color: var(--text-primary);
+  background: rgba(10, 15, 30, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-radius: var(--radius-lg);
   z-index: 10;
-  padding: var(--spacing-xl);
+  padding: 40px;
   text-align: center;
 }
-
-/* Toast Responsive */
-@media (max-width: 768px) {
-  .toast-container {
-    right: 12px;
-    left: 12px;
-  }
-  
-  .toast {
-    min-width: auto;
-    max-width: 100%;
-  }
-}
-

@@ -1,119 +1,142 @@
-/* ============================================
-   AI Workflow Lab - Tools Navigator Styles
-   ============================================ */
+/* ============================================================
+   AI Workflow Lab — Tools Navigator
+   ============================================================ */
 
-/* Body padding for fixed navbar */
-body {
-  padding-top: 44px;
-}
+body { padding-top: 56px; }
 
-/* Navbar compatibility */
-.navbar.navbar-expand-lg {
-  height: auto;
-  min-height: 44px;
-}
-
-/* Tool Card */
+/* ===== Tool Card ===== */
 .tool-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border: 1px solid #e9ecef;
-  border-radius: 12px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  transition: all var(--transition-base);
+  height: 100%;
 }
 
 .tool-card:hover {
+  border-color: rgba(59, 130, 246, 0.35);
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
-  border-color: #0071e3;
+  box-shadow: var(--shadow-glow), var(--shadow-lg);
 }
 
 .tool-card .card-header {
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--glass-border);
   padding: 12px 16px;
 }
 
-/* Provider Logo */
+.tool-card .card-body { padding: 16px; }
+
+/* ===== Filter Card ===== */
+.filter-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  position: sticky;
+  top: 72px;
+}
+
+.filter-card .filter-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+/* ===== Provider Logo ===== */
 .provider-logo-sm {
   width: 24px;
   height: 24px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   object-fit: contain;
-  background: #f5f5f7;
+  background: var(--glass-bg);
 }
 
-/* Star Rating */
+/* ===== Star Rating ===== */
 .star-rating {
-  color: #f5c518;
-  font-size: 0.85rem;
+  color: #f59e0b;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
 }
 
-/* Tag badges */
+/* ===== Tag badges ===== */
 .tag-badge {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 20px;
-  background: #f0f4ff;
-  color: #3b5bdb;
-  border: 1px solid #dbe4ff;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--cat-chat);
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
-/* Filter sidebar */
-.filter-card {
-  border-radius: 12px;
-  border: 1px solid #e9ecef;
-  position: sticky;
-  top: 60px;
-}
+/* ===== Category badge colors ===== */
+.badge-text-gen  { background: rgba(59,130,246,0.12);  color: var(--cat-chat);  border: 1px solid rgba(59,130,246,0.25); }
+.badge-image-gen { background: rgba(168,85,247,0.12);  color: var(--cat-image); border: 1px solid rgba(168,85,247,0.25); }
+.badge-code-gen  { background: rgba(34,197,94,0.12);   color: var(--cat-code);  border: 1px solid rgba(34,197,94,0.25); }
+.badge-voice     { background: rgba(249,115,22,0.12);  color: var(--cat-audio); border: 1px solid rgba(249,115,22,0.25); }
+.badge-video     { background: rgba(139,92,246,0.12);  color: var(--accent-secondary); border: 1px solid rgba(139,92,246,0.25); }
+.badge-translate { background: rgba(6,182,212,0.12);   color: var(--cat-data);  border: 1px solid rgba(6,182,212,0.25); }
+.badge-data      { background: rgba(6,182,212,0.12);   color: var(--cat-data);  border: 1px solid rgba(6,182,212,0.25); }
 
-/* Recommendation result */
+/* ===== Recommendation result card ===== */
 .recommend-result-card {
-  border-left: 4px solid #0071e3;
-  border-radius: 8px;
-  padding: 12px 16px;
-  background: #f0f7ff;
-  margin-bottom: 8px;
+  border-left: 3px solid var(--accent-primary);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  background: rgba(59, 130, 246, 0.08);
+  border-top: 1px solid rgba(59, 130, 246, 0.15);
+  border-right: 1px solid rgba(59, 130, 246, 0.15);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.15);
+  margin-bottom: 10px;
 }
 
-/* List view tool row */
+/* ===== Tool List Row (list view) ===== */
 .tool-list-row {
-  border: 1px solid #e9ecef;
-  border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 12px;
-  transition: all 0.2s ease;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 10px;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .tool-list-row:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  border-color: #0071e3;
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(3px);
 }
 
-/* Category badge colors */
-.badge-text-gen { background: #dbeafe; color: #1d4ed8; }
-.badge-image-gen { background: #fce7f3; color: #be185d; }
-.badge-code-gen { background: #d1fae5; color: #065f46; }
-.badge-voice { background: #fef3c7; color: #92400e; }
-.badge-video { background: #ede9fe; color: #5b21b6; }
-.badge-translate { background: #e0f2fe; color: #0369a1; }
-.badge-data { background: #f0fdf4; color: #166534; }
-
-/* Popular tools list */
+/* ===== Popular tool item ===== */
 .popular-tool-item {
   display: flex;
   align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
-  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--glass-border);
+  gap: 10px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
 }
 
-.popular-tool-item:last-child {
-  border-bottom: none;
-}
+.popular-tool-item:last-child { border-bottom: none; }
 
-/* Responsive adjustments */
+.popular-tool-item:hover { color: var(--text-primary); }
+
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
-  .filter-card {
-    position: static;
-  }
+  .filter-card { position: static; margin-bottom: 20px; }
 }
