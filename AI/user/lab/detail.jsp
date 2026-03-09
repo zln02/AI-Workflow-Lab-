@@ -26,13 +26,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= escapeHtml(project.getTitle()) %> - AI 실습 랩</title>
-  <link rel="stylesheet" href="/AI/assets/css/landing.css">
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/AI/assets/css/dark-theme.css">
   <style>
+    body { padding-top: 44px; }
     .step-number { width:36px; height:36px; font-weight:700; font-size:.9rem; flex-shrink:0; }
-    .step-content { background:#f8f9fa; border-radius:.5rem; padding:1rem; }
-    .goal-chip { display:inline-block; padding:.3rem .75rem; background:#e8f4fd; border-radius:1rem;
-                 font-size:.85rem; margin:.2rem; border:1px solid #bee3f8; }
-    .progress-tracker { position:sticky; top:80px; }
+    .step-content { background: var(--bg-secondary, #1e293b); border-radius:.5rem; padding:1rem; border: 1px solid var(--border-primary, #334155); }
+    .goal-chip { display:inline-block; padding:.3rem .75rem; background: rgba(99,102,241,0.15); border-radius:1rem;
+                 font-size:.85rem; margin:.2rem; border:1px solid rgba(99,102,241,0.3); color: var(--text-primary, #e2e8f0); }
+    .progress-tracker { position:sticky; top:64px; }
   </style>
 </head>
 <body>

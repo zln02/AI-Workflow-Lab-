@@ -37,19 +37,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= pageTitle %> - AI Workflow Lab</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/AI/assets/css/dark-theme.css">
   <style>
-    body { padding-top: 44px; font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif; }
-    .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); border-bottom: 0.5px solid rgba(0,0,0,0.1); height: 44px; display: flex; align-items: center; padding: 0; }
-    .navbar-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 20px; }
-    .navbar-logo { font-size: 17px; font-weight: 500; color: #1d1d1f; text-decoration: none; }
-    .navbar-menu-wrapper { display: flex; align-items: center; gap: 2rem; }
-    .navbar-menu { display: flex; gap: 1.5rem; list-style: none; align-items: center; margin: 0; padding: 0; }
-    .navbar-menu a { color: #1d1d1f; text-decoration: none; font-size: 13px; }
-    .navbar-menu a:hover, .navbar-menu a.active { color: #0071e3; }
-    .navbar-toggle { display: none; background: none; border: none; color: #1d1d1f; font-size: 1.5rem; cursor: pointer; }
-    .lab-card { border-radius: 12px; transition: all 0.2s ease; border: 1px solid #e9ecef; }
-    .lab-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); border-color: #198754; }
+    body { padding-top: 44px; }
   </style>
 </head>
 <body>
@@ -136,30 +132,26 @@
             </div>
           </form>
         </div>
-      </div>
 
       <!-- 인기 프로젝트 -->
-      <div class="filter-sidebar">
+      <div class="filter-sidebar mt-3">
         <div class="filter-title">
           <i class="bi bi-trophy me-2"></i>인기 프로젝트
         </div>
-        </div>
-        <div class="card-body p-0">
-          <ul class="list-group list-group-flush">
-            <% for (LabProject p : popular) { %>
-            <li class="list-group-item">
-              <a href="/AI/user/lab/detail.jsp?id=<%= p.getId() %>" class="text-decoration-none d-block">
-                <span class="badge <%= p.getDifficultyBadgeClass() %> me-1"><%= p.getDifficultyLevel() %></span>
-                <%= escapeHtml(p.getTitle()) %>
-              </a>
-              <div class="small text-muted mt-1">
-                <i class="bi bi-people me-1"></i><%= p.getCurrentParticipants() != null ? p.getCurrentParticipants() : 0 %>명 참여
-                &nbsp;<i class="bi bi-clock me-1"></i><%= p.getFormattedDuration() %>
-              </div>
-            </li>
-            <% } %>
-          </ul>
-        </div>
+        <ul class="list-group list-group-flush" style="margin: 0 -1rem -1rem;">
+          <% for (LabProject p : popular) { %>
+          <li class="list-group-item" style="background: transparent; border-color: #334155; padding: 10px 16px;">
+            <a href="/AI/user/lab/detail.jsp?id=<%= p.getId() %>" class="text-decoration-none d-block" style="color: #e2e8f0;">
+              <span class="badge <%= p.getDifficultyBadgeClass() %> me-1"><%= p.getDifficultyLevel() %></span>
+              <%= escapeHtml(p.getTitle()) %>
+            </a>
+            <div class="small text-muted mt-1">
+              <i class="bi bi-people me-1"></i><%= p.getCurrentParticipants() != null ? p.getCurrentParticipants() : 0 %>명 참여
+              &nbsp;<i class="bi bi-clock me-1"></i><%= p.getFormattedDuration() %>
+            </div>
+          </li>
+          <% } %>
+        </ul>
       </div>
     </aside>
 

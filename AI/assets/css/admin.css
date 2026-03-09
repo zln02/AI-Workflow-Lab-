@@ -1286,6 +1286,8 @@ input[readonly]:focus {
 .kpi-lab    { --kpi-color: #a78bfa; }
 .kpi-users  { --kpi-color: #34d399; }
 .kpi-category { --kpi-color: #fb923c; }
+.kpi-orders { --kpi-color: #60a5fa; }
+.kpi-revenue { --kpi-color: #34d399; }
 
 .kpi-icon {
   flex-shrink: 0;
@@ -1335,6 +1337,7 @@ input[readonly]:focus {
 .kpi-card:nth-child(2) { animation-delay: .12s; }
 .kpi-card:nth-child(3) { animation-delay: .18s; }
 .kpi-card:nth-child(4) { animation-delay: .24s; }
+.kpi-card:nth-child(5) { animation-delay: .30s; }
 
 /* ===== Quick Links Grid ===== */
 .quick-links-grid {
@@ -1414,6 +1417,12 @@ input[readonly]:focus {
   background: rgba(239,68,68,.15);
   color: #f87171;
   border: 1px solid rgba(239,68,68,.3);
+}
+
+.status-pending {
+  background: rgba(245,158,11,.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245,158,11,.3);
 }
 
 /* ===== Superadmin Queue ===== */

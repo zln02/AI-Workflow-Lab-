@@ -8,17 +8,6 @@
   User _headerUser = (_headerUserObj instanceof User) ? (User) _headerUserObj : null;
   boolean _headerIsLoggedIn = _headerUser != null && _headerUser.isActive();
 %>
-<!-- Favicon -->
-<link rel="icon" href="data:,">
-<!-- Google Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<!-- Bootstrap 5.3.3 -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-<!-- Dark Theme -->
-<link href="/AI/assets/css/dark-theme.css" rel="stylesheet">
 <nav class="navbar" id="navbar">
   <div class="navbar-container">
     <a href="/AI/user/home.jsp" class="navbar-logo">
@@ -51,4 +40,15 @@
     <button class="navbar-toggle" id="navbarToggle"><i class="bi bi-list"></i></button>
   </div>
 </nav>
+<script>
+(function(){
+  var toggle = document.getElementById('navbarToggle');
+  var wrapper = document.querySelector('.navbar-menu-wrapper');
+  if (toggle && wrapper) {
+    toggle.addEventListener('click', function() {
+      wrapper.classList.toggle('active');
+    });
+  }
+})();
+</script>
 

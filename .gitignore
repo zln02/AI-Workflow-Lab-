@@ -169,3 +169,8 @@ $RECYCLE.BIN/
 **/docs/_build/
 **/site/
 
+
+# User uploads
+uploads/profile-images/
+
+# Dev docs (move these to docs/ which IS tracked)

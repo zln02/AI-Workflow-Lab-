@@ -88,16 +88,66 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ===== Navigation ===== */
 .navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--glass-border);
-  height: 60px;
-  padding: 0 var(--spacing-lg);
+  height: 44px;
+  padding: 0;
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.navbar-menu-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.navbar-menu {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-menu-auth {
+  gap: 1rem;
+}
+
+.navbar-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
 }
 
 .navbar-logo {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: var(--font-weight-bold);
   background: var(--primary-gradient);
   -webkit-background-clip: text;
@@ -105,6 +155,7 @@ h1, h2, h3, h4, h5, h6 {
   background-clip: text;
   text-decoration: none;
   transition: var(--transition-normal);
+  flex-shrink: 0;
 }
 
 .navbar-logo:hover {
@@ -114,15 +165,52 @@ h1, h2, h3, h4, h5, h6 {
 .navbar-menu a {
   color: var(--text-secondary);
   font-weight: var(--font-weight-medium);
+  font-size: 13px;
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: 0.5rem;
+  text-decoration: none;
   transition: var(--transition-normal);
+  white-space: nowrap;
 }
 
 .navbar-menu a:hover,
 .navbar-menu a.active {
   color: var(--text-primary);
   background: rgba(99, 102, 241, 0.1);
+}
+
+@media (max-width: 768px) {
+  .navbar-menu-wrapper {
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    position: fixed;
+    top: 44px;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-primary);
+    z-index: 999;
+    gap: 0.5rem;
+  }
+  .navbar-menu-wrapper.active {
+    display: flex;
+  }
+  .navbar-menu {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    width: 100%;
+  }
+  .navbar-menu-auth {
+    width: 100%;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-primary);
+  }
+  .navbar-toggle {
+    display: flex;
+  }
 }
 
 /* ===== Cards ===== */

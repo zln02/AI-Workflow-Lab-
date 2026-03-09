@@ -13,7 +13,8 @@
   String adminRole = (String) session.getAttribute("adminRole");
   boolean isSuperadmin = "superadmin".equals(adminRole) || "SUPER".equals(adminRole);
 
-  int toolCount = 0, projectCount = 0, userCount = 0, subscriberCount = 0;
+  int toolCount = 0, projectCount = 0, userCount = 0, orderCount = 0;
+  double totalRevenue = 0.0;
   String topCategory = "-";
   try (Connection c = DBConnect.getConnection()) {
     try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM ai_tools");
@@ -28,10 +29,9 @@
          ResultSet rs = ps.executeQuery()) {
       if (rs.next()) userCount = rs.getInt(1);
     }
-    try (PreparedStatement ps = c.prepareStatement(
-           "SELECT COUNT(*) FROM users WHERE experience_level IS NOT NULL AND is_active = 1");
+    try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*), COALESCE(SUM(total_price),0) FROM orders");
          ResultSet rs = ps.executeQuery()) {
-      if (rs.next()) subscriberCount = rs.getInt(1);
+      if (rs.next()) { orderCount = rs.getInt(1); totalRevenue = rs.getDouble(2); }
     }
     try (PreparedStatement ps = c.prepareStatement(
            "SELECT category, COUNT(*) AS cnt FROM ai_tools GROUP BY category ORDER BY cnt DESC LIMIT 1");
@@ -78,12 +78,20 @@
             <span class="kpi-desc">is_active 회원 수</span>
           </div>
         </article>
-        <article class="kpi-card kpi-category">
-          <div class="kpi-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+        <article class="kpi-card kpi-orders" style="cursor:pointer;" onclick="location.href='/AI/admin/orders/index.jsp'">
+          <div class="kpi-icon"><i class="bi bi-receipt-cutoff"></i></div>
           <div class="kpi-body">
-            <span class="kpi-label">인기 카테고리</span>
-            <span class="kpi-value kpi-value-sm"><%= topCategory %></span>
-            <span class="kpi-desc">AI 도구 최다 카테고리</span>
+            <span class="kpi-label">총 주문</span>
+            <span class="kpi-value"><%= orderCount %></span>
+            <span class="kpi-desc">누적 결제 건수</span>
+          </div>
+        </article>
+        <article class="kpi-card kpi-revenue" style="cursor:pointer;" onclick="location.href='/AI/admin/orders/index.jsp'">
+          <div class="kpi-icon"><i class="bi bi-currency-dollar"></i></div>
+          <div class="kpi-body">
+            <span class="kpi-label">총 매출</span>
+            <span class="kpi-value kpi-value-sm">$<%= String.format("%,.0f", totalRevenue) %></span>
+            <span class="kpi-desc">누적 결제 금액</span>
           </div>
         </article>
       </section>
@@ -104,6 +112,10 @@
             <i class="bi bi-people"></i>
             <span>사용자 관리</span>
           </a>
+          <a class="quick-link-card" href="/AI/admin/orders/index.jsp">
+            <i class="bi bi-receipt"></i>
+            <span>주문 관리</span>
+          </a>
           <a class="quick-link-card" href="/AI/admin/packages/index.jsp">
             <i class="bi bi-credit-card"></i>
             <span>구독 플랜</span>
@@ -112,7 +124,7 @@
             <i class="bi bi-folder2-open"></i>
             <span>카테고리</span>
           </a>
-          <% if (isSuperadmin) { %>
+          <% if (isSuperadmin) { /* superadmin quick link */ %>
           <a class="quick-link-card" href="/AI/admin/admins/index.jsp">
             <i class="bi bi-shield-lock"></i>
             <span>관리자 관리</span>
@@ -205,6 +217,55 @@
               <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:2rem;">등록된 프로젝트가 없습니다.</td></tr>
               <% } } catch (Exception e3) { %>
               <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:2rem;">데이터를 불러올 수 없습니다.</td></tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 최근 주문 -->
+      <section style="margin-bottom:2.5rem;background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:var(--radius-xl);padding:var(--spacing-xl);">
+        <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+          <div>
+            <h2 style="margin:0;">최근 주문</h2>
+            <p style="margin:.25rem 0 0;font-size:.85rem;color:var(--text-secondary);">최근 결제된 주문 5건</p>
+          </div>
+          <a class="btn" href="/AI/admin/orders/index.jsp" style="padding:6px 14px;font-size:.85rem;">전체 보기</a>
+        </header>
+        <div class="admin-table-section">
+          <table class="admin-table">
+            <thead>
+              <tr><th>주문번호</th><th>고객명</th><th>이메일</th><th>결제금액</th><th>결제수단</th><th>상태</th><th>주문일시</th></tr>
+            </thead>
+            <tbody>
+              <%
+                try (Connection co = DBConnect.getConnection();
+                     PreparedStatement pso = co.prepareStatement(
+                       "SELECT id, customer_name, customer_email, total_price, payment_method, order_status, created_at FROM orders ORDER BY created_at DESC LIMIT 5");
+                     ResultSet rso = pso.executeQuery()) {
+                  int rowCo = 0;
+                  while (rso.next()) {
+                    rowCo++;
+                    String status = rso.getString("order_status");
+                    String statusClass = "COMPLETED".equals(status) ? "status-active" : "PENDING".equals(status) ? "status-pending" : "status-inactive";
+                    String statusLabel = "COMPLETED".equals(status) ? "완료" : "PENDING".equals(status) ? "대기" : "CANCELLED".equals(status) ? "취소" : status;
+              %>
+              <tr>
+                <td><strong>#<%= rso.getInt("id") %></strong></td>
+                <td><%= rso.getString("customer_name") != null ? rso.getString("customer_name") : "-" %></td>
+                <td style="font-size:.82rem;color:var(--text-secondary);"><%= rso.getString("customer_email") != null ? rso.getString("customer_email") : "-" %></td>
+                <td><strong>$<%= rso.getObject("total_price") != null ? String.format("%.2f", rso.getDouble("total_price")) : "0.00" %></strong></td>
+                <td><%= rso.getString("payment_method") != null ? rso.getString("payment_method") : "-" %></td>
+                <td><span class="status-badge <%= statusClass %>"><%= statusLabel %></span></td>
+                <td style="font-size:.82rem;color:var(--text-secondary);"><%= rso.getString("created_at") != null ? rso.getString("created_at").substring(0, 16) : "-" %></td>
+              </tr>
+              <%
+                  }
+                  if (rowCo == 0) {
+              %>
+              <tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem;">주문 내역이 없습니다.</td></tr>
+              <% } } catch (Exception eo) { %>
+              <tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem;">데이터를 불러올 수 없습니다.</td></tr>
               <% } %>
             </tbody>
           </table>

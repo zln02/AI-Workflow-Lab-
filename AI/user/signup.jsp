@@ -8,6 +8,7 @@
   request.setCharacterEncoding("UTF-8");
   
   String errorMessage = null;
+  List<String> errorMessages = null;
   String successMessage = null;
   
   // POST 요청 처리 (회원가입)
@@ -27,14 +28,16 @@
     List<String> errors = userService.validateSignup(email, password, passwordConfirm, name);
     
     if (!errors.isEmpty()) {
-      errorMessage = String.join("<br>", errors);
+      errorMessages = errors;
     } else {
       // 사용자 생성
       User user = userService.createUser(email, password, name);
-      
+
       if (user != null) {
-        // 자동 로그인 (세션에 사용자 저장)
-        session.setAttribute("user", user);
+        // 세션 재생성 (session fixation 방지) 후 자동 로그인
+        session.invalidate();
+        javax.servlet.http.HttpSession newSession = request.getSession(true);
+        newSession.setAttribute("user", user);
         response.sendRedirect("/AI/user/home.jsp");
         return;
       } else {
@@ -74,6 +77,15 @@
         <% if (errorMessage != null) { %>
           <div id="error-message" class="error-message" style="background: #ff3b30; color: #ffffff; padding: 16px; border-radius: 12px; margin-bottom: 24px; font-size: 14px; line-height: 1.42859;">
             <%= EscapeUtil.escapeHtml(errorMessage) %>
+          </div>
+        <% } %>
+        <% if (errorMessages != null && !errorMessages.isEmpty()) { %>
+          <div id="error-message" class="error-message" style="background: #ff3b30; color: #ffffff; padding: 16px; border-radius: 12px; margin-bottom: 24px; font-size: 14px; line-height: 1.42859;">
+            <ul style="margin: 0; padding-left: 16px; list-style: disc;">
+              <% for (String err : errorMessages) { %>
+                <li><%= EscapeUtil.escapeHtml(err) %></li>
+              <% } %>
+            </ul>
           </div>
         <% } %>
         

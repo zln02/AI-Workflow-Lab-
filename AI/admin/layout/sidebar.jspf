@@ -33,6 +33,10 @@
       <span class="sidebar-text">실습 랩 관리</span>
     </a>
     <div class="sidebar-section-label">운영 관리</div>
+    <a href="/AI/admin/orders/index.jsp" class="sidebar-item" data-path="/admin/orders">
+      <span class="sidebar-icon"><i class="bi bi-receipt"></i></span>
+      <span class="sidebar-text">주문 관리</span>
+    </a>
     <a href="/AI/admin/users/index.jsp" class="sidebar-item" data-path="/admin/users">
       <span class="sidebar-icon"><i class="bi bi-people"></i></span>
       <span class="sidebar-text">사용자 관리</span>

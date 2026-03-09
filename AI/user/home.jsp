@@ -37,66 +37,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Workflow Lab - AI 도구 추천과 실무 경험 플랫폼</title>
   <meta name="description" content="AI 도구 추천, 워크플로우 가이드, 실습 랩을 통해 AI 실무 경험을 쌓아보세요. 쉽고 빠른 AI 학습과 실전 프로젝트를 지원합니다.">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="/AI/assets/css/animations.css">
+  <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/AI/assets/css/dark-theme.css">
+  <link rel="stylesheet" href="/AI/assets/css/animations.css">
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/ScrollTrigger.min.js"></script>
   <style>
-    body { padding-top: 44px; font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif; }
-
-    /* Navbar */
-    .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 0.5px solid rgba(0,0,0,0.1); height: 44px; display: flex; align-items: center; padding: 0; }
-    .navbar-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 20px; }
-    .navbar-logo { font-size: 17px; font-weight: 500; color: #1d1d1f; text-decoration: none; }
-    .navbar-menu-wrapper { display: flex; align-items: center; gap: 2rem; }
-    .navbar-menu { display: flex; gap: 1.5rem; list-style: none; align-items: center; margin: 0; padding: 0; }
-    .navbar-menu a { color: #1d1d1f; text-decoration: none; font-size: 13px; transition: color 0.2s; }
-    .navbar-menu a:hover, .navbar-menu a.active { color: #0071e3; }
-    .navbar-toggle { display: none; background: none; border: none; color: #1d1d1f; font-size: 1.5rem; cursor: pointer; }
-    @media (max-width: 768px) {
-      .navbar-menu-wrapper { display: none; }
-      .navbar-menu-wrapper.active { display: flex; flex-direction: column; position: fixed; top: 44px; left: 0; right: 0; background: #fff; padding: 1rem; border-bottom: 1px solid #e0e0e0; z-index: 999; }
-      .navbar-toggle { display: block; }
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif; }
 
     /* AI Provider logos section */
-    .ai-logos-section { background: #f5f5f7; padding: 40px 0; overflow: hidden; }
+    .ai-logos-section { background: #0a0f1e; padding: 40px 0; overflow: hidden; border-top: 1px solid #1e293b; border-bottom: 1px solid #1e293b; }
     .ai-logos-track { display: flex; gap: 40px; align-items: center; animation: scrollLogos 30s linear infinite; width: max-content; }
     .ai-logos-track:hover { animation-play-state: paused; }
-    .ai-logo-item { display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: 0.7; transition: opacity 0.2s; flex-shrink: 0; }
+    .ai-logo-item { display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: 0.5; transition: opacity 0.2s; flex-shrink: 0; }
     .ai-logo-item:hover { opacity: 1; }
     .ai-logo-item img { width: 48px; height: 48px; border-radius: 10px; }
-    .ai-logo-item span { font-size: 11px; color: #86868b; font-weight: 500; }
+    .ai-logo-item span { font-size: 11px; color: #64748b; font-weight: 500; }
     @keyframes scrollLogos { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
     /* Section titles */
-    .home-section-title { font-size: 32px; font-weight: 600; color: #1d1d1f; letter-spacing: -0.003em; margin-bottom: 6px; }
-    .home-section-sub { font-size: 17px; color: #86868b; margin-bottom: 0; }
+    .home-section-title { font-size: 32px; font-weight: 600; color: var(--text-primary, #e2e8f0); letter-spacing: -0.003em; margin-bottom: 6px; }
+    .home-section-sub { font-size: 17px; color: var(--text-secondary, #94a3b8); margin-bottom: 0; }
 
-    /* Dark Theme Overrides */
-    .ai-tool-card { background: var(--bg-card); border: 1px solid var(--border-primary); }
-    .ai-tool-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
-    .ai-tool-card-header { border-bottom: 1px solid var(--border-primary); background: var(--bg-tertiary); }
-    .provider-logo-fallback { background: var(--bg-tertiary); }
-    .ai-tool-card-title { color: var(--text-primary); }
-    .ai-tool-card-desc { color: var(--text-secondary); }
-    .ai-tool-card-footer { border-top: 1px solid var(--border-primary); }
+    /* AI Tool Cards */
+    .ai-tool-card { background: var(--bg-card, #1e293b); border: 1px solid var(--border-primary, #334155); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; height: 100%; transition: all 0.2s ease; }
+    .ai-tool-card:hover { border-color: var(--border-hover, #6366f1); box-shadow: var(--shadow-glow, 0 0 20px rgba(99,102,241,0.3)); transform: translateY(-4px); }
+    .ai-tool-card-header { padding: 12px 16px; border-bottom: 1px solid var(--border-primary, #334155); background: var(--bg-tertiary, #334155); display: flex; justify-content: space-between; align-items: center; }
+    .ai-tool-card-body { padding: 16px; flex: 1; }
+    .ai-tool-card-title { font-size: 15px; font-weight: 600; color: var(--text-primary, #e2e8f0); margin-bottom: 8px; }
+    .ai-tool-card-desc { font-size: 13px; color: var(--text-secondary, #94a3b8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; }
+    .ai-tool-card-footer { padding: 12px 16px; border-top: 1px solid var(--border-primary, #334155); }
 
-    .platform-card { background: var(--bg-card); border: 1px solid var(--border-primary); }
-    .platform-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
+    /* Provider logos */
+    .provider-logo { width: 24px; height: 24px; border-radius: 6px; object-fit: contain; }
+    .provider-logo-fallback { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary, #334155); border-radius: 6px; font-size: 14px; }
 
-    .lab-card { background: var(--bg-card); border: 1px solid var(--border-primary); }
-    .lab-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
+    /* Platform cards */
+    .platform-card { padding: 2rem; border-radius: 16px; height: 100%; transition: all 0.2s ease; }
+    .platform-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
 
-    .cta-section { background: var(--primary-gradient); }
+    /* CTA section */
+    .cta-section { background: linear-gradient(135deg, #4338ca 0%, #6366f1 40%, #8b5cf6 100%); }
 
-    .badge-beginner { background: rgba(16, 185, 129, 0.2); color: var(--difficulty-beginner); border: 1px solid rgba(16, 185, 129, 0.3); }
-    .badge-intermediate { background: rgba(245, 158, 11, 0.2); color: var(--difficulty-intermediate); border: 1px solid rgba(245, 158, 11, 0.3); }
-    .badge-advanced { background: rgba(239, 68, 68, 0.2); color: var(--difficulty-advanced); border: 1px solid rgba(239, 68, 68, 0.3); }
+    /* Sections */
+    .tools-section { background: var(--bg-secondary, #1e293b); padding: 64px 0; }
+
+    .badge-beginner { background: rgba(16, 185, 129, 0.2); color: var(--difficulty-beginner, #10b981); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-intermediate { background: rgba(245, 158, 11, 0.2); color: var(--difficulty-intermediate, #f59e0b); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-advanced { background: rgba(239, 68, 68, 0.2); color: var(--difficulty-advanced, #ef4444); border: 1px solid rgba(239, 68, 68, 0.3); }
   </style>
 </head>
 <body>
@@ -164,7 +157,7 @@
     </section>
 
     <!-- 인기 AI 도구 섹션 -->
-    <section class="py-5" style="background: #f5f5f7;">
+    <section class="py-5 tools-section">
       <div class="container">
         <div class="d-flex justify-content-between align-items-end mb-5">
           <div>

@@ -9,7 +9,10 @@
 <%@ page import="java.time.LocalDate" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%
-  response.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
+  String allowedOrigin = System.getenv("CORS_ALLOWED_ORIGIN");
+  if (allowedOrigin != null && !allowedOrigin.isEmpty()) {
+    response.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+  }
   response.setHeader("Content-Type", "application/json; charset=UTF-8");
   
   if (!"POST".equals(request.getMethod())) {
@@ -55,7 +58,7 @@
   }
   
   // 화이트리스트 검증
-  if (!planCode.matches("^(STARTER|GROWTH|PRO)$")) {
+  if (!planCode.matches("^(STARTER|GROWTH|ENTERPRISE)$")) {
     response.setStatus(400);
     out.print("{\"error\":\"유효하지 않은 요금제 코드입니다.\"}");
     return;

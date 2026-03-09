@@ -44,14 +44,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= pageTitle %> - AI Workflow Lab</title>
   <meta name="description" content="AI Workflow Lab에서 다양한 AI 도구를 탐색하고 추천을 받아보세요.">
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/AI/assets/css/dark-theme.css">
   <link rel="stylesheet" href="/AI/assets/css/tools.css">
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body { padding-top: 44px; background: var(--bg-primary, #0f172a); color: var(--text-primary, #e2e8f0); }
+    .page-header { background: linear-gradient(135deg, #1e293b, #0f172a); border-bottom: 1px solid #334155; padding: 32px 0 24px; margin-bottom: 0; }
+    .page-header h1 { color: #e2e8f0; font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+    .page-header p { color: #94a3b8; font-size: 15px; margin: 0; }
+    .card { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; }
+    .card-header.bg-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6) !important; border-bottom: none; }
+    .card-header.bg-success { background: linear-gradient(135deg, #059669, #10b981) !important; border-bottom: none; }
+    .card-body { color: #e2e8f0; }
+    .card-body .text-muted, .small.text-muted { color: #94a3b8 !important; }
+    .form-label { color: #94a3b8; font-size: 13px; font-weight: 500; }
+    .form-control { background: #334155; border: 1px solid #475569; color: #e2e8f0; }
+    .form-control:focus { background: #334155; border-color: #6366f1; color: #e2e8f0; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    .form-control::placeholder { color: #64748b; }
+    .form-select { background: #334155; border: 1px solid #475569; color: #e2e8f0; }
+    .form-select:focus { background: #334155; border-color: #6366f1; color: #e2e8f0; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    .form-select option { background: #1e293b; color: #e2e8f0; }
+    .btn-outline-primary { color: #6366f1; border-color: #6366f1; }
+    .btn-outline-primary:hover { background: #6366f1; color: white; }
+    .btn-outline-secondary { color: #94a3b8; border-color: #475569; }
+    .btn-outline-secondary:hover, .btn-outline-secondary.active { background: #334155; color: #e2e8f0; border-color: #6366f1; }
+    .tool-card { transition: all 0.2s ease; }
+    .tool-card:hover { border-color: #6366f1; transform: translateY(-4px); box-shadow: 0 0 20px rgba(99,102,241,0.3); }
+    .card-footer.bg-transparent { border-top: 1px solid #334155; background: transparent; }
+    a.text-decoration-none { color: #e2e8f0; }
+    a.text-decoration-none:hover { color: #6366f1; }
+    .badge.bg-light { background: #334155 !important; color: #94a3b8 !important; border: 1px solid #475569; }
+    .bg-light.card { background: #1e293b !important; border: 1px solid #6366f1; }
+    .bg-light.card .card-title { color: #e2e8f0; }
+    .bg-light.card .card-text { color: #94a3b8; }
+    .recommend-section { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15)); border: 1px solid rgba(99,102,241,0.3); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+    .recommend-section .card-title { color: #e2e8f0; font-size: 17px; font-weight: 600; }
+    .recommend-section .card-text { color: #94a3b8; font-size: 14px; }
+    h1.h3 { color: #e2e8f0; }
+    p.text-muted.mb-0 { color: #94a3b8 !important; }
+  </style>
 </head>
 <body>
   <%@ include file="/AI/partials/header.jsp" %>
-  
+
+  <div class="page-header">
+    <div class="container-fluid">
+      <h1><i class="bi bi-compass me-2"></i>AI 도구 탐색</h1>
+      <p>업무 목적에 맞는 AI 도구를 찾고 추천받으세요. 50+ 도구 수록.</p>
+    </div>
+  </div>
+
   <div class="container-fluid mt-4">
     <div class="row">
       <!-- 사이드바 -->
@@ -114,8 +162,8 @@
           <div class="card-body">
             <% for (AITool tool : popularTools) { %>
             <div class="d-flex align-items-center mb-3">
-              <img src="/AI/assets/img/providers/<%= getProviderLogoFileName(tool.getProviderName()) %>.png" 
-                   alt="<%= escapeHtml(tool.getProviderName()) %>" 
+              <img src="/AI/assets/img/providers/<%= getProviderLogoFileName(tool.getProviderName()) %>.svg"
+                   alt="<%= escapeHtml(tool.getProviderName()) %>"
                    class="me-2" style="width: 24px; height: 24px;">
               <div class="flex-grow-1">
                 <a href="/AI/user/tools/detail.jsp?id=<%= tool.getId() %>" class="text-decoration-none">
@@ -152,9 +200,9 @@
         </div>
         
         <!-- AI 도구 추천 섹션 -->
-        <div class="card shadow-sm mb-4 bg-light">
-          <div class="card-body">
-            <h5 class="card-title"><i class="bi bi-magic"></i> AI 도구 추천받기</h5>
+        <div class="recommend-section mb-4">
+          <div class="card-body p-0">
+            <h5 class="card-title"><i class="bi bi-magic me-2"></i>AI 도구 추천받기</h5>
             <p class="card-text">어떤 작업을 하고 싶으신가요? AI가 적합한 도구를 추천해드립니다.</p>
             <form id="recommendForm" class="row g-3">
               <div class="col-md-6">
@@ -178,6 +226,7 @@
             <div id="recommendResults" class="mt-3"></div>
           </div>
         </div>
+
         
         <!-- 도구 목록 -->
         <div id="toolsContainer" class="<%= "grid".equals(view) ? "row g-4" : "" %>">
@@ -197,8 +246,8 @@
                   <div class="card h-100 shadow-sm tool-card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                       <div class="d-flex align-items-center">
-                        <img src="/AI/assets/img/providers/<%= getProviderLogoFileName(tool.getProviderName()) %>.png" 
-                             alt="<%= escapeHtml(tool.getProviderName()) %>" 
+                        <img src="/AI/assets/img/providers/<%= getProviderLogoFileName(tool.getProviderName()) %>.svg"
+                             alt="<%= escapeHtml(tool.getProviderName()) %>"
                              class="me-2" style="width: 24px; height: 24px;">
                         <span class="badge <%= tool.getDifficultyBadgeClass() %>">
                           <%= tool.getDifficultyLevel() %>
@@ -239,8 +288,8 @@
                       <div class="row align-items-center">
                         <div class="col-md-8">
                           <div class="d-flex align-items-center mb-2">
-                            <img src="/AI/assets/img/providers/<%= getProviderLogoFileName(tool.getProviderName()) %>.png" 
-                                 alt="<%= escapeHtml(tool.getProviderName()) %>" 
+                            <img src="/AI/assets/img/providers/<%= getProviderLogoFileName(tool.getProviderName()) %>.svg"
+                                 alt="<%= escapeHtml(tool.getProviderName()) %>"
                                  class="me-2" style="width: 24px; height: 24px;">
                             <h5 class="mb-0 me-3"><%= escapeHtml(tool.getToolName()) %></h5>
                             <span class="badge <%= tool.getDifficultyBadgeClass() %> me-2">
@@ -313,7 +362,7 @@
       resultsDiv.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> 추천 중...</div>';
       
       try {
-        const response = await axios.get('/AI/api/ai-tools/recommend', {
+        const response = await axios.get('/AI/api/recommend.jsp', {
           params: { q: query, difficulty: difficulty }
         });
         
@@ -325,8 +374,8 @@
               <div class="col-md-6 mb-2">
                 <div class="card card-body">
                   <div class="d-flex align-items-center">
-                    <img src="/AI/assets/img/providers/${tool.providerName.toLowerCase()}.png" 
-                         alt="${tool.providerName}" 
+                    <img src="/AI/assets/img/providers/${tool.providerName.toLowerCase()}.svg"
+                         alt="${tool.providerName}"
                          class="me-2" style="width: 20px; height: 20px;">
                     <div class="flex-grow-1">
                       <a href="/AI/user/tools/detail.jsp?id=${tool.id}" class="text-decoration-none fw-bold">

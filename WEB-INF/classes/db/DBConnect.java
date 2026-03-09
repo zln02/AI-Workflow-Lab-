@@ -18,16 +18,24 @@ public class DBConnect {
             String dbUser = System.getenv("DB_USER");
             String dbPassword = System.getenv("DB_PASSWORD");
             
-            // 환경 변수가 없으면 기본값 사용 (개발용)
+            String environment = System.getenv("ENVIRONMENT");
+            boolean isDev = "dev".equalsIgnoreCase(environment) || "development".equalsIgnoreCase(environment);
+
             if (dbUrl == null) {
+                if (!isDev) throw new IllegalStateException("[FATAL] DB_URL 환경 변수가 설정되지 않았습니다. 프로덕션에서는 DB_URL, DB_USER, DB_PASSWORD를 반드시 설정하세요.");
                 dbUrl = "jdbc:mysql://localhost:3306/ai_navigator?useSSL=true&serverTimezone=UTC&requireSSL=false&verifyServerCertificate=false";
+                System.err.println("[DEV MODE] DB_URL 기본값 사용");
             }
             if (dbUser == null) {
+                if (!isDev) throw new IllegalStateException("[FATAL] DB_USER 환경 변수가 설정되지 않았습니다.");
                 dbUser = "root";
+                System.err.println("[DEV MODE] DB_USER 기본값 사용");
             }
             if (dbPassword == null) {
-                System.err.println("[SECURITY WARNING] DB_PASSWORD 환경 변수가 설정되지 않았습니다. 개발용 기본값을 사용합니다. 프로덕션에서는 반드시 환경 변수를 설정하세요.");
-                dbPassword = "1234!";
+                if (!isDev) throw new IllegalStateException("[FATAL] DB_PASSWORD 환경 변수가 설정되지 않았습니다.");
+                dbPassword = System.getenv("DB_DEV_PASSWORD");
+                if (dbPassword == null) throw new IllegalStateException("[FATAL] 개발 환경에서도 DB_DEV_PASSWORD 환경 변수를 설정해야 합니다.");
+                System.err.println("[DEV MODE] DB_DEV_PASSWORD 환경 변수 사용");
             }
             
             config.setJdbcUrl(dbUrl);

@@ -80,6 +80,15 @@
   </filter-mapping>
   
   <filter>
+    <filter-name>RateLimitFilter</filter-name>
+    <filter-class>filter.RateLimitFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>RateLimitFilter</filter-name>
+    <url-pattern>/AI/*</url-pattern>
+  </filter-mapping>
+
+  <filter>
     <filter-name>SessionPersistenceFilter</filter-name>
     <filter-class>filter.SessionPersistenceFilter</filter-class>
   </filter>
@@ -108,6 +117,24 @@
     <servlet-name>LoginServlet</servlet-name>
     <url-pattern>/AI/admin/auth/login</url-pattern>
   </servlet-mapping>
+
+  <!-- 에러 페이지 설정 -->
+  <error-page>
+    <error-code>404</error-code>
+    <location>/AI/error/404.jsp</location>
+  </error-page>
+  <error-page>
+    <error-code>403</error-code>
+    <location>/AI/error/403.jsp</location>
+  </error-page>
+  <error-page>
+    <error-code>500</error-code>
+    <location>/AI/error/500.jsp</location>
+  </error-page>
+  <error-page>
+    <exception-type>java.lang.Exception</exception-type>
+    <location>/AI/error/500.jsp</location>
+  </error-page>
 
   <servlet>
     <servlet-name>AIToolServlet</servlet-name>

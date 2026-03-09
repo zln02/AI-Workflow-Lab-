@@ -2,6 +2,7 @@
 <%@ page import="dao.PackageDAO" %>
 <%@ page import="model.Package" %>
 <%@ page import="java.util.List" %>
+<%@ page import="util.EscapeUtil" %>
 <%
   PackageDAO packageDAO = new PackageDAO();
   List<Package> packages = packageDAO.getAllPackages(1, 1000);
@@ -12,8 +13,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>요금제- AI Workflow Lab</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/AI/assets/css/dark-theme.css">
   <link rel="stylesheet" href="/AI/assets/css/user.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 </head>
 <body>
   <%@ include file="/AI/partials/header.jsp" %>
@@ -113,11 +120,11 @@
           <% for (Package pkg : packages) { %>
             <div class="user-card glass-card" style="display: flex; flex-direction: column; height: 100%;">
               <div style="flex: 1;">
-                <h3 style="margin-bottom: 12px; font-size: 24px; line-height: 1.16667; font-weight: 600;"><%= pkg.getTitle() != null ? pkg.getTitle() : "Package" %></h3>
+                <h3 style="margin-bottom: 12px; font-size: 24px; line-height: 1.16667; font-weight: 600;"><%= EscapeUtil.escapeHtml(pkg.getTitle() != null ? pkg.getTitle() : "Package") %></h3>
                 <p style="color: var(--text-secondary); margin: 16px 0; line-height: 1.47059; font-size: 17px;">
-                  <%= pkg.getDescription() != null && pkg.getDescription().length() > 150 
-                      ? pkg.getDescription().substring(0, 150) + "..." 
-                      : (pkg.getDescription() != null ? pkg.getDescription() : "설명 없음") %>
+                  <%= EscapeUtil.escapeHtml(pkg.getDescription() != null && pkg.getDescription().length() > 150
+                      ? pkg.getDescription().substring(0, 150) + "..."
+                      : (pkg.getDescription() != null ? pkg.getDescription() : "설명 없음")) %>
                 </p>
               </div>
               <div style="margin-top: auto; text-align: center;">

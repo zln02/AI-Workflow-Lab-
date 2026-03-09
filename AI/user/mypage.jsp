@@ -10,6 +10,7 @@
 <%@ page import="dao.AIModelDAO" %>
 <%@ page import="service.UserService" %>
 <%@ page import="util.CSRFUtil" %>
+<%@ page import="util.EscapeUtil" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.HashMap" %>
@@ -131,7 +132,7 @@
   }
   
   // 비밀번호 변경 처리
-  String passwordError = null;
+  List<String> passwordError = null;
   String passwordSuccess = null;
   if ("POST".equals(request.getMethod()) && "changePassword".equals(request.getParameter("action"))
       && CSRFUtil.validateToken(request)) {
@@ -145,7 +146,7 @@
     if (errors.isEmpty()) {
       passwordSuccess = "비밀번호가 성공적으로 변경되었습니다.";
     } else {
-      passwordError = String.join("<br>", errors);
+      passwordError = errors;
     }
   }
 %>
@@ -389,14 +390,14 @@
         <div class="form-group">
           <label>이메일</label>
           <div style="padding: 12px 16px; background: var(--surface); border-radius: 12px; color: var(--text);">
-            <%= user.getEmail() != null ? user.getEmail() : "" %>
+            <%= EscapeUtil.escapeHtml(user.getEmail() != null ? user.getEmail() : "") %>
           </div>
         </div>
 
         <div class="form-group">
           <label>이름</label>
           <div style="padding: 12px 16px; background: var(--surface); border-radius: 12px; color: var(--text);">
-            <%= user.getFullName() != null ? user.getFullName() : "" %>
+            <%= EscapeUtil.escapeHtml(user.getFullName() != null ? user.getFullName() : "") %>
           </div>
         </div>
 
@@ -434,9 +435,13 @@
       <div class="glass-card" style="padding: 48px;">
         <h2 style="margin-bottom: 32px; font-size: 32px; line-height: 1.125;">비밀번호 변경</h2>
         
-        <% if (passwordError != null) { %>
+        <% if (passwordError != null && !passwordError.isEmpty()) { %>
           <div id="password-error" class="error-message" style="background: #ff3b30; color: #ffffff; padding: 16px; border-radius: 12px; margin-bottom: 24px; font-size: 14px; line-height: 1.42859;">
-            <%= passwordError %>
+            <ul style="margin: 0; padding-left: 16px; list-style: disc;">
+              <% for (String err : passwordError) { %>
+                <li><%= EscapeUtil.escapeHtml(err) %></li>
+              <% } %>
+            </ul>
           </div>
         <% } %>
         
