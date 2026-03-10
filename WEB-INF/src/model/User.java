@@ -8,7 +8,7 @@ import java.util.List;
  * AI Workflow Lab 플랫폼의 사용자
  */
 public class User {
-    private int id;
+    private long id;
     private String username;
     private String email;
     private String passwordHash;
@@ -20,6 +20,13 @@ public class User {
     private List<String> skills;
     private List<String> interests;
     private String experienceLevel;
+    private Long kakaoId;
+    private String googleId;
+    private String naverId;
+    private String gender;
+    private String ageRange;
+    private String birthyear;
+    private String birthday;
     private boolean emailVerified;
     private boolean isActive;
     private Timestamp lastLogin;
@@ -29,19 +36,24 @@ public class User {
     // 생성자
     public User() {}
     
-    public User(int id, String username, String email) {
+    public User(long id, String username, String email) {
         this.id = id;
         this.username = username;
         this.email = email;
     }
     
     // Getters and Setters
-    public int getId() {
+    public long getId() {
         return id;
     }
-    
-    public void setId(int id) {
+
+    public void setId(long id) {
         this.id = id;
+    }
+
+    /** Convenience int overload for DAOs using rs.getInt() */
+    public void setId(int id) {
+        this.id = (long) id;
     }
     
     public String getUsername() {
@@ -74,6 +86,24 @@ public class User {
     
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    /** Alias for setFullName - required by UserService */
+    public void setName(String name) {
+        this.fullName = name;
+    }
+
+    public String getName() {
+        return this.fullName;
+    }
+
+    /** Required by UserService */
+    public void setStatus(String status) {
+        this.isActive = "ACTIVE".equalsIgnoreCase(status) || "active".equalsIgnoreCase(status);
+    }
+
+    public String getStatus() {
+        return isActive ? "ACTIVE" : "INACTIVE";
     }
     
     public String getProfileImageUrl() {
@@ -132,6 +162,32 @@ public class User {
         this.experienceLevel = experienceLevel;
     }
     
+    public Long getKakaoId() {
+        return kakaoId;
+    }
+
+    public void setKakaoId(Long kakaoId) {
+        this.kakaoId = kakaoId;
+    }
+
+    public String getGoogleId() { return googleId; }
+    public void setGoogleId(String googleId) { this.googleId = googleId; }
+
+    public String getNaverId() { return naverId; }
+    public void setNaverId(String naverId) { this.naverId = naverId; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+
+    public String getAgeRange() { return ageRange; }
+    public void setAgeRange(String ageRange) { this.ageRange = ageRange; }
+
+    public String getBirthyear() { return birthyear; }
+    public void setBirthyear(String birthyear) { this.birthyear = birthyear; }
+
+    public String getBirthday() { return birthday; }
+    public void setBirthday(String birthday) { this.birthday = birthday; }
+
     public boolean isEmailVerified() {
         return emailVerified;
     }

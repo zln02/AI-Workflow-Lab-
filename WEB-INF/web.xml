@@ -27,7 +27,7 @@
     <session-timeout>30</session-timeout>
     <cookie-config>
       <http-only>true</http-only>
-      <secure>true</secure>
+      <secure>false</secure>
     </cookie-config>
     <tracking-mode>COOKIE</tracking-mode>
   </session-config>
@@ -143,5 +143,36 @@
   <servlet-mapping>
     <servlet-name>AIToolServlet</servlet-name>
     <url-pattern>/AI/api/ai-tools/*</url-pattern>
+  </servlet-mapping>
+
+  <!-- 소셜 로그인 -->
+  <servlet>
+    <servlet-name>KakaoAuthServlet</servlet-name>
+    <servlet-class>servlet.KakaoAuthServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>KakaoAuthServlet</servlet-name>
+    <url-pattern>/AI/oauth/kakao</url-pattern>
+    <url-pattern>/AI/oauth/kakao/callback</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>GoogleAuthServlet</servlet-name>
+    <servlet-class>servlet.GoogleAuthServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>GoogleAuthServlet</servlet-name>
+    <url-pattern>/AI/oauth/google</url-pattern>
+    <url-pattern>/AI/oauth/google/callback</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>NaverAuthServlet</servlet-name>
+    <servlet-class>servlet.NaverAuthServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>NaverAuthServlet</servlet-name>
+    <url-pattern>/AI/oauth/naver</url-pattern>
+    <url-pattern>/AI/oauth/naver/callback</url-pattern>
   </servlet-mapping>
 </web-app>
