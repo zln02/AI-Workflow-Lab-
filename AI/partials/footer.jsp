@@ -10,7 +10,7 @@
       <!-- Left: Brand -->
       <div class="site-footer__brand">
         <a href="/AI/user/home.jsp" class="site-footer__logo">
-          <span class="site-footer__logo-icon">🤖</span>
+          <i class="bi bi-hexagon-fill" style="font-size:1.1rem;background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;"></i>
           <span class="site-footer__logo-text">AI Workflow Lab</span>
         </a>
         <p class="site-footer__desc">
@@ -86,7 +86,6 @@
   margin-bottom: 14px;
 }
 
-.site-footer__logo-icon { font-size: 1.1rem; line-height: 1; }
 
 .site-footer__logo-text {
   font-size: 0.9375rem;

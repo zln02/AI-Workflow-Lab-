@@ -6,12 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Workflow Lab 관리자 로그인</title>
   <link rel="stylesheet" href="/AI/assets/css/admin-login.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 </head>
 <body>
   <div class="login-container">
     <div class="login-box">
       <div class="login-header">
-        <div class="login-icon">⚡</div>
+        <div class="login-icon"><i class="bi bi-hexagon-fill" style="font-size:2rem;background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;"></i></div>
         <h1 class="title">Admin Login</h1>
         <p class="subtitle">AI Workflow Lab 관리자 페이지</p>
       </div>

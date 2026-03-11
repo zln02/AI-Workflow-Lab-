@@ -74,17 +74,24 @@ public class AIToolServlet extends HttpServlet {
         String keyword = request.getParameter("keyword");
         String category = request.getParameter("category");
         String difficulty = request.getParameter("difficulty");
-        List<AITool> tools;
-        
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            tools = toolDAO.searchByKeyword(keyword);
-        } else if (category != null && !category.trim().isEmpty()) {
-            tools = toolDAO.findByCategory(category);
-        } else if (difficulty != null && !difficulty.trim().isEmpty()) {
-            tools = toolDAO.findByDifficulty(difficulty);
-        } else {
-            tools = toolDAO.findAll();
-        }
+        String country = request.getParameter("country");
+        String sort = request.getParameter("sort");
+        boolean freeOnly = Boolean.parseBoolean(request.getParameter("freeOnly"));
+        boolean apiOnly = Boolean.parseBoolean(request.getParameter("apiOnly"));
+        Integer limit = parseInteger(request.getParameter("limit"));
+        Integer offset = parseInteger(request.getParameter("offset"));
+
+        List<AITool> tools = toolDAO.findFiltered(
+                keyword,
+                category,
+                difficulty,
+                country,
+                freeOnly,
+                apiOnly,
+                sort,
+                limit,
+                offset
+        );
         
         out.print(gson.toJson(new SuccessResponse(tools)));
     }
@@ -139,6 +146,18 @@ public class AIToolServlet extends HttpServlet {
         
         List<AITool> tools = toolDAO.recommendTools(query, difficulty, category);
         out.print(gson.toJson(new SuccessResponse(tools)));
+    }
+
+    private Integer parseInteger(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
     
     /**

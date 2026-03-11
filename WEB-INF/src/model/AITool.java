@@ -1,7 +1,10 @@
 package model;
 
+import java.sql.Date;
 import java.sql.Timestamp;
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * AI 도구 정보를 담는 모델 클래스
@@ -11,6 +14,7 @@ public class AITool {
     private int id;
     private String toolName;
     private String providerName;
+    private String providerCountry;
     private String category;
     private String subcategory;
     private String description;
@@ -25,10 +29,28 @@ public class AITool {
     private String docsUrl;
     private String playgroundUrl;
     private List<String> supportedLanguages;
+    private List<String> supportedPlatforms;
     private String inputModalities;
     private String outputModalities;
     private Double maxFileSizeMb;
     private Integer rateLimitPerMin;
+    private Long monthlyActiveUsers;
+    private Date launchDate;
+    private Date lastMajorUpdate;
+    private Integer globalRank;
+    private Integer categoryRank;
+    private Double trendScore;
+    private Double growthRate;
+    private List<String> pros;
+    private List<String> cons;
+    private List<String> alternatives;
+    private List<String> integrations;
+    private Integer dataPrivacyScore;
+    private boolean enterpriseReady;
+    private boolean openSource;
+    private String githubUrl;
+    private Integer githubStars;
+    private Long monthlyVisits;
     private boolean commercialUseAllowed;
     private boolean onpremAvailable;
     private String licenseType;
@@ -72,6 +94,14 @@ public class AITool {
     
     public void setProviderName(String providerName) {
         this.providerName = providerName;
+    }
+
+    public String getProviderCountry() {
+        return providerCountry;
+    }
+
+    public void setProviderCountry(String providerCountry) {
+        this.providerCountry = providerCountry;
     }
     
     public String getCategory() {
@@ -185,6 +215,14 @@ public class AITool {
     public void setSupportedLanguages(List<String> supportedLanguages) {
         this.supportedLanguages = supportedLanguages;
     }
+
+    public List<String> getSupportedPlatforms() {
+        return supportedPlatforms;
+    }
+
+    public void setSupportedPlatforms(List<String> supportedPlatforms) {
+        this.supportedPlatforms = supportedPlatforms;
+    }
     
     public String getInputModalities() {
         return inputModalities;
@@ -216,6 +254,142 @@ public class AITool {
     
     public void setRateLimitPerMin(Integer rateLimitPerMin) {
         this.rateLimitPerMin = rateLimitPerMin;
+    }
+
+    public Long getMonthlyActiveUsers() {
+        return monthlyActiveUsers;
+    }
+
+    public void setMonthlyActiveUsers(Long monthlyActiveUsers) {
+        this.monthlyActiveUsers = monthlyActiveUsers;
+    }
+
+    public Date getLaunchDate() {
+        return launchDate;
+    }
+
+    public void setLaunchDate(Date launchDate) {
+        this.launchDate = launchDate;
+    }
+
+    public Date getLastMajorUpdate() {
+        return lastMajorUpdate;
+    }
+
+    public void setLastMajorUpdate(Date lastMajorUpdate) {
+        this.lastMajorUpdate = lastMajorUpdate;
+    }
+
+    public Integer getGlobalRank() {
+        return globalRank;
+    }
+
+    public void setGlobalRank(Integer globalRank) {
+        this.globalRank = globalRank;
+    }
+
+    public Integer getCategoryRank() {
+        return categoryRank;
+    }
+
+    public void setCategoryRank(Integer categoryRank) {
+        this.categoryRank = categoryRank;
+    }
+
+    public Double getTrendScore() {
+        return trendScore;
+    }
+
+    public void setTrendScore(Double trendScore) {
+        this.trendScore = trendScore;
+    }
+
+    public Double getGrowthRate() {
+        return growthRate;
+    }
+
+    public void setGrowthRate(Double growthRate) {
+        this.growthRate = growthRate;
+    }
+
+    public List<String> getPros() {
+        return pros;
+    }
+
+    public void setPros(List<String> pros) {
+        this.pros = pros;
+    }
+
+    public List<String> getCons() {
+        return cons;
+    }
+
+    public void setCons(List<String> cons) {
+        this.cons = cons;
+    }
+
+    public List<String> getAlternatives() {
+        return alternatives;
+    }
+
+    public void setAlternatives(List<String> alternatives) {
+        this.alternatives = alternatives;
+    }
+
+    public List<String> getIntegrations() {
+        return integrations;
+    }
+
+    public void setIntegrations(List<String> integrations) {
+        this.integrations = integrations;
+    }
+
+    public Integer getDataPrivacyScore() {
+        return dataPrivacyScore;
+    }
+
+    public void setDataPrivacyScore(Integer dataPrivacyScore) {
+        this.dataPrivacyScore = dataPrivacyScore;
+    }
+
+    public boolean isEnterpriseReady() {
+        return enterpriseReady;
+    }
+
+    public void setEnterpriseReady(boolean enterpriseReady) {
+        this.enterpriseReady = enterpriseReady;
+    }
+
+    public boolean isOpenSource() {
+        return openSource;
+    }
+
+    public void setOpenSource(boolean openSource) {
+        this.openSource = openSource;
+    }
+
+    public String getGithubUrl() {
+        return githubUrl;
+    }
+
+    public void setGithubUrl(String githubUrl) {
+        this.githubUrl = githubUrl;
+    }
+
+    public Integer getGithubStars() {
+        return githubStars;
+    }
+
+    public void setGithubStars(Integer githubStars) {
+        this.githubStars = githubStars;
+    }
+
+    public Long getMonthlyVisits() {
+        return monthlyVisits;
+    }
+
+    public void setMonthlyVisits(Long monthlyVisits) {
+        this.monthlyVisits = monthlyVisits;
     }
     
     public boolean isCommercialUseAllowed() {
@@ -332,6 +506,56 @@ public class AITool {
         }
         return pricingModel != null ? pricingModel : "유료";
     }
+
+    public String getRankDisplay() {
+        if (globalRank == null || globalRank <= 0) {
+            return "-";
+        }
+        return "#" + globalRank;
+    }
+
+    public String getTrendDisplay() {
+        if (trendScore == null) {
+            return "-";
+        }
+        return String.format(Locale.US, "%.1f", trendScore);
+    }
+
+    public String getGrowthDisplay() {
+        if (growthRate == null) {
+            return "-";
+        }
+        return String.format(Locale.US, "%+.1f%%", growthRate);
+    }
+
+    public String getFormattedMonthlyActiveUsers() {
+        return formatCompactNumber(monthlyActiveUsers);
+    }
+
+    public String getFormattedMonthlyVisits() {
+        return formatCompactNumber(monthlyVisits);
+    }
+
+    public String getFormattedGithubStars() {
+        return formatCompactNumber(githubStars != null ? githubStars.longValue() : null);
+    }
+
+    private String formatCompactNumber(Long value) {
+        if (value == null || value <= 0) {
+            return "-";
+        }
+
+        if (value >= 1000000000L) {
+            return String.format(Locale.US, "%.1fB", value / 1000000000.0);
+        }
+        if (value >= 1000000L) {
+            return String.format(Locale.US, "%.1fM", value / 1000000.0);
+        }
+        if (value >= 1000L) {
+            return String.format(Locale.US, "%.1fK", value / 1000.0);
+        }
+        return NumberFormat.getIntegerInstance(Locale.US).format(value);
+    }
     
     @Override
     public String toString() {
@@ -339,6 +563,7 @@ public class AITool {
                 "id=" + id +
                 ", toolName='" + toolName + '\'' +
                 ", providerName='" + providerName + '\'' +
+                ", providerCountry='" + providerCountry + '\'' +
                 ", category='" + category + '\'' +
                 ", rating=" + rating +
                 '}';

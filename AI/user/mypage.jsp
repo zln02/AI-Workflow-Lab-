@@ -8,6 +8,8 @@
 <%@ page import="dao.OrderDAO" %>
 <%@ page import="dao.PackageDAO" %>
 <%@ page import="dao.AIModelDAO" %>
+<%@ page import="dao.CreditDAO" %>
+<%@ page import="dao.LabSessionDAO" %>
 <%@ page import="service.UserService" %>
 <%@ page import="util.CSRFUtil" %>
 <%@ page import="util.EscapeUtil" %>
@@ -15,6 +17,7 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.math.BigDecimal" %>
+<%@ page import="model.LabSession" %>
 <%
   request.setCharacterEncoding("UTF-8");
   response.setCharacterEncoding("UTF-8");
@@ -141,6 +144,30 @@
       passwordError = errors;
     }
   }
+
+  CreditDAO creditDAO = new CreditDAO();
+  int creditBalance = 0;
+  int totalGranted = 0;
+  int totalUsed = 0;
+  List<Map<String, Object>> creditLogs = new java.util.ArrayList<>();
+  try {
+    creditBalance = creditDAO.getBalance(user.getId());
+    totalGranted = creditDAO.getTotalGranted(user.getId());
+    totalUsed = creditDAO.getTotalUsed(user.getId());
+    creditLogs = creditDAO.getUsageLogs(user.getId(), 10);
+  } catch (Exception e) {}
+
+  List<LabSession> labSessions = new java.util.ArrayList<>();
+  try {
+    labSessions = new LabSessionDAO().findRecentByUser(user.getId(), 10);
+  } catch (Exception e) {}
+
+  String returnParam = request.getParameter("return");
+  String returnUrl = null;
+  if (returnParam != null && !returnParam.isEmpty()
+      && returnParam.startsWith("/") && !returnParam.startsWith("//")) {
+    returnUrl = returnParam;
+  }
 %>
 <!DOCTYPE html>
 <html lang="ko">
@@ -260,17 +287,26 @@
 
   <!-- Tabs -->
   <div class="tab-bar">
-    <button class="tab-item active" onclick="switchTab('profile', this)">
+    <button class="tab-item active" data-tab="profile" onclick="switchTab('profile', this)">
       <i class="bi bi-person"></i>프로필
     </button>
-    <button class="tab-item" onclick="switchTab('subscription', this)">
+    <button class="tab-item" data-tab="subscription" onclick="switchTab('subscription', this)">
       <i class="bi bi-credit-card"></i>구독
     </button>
-    <button class="tab-item" onclick="switchTab('orders', this)">
+    <button class="tab-item" data-tab="orders" onclick="switchTab('orders', this)">
       <i class="bi bi-receipt"></i>활동 내역
     </button>
-    <button class="tab-item" onclick="switchTab('payment', this)">
+    <button class="tab-item" data-tab="payment" onclick="switchTab('payment', this)">
       <i class="bi bi-credit-card-2-front"></i>결제 수단
+    </button>
+    <button class="tab-item" data-tab="usage" onclick="switchTab('usage', this)">
+      <i class="bi bi-coin"></i>크레딧
+    </button>
+    <button class="tab-item" data-tab="labs" onclick="switchTab('labs', this)">
+      <i class="bi bi-bezier2"></i>실습 기록
+    </button>
+    <button class="tab-item" data-tab="apikeys" onclick="switchTab('apikeys', this)">
+      <i class="bi bi-key"></i>API 키
     </button>
   </div>
 
@@ -604,6 +640,131 @@
     </div>
   </div><!-- /panel-payment -->
 
+  <!-- ══ Panel: 크레딧 ══ -->
+  <div id="panel-usage" class="tab-panel">
+    <div class="glass-card">
+      <div class="card-header"><i class="bi bi-coin"></i>크레딧 현황</div>
+      <div class="glass-card__body">
+        <div class="info-row">
+          <span class="info-row__label">현재 잔액</span>
+          <span class="info-row__val" style="font-weight:700;color:#60a5fa;"><%= creditBalance %> credits</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">누적 지급</span>
+          <span class="info-row__val"><%= totalGranted %> credits</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row__label">누적 사용</span>
+          <span class="info-row__val"><%= totalUsed %> credits</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-card" style="margin-top:16px;">
+      <div class="card-header"><i class="bi bi-clock-history"></i>최근 사용 내역</div>
+      <div class="glass-card__body">
+        <% if (creditLogs.isEmpty()) { %>
+          <div class="no-orders">사용 기록이 없습니다.</div>
+        <% } else { %>
+          <% for (Map<String, Object> log : creditLogs) { %>
+            <div class="order-item">
+              <div class="order-item__name">
+                <strong><%= EscapeUtil.escapeHtml(String.valueOf(log.get("feature"))) %></strong>
+                <span style="color:var(--text-muted,#64748b);">
+                  <%= log.get("requestSummary") != null ? EscapeUtil.escapeHtml(String.valueOf(log.get("requestSummary"))) : "" %>
+                </span>
+              </div>
+              <div class="order-item__price">
+                -<%= log.get("creditsUsed") %> credits
+              </div>
+            </div>
+          <% } %>
+        <% } %>
+      </div>
+    </div>
+  </div><!-- /panel-usage -->
+
+  <!-- ══ Panel: 실습 기록 ══ -->
+  <div id="panel-labs" class="tab-panel">
+    <div class="glass-card">
+      <div class="card-header"><i class="bi bi-bezier2"></i>최근 실습 세션</div>
+      <div class="glass-card__body">
+        <% if (labSessions.isEmpty()) { %>
+          <div class="no-orders">저장된 실습 세션이 없습니다.</div>
+        <% } else { %>
+          <% for (LabSession labSession : labSessions) { %>
+            <div class="order-card">
+              <div class="order-card__top">
+                <div>
+                  <div class="order-card__id"><%= EscapeUtil.escapeHtml(labSession.getTitle() != null ? labSession.getTitle() : "실습 실행") %></div>
+                  <div class="order-card__date">
+                    <%= labSession.getCreatedAt() != null ? new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(labSession.getCreatedAt()) : "-" %>
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="order-card__price" style="font-size:1rem;"><%= labSession.getTokensUsed() %> tokens</div>
+                  <div class="order-card__method"><%= EscapeUtil.escapeHtml(labSession.getSessionType()) %> · <%= EscapeUtil.escapeHtml(String.valueOf(labSession.getCreditsUsed())) %> credits</div>
+                </div>
+              </div>
+              <% if (labSession.getProjectId() != null) { %>
+              <a href="/AI/user/lab/session.jsp?id=<%= labSession.getProjectId() %>" class="btn-primary" style="display:inline-flex;padding:8px 14px;font-size:.82rem;">
+                <i class="bi bi-arrow-repeat"></i>세션 열기
+              </a>
+              <% } %>
+            </div>
+          <% } %>
+        <% } %>
+      </div>
+    </div>
+  </div><!-- /panel-labs -->
+
+  <!-- ══ Panel: API Keys ══ -->
+  <div id="panel-apikeys" class="tab-panel">
+    <div class="glass-card">
+      <div class="card-header"><i class="bi bi-key"></i>API 키 관리</div>
+      <div class="glass-card__body">
+        <% if (returnUrl != null) { %>
+        <div class="alert-success" style="margin-bottom:14px;">
+          실습 화면에서 오셨습니다. Anthropic API 키를 저장하면 바로 돌아가서 실행을 이어갈 수 있습니다.
+          <div style="margin-top:10px;">
+            <a href="<%= EscapeUtil.escapeHtml(returnUrl) %>" class="btn-primary" style="display:inline-flex;padding:8px 14px;font-size:.82rem;">
+              <i class="bi bi-arrow-left"></i>실습으로 돌아가기
+            </a>
+          </div>
+        </div>
+        <% } %>
+        <form id="apiKeyForm" onsubmit="saveApiKey(event)">
+          <div class="form-field">
+            <label>Provider</label>
+            <select id="apiProvider" class="form-input">
+              <option value="anthropic">Anthropic</option>
+              <option value="openai">OpenAI</option>
+              <option value="google">Google</option>
+              <option value="mistral">Mistral</option>
+            </select>
+            <small>실습 실행과 AI 도우미는 현재 Anthropic, OpenAI 키를 지원합니다.</small>
+          </div>
+          <div class="form-field">
+            <label>키 이름</label>
+            <input type="text" id="apiKeyName" class="form-input" placeholder="예: 개인 Anthropic 키">
+          </div>
+          <div class="form-field">
+            <label>API 키</label>
+            <input type="password" id="apiKeyValue" class="form-input" placeholder="sk-ant-... 또는 sk-proj-...">
+          </div>
+          <button type="submit" class="btn-submit">API 키 저장</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="glass-card" style="margin-top:16px;">
+      <div class="card-header"><i class="bi bi-list-ul"></i>등록된 키</div>
+      <div class="glass-card__body">
+        <div id="apiKeyList" class="no-orders">불러오는 중...</div>
+      </div>
+    </div>
+  </div><!-- /panel-apikeys -->
+
 </div><!-- /wrapper -->
 
 <script src="/AI/assets/js/user.js"></script>
@@ -614,7 +775,23 @@
     document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
     document.getElementById('panel-' + name).classList.add('active');
     btn.classList.add('active');
+    if (history.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', name);
+      history.replaceState(null, '', url.toString());
+    }
   }
+
+  (function initRequestedTab() {
+    const params = new URLSearchParams(window.location.search);
+    const requestedTab = params.get('tab') || (window.location.hash ? window.location.hash.replace('#', '') : '');
+    if (!requestedTab) return;
+    const panel = document.getElementById('panel-' + requestedTab);
+    const btn = document.querySelector('.tab-item[data-tab="' + requestedTab + '"]');
+    if (panel && btn) {
+      switchTab(requestedTab, btn);
+    }
+  })();
 
   /* ── Open profile tab if password errors exist ── */
   <% if ((passwordError != null && !passwordError.isEmpty()) || passwordSuccess != null) { %>
@@ -692,6 +869,92 @@
     }
     alert('결제 수단이 등록되었습니다.\n(실제 결제 게이트웨이 연동 시 처리됩니다)');
   }
+
+  async function loadApiKeys() {
+    const wrap = document.getElementById('apiKeyList');
+    if (!wrap) return;
+    try {
+      const resp = await fetch('/AI/api/user/api-keys/');
+      const data = await resp.json();
+      if (!data.success || !Array.isArray(data.data) || data.data.length === 0) {
+        wrap.innerHTML = '<div class="no-orders">등록된 API 키가 없습니다.</div>';
+        return;
+      }
+      wrap.innerHTML = data.data.map(item => `
+        <div class="order-item">
+          <div class="order-item__name">
+            <strong>${item.provider}</strong>
+            <span>${item.keyName || ''}</span>
+            <span style="color:var(--text-muted,#64748b);">${item.maskedKey || ''}</span>
+          </div>
+          <div class="order-item__price">
+            <button type="button" onclick="deleteApiKey(${item.id})" style="background:none;border:none;color:#f87171;">삭제</button>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      wrap.innerHTML = '<div class="no-orders">API 키 목록을 불러오지 못했습니다.</div>';
+    }
+  }
+
+  async function saveApiKey(e) {
+    e.preventDefault();
+    const provider = document.getElementById('apiProvider').value;
+    const keyName = document.getElementById('apiKeyName').value;
+    const apiKey = document.getElementById('apiKeyValue').value;
+    if (!apiKey.trim()) {
+      alert('API 키를 입력하세요.');
+      return;
+    }
+
+    const resp = await fetch('/AI/api/user/api-keys/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ provider, keyName, apiKey })
+    });
+    const data = await resp.json();
+    if (data.success) {
+      document.getElementById('apiKeyForm').reset();
+      loadApiKeys();
+      <% if (returnUrl != null) { %>
+      if (confirm('API 키가 저장되었습니다. 실습 화면으로 돌아갈까요?')) {
+        window.location.href = '<%= EscapeUtil.escapeHtml(returnUrl) %>';
+        return;
+      }
+      <% } else { %>
+      alert('API 키가 저장되었습니다.');
+      <% } %>
+    } else {
+      alert(data.message || '저장에 실패했습니다.');
+    }
+  }
+
+  async function deleteApiKey(id) {
+    if (!confirm('이 API 키를 삭제할까요?')) return;
+    const resp = await fetch('/AI/api/user/api-keys/' + id, { method: 'DELETE' });
+    const data = await resp.json();
+    if (data.success) {
+      loadApiKeys();
+    } else {
+      alert(data.message || '삭제에 실패했습니다.');
+    }
+  }
+
+  (function initApiKeyContext() {
+    const params = new URLSearchParams(window.location.search);
+    const requestedTab = params.get('tab');
+    const returnUrl = params.get('return');
+    if (requestedTab === 'apikeys') {
+      const providerEl = document.getElementById('apiProvider');
+      if (providerEl) providerEl.value = 'anthropic';
+    }
+    if (returnUrl) {
+      const nameEl = document.getElementById('apiKeyName');
+      if (nameEl && !nameEl.value) nameEl.value = '실습용 Anthropic 키';
+    }
+  })();
+
+  loadApiKeys();
 </script>
 <jsp:include page="/AI/partials/footer.jsp"/>
 </body>

@@ -21,7 +21,7 @@
 
     <!-- Logo -->
     <a href="/AI/user/home.jsp" class="site-nav__logo">
-      <span class="site-nav__logo-icon">🤖</span>
+      <i class="bi bi-hexagon-fill" style="font-size:1.2rem;background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;"></i>
       <span class="site-nav__logo-text">AI Workflow Lab</span>
     </a>
 
@@ -78,7 +78,7 @@
 <div class="offcanvas offcanvas-end mobile-nav" tabindex="-1" id="mobileNav">
   <div class="offcanvas-header mobile-nav__header">
     <a href="/AI/user/home.jsp" class="site-nav__logo">
-      <span class="site-nav__logo-icon">🤖</span>
+      <i class="bi bi-hexagon-fill" style="font-size:1.2rem;background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;"></i>
       <span class="site-nav__logo-text">AI Workflow Lab</span>
     </a>
     <button type="button" class="mobile-nav__close" data-bs-dismiss="offcanvas" aria-label="닫기">

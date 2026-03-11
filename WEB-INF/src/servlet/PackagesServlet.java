@@ -135,7 +135,7 @@ public class PackagesServlet extends HttpServlet {
             if (discountPrice != null) {
                 newPackage.setDiscountPrice(java.math.BigDecimal.valueOf(discountPrice));
             }
-            newPackage.setActive(true);
+            newPackage.setIsActive(true);
             
             boolean created = packageDAO.addPackage(newPackage);
             
@@ -192,7 +192,7 @@ public class PackagesServlet extends HttpServlet {
             
             if (title != null) pkg.setTitle(title);
             if (description != null) pkg.setDescription(description);
-            if (status != null) pkg.setActive("active".equalsIgnoreCase(status));
+            if (status != null) pkg.setIsActive("active".equalsIgnoreCase(status));
             
             try {
                 String priceStr = request.getParameter("price");

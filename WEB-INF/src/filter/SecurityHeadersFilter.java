@@ -26,13 +26,20 @@ public class SecurityHeadersFilter implements Filter {
         httpResponse.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
         httpResponse.setHeader("Content-Security-Policy",
             "default-src 'self'; " +
+            "base-uri 'self'; " +
             "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; " +
+            "object-src 'none'; " +
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; " +
             "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
             "connect-src 'self' https://cdn.jsdelivr.net; " +
-            "img-src 'self' data: https:;"
+            "img-src 'self' data: https:; " +
+            "media-src 'self' data: https: blob:; " +
+            "form-action 'self'; " +
+            "frame-ancestors 'none';"
         );
         httpResponse.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+        httpResponse.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+        httpResponse.setHeader("Cross-Origin-Resource-Policy", "same-origin");
         httpResponse.setHeader("Permissions-Policy", 
             "geolocation=(), " +
             "microphone=(), " +

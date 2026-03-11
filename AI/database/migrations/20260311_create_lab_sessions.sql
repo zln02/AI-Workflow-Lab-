@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS lab_sessions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  project_id INT DEFAULT NULL,
+  session_type ENUM('playground','project','challenge') DEFAULT 'playground',
+  title VARCHAR(255) DEFAULT NULL,
+  code_content LONGTEXT DEFAULT NULL,
+  result_content LONGTEXT DEFAULT NULL,
+  model_used VARCHAR(100) DEFAULT NULL,
+  tokens_used INT DEFAULT 0,
+  credits_used DECIMAL(10,2) DEFAULT 0,
+  execution_time_ms INT DEFAULT NULL,
+  status ENUM('draft','running','completed','error') DEFAULT 'draft',
+  metadata JSON DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_lab_sessions_user FOREIGN KEY (user_id) REFERENCES users(id),
+  CONSTRAINT fk_lab_sessions_project FOREIGN KEY (project_id) REFERENCES lab_projects(id) ON DELETE SET NULL,
+  INDEX idx_lab_sessions_user (user_id, created_at DESC),
+  INDEX idx_lab_sessions_project (project_id, created_at DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

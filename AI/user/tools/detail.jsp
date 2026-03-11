@@ -18,9 +18,29 @@
 
   List<AITool> related = toolDao.findByCategory(tool.getCategory());
   related.removeIf(t -> t.getId() == tool.getId());
-  if (related.size() > 4) related = related.subList(0, 4);
+  if (related.size() > 3) related = related.subList(0, 3);
 
   String[] logoInfo = getProviderLogo(tool.getProviderName(), tool.getToolName());
+%>
+<%!
+  private String joinList(List<String> values, String fallback) {
+    if (values == null || values.isEmpty()) return fallback;
+    return String.join(", ", values);
+  }
+
+  private String countryLabel(String code) {
+    if (code == null || code.isEmpty()) return "-";
+    switch (code) {
+      case "US": return "미국";
+      case "KR": return "한국";
+      case "CN": return "중국";
+      case "FR": return "프랑스";
+      case "DE": return "독일";
+      case "JP": return "일본";
+      case "CA": return "캐나다";
+      default: return code;
+    }
+  }
 %>
 <!DOCTYPE html>
 <html lang="ko">
@@ -28,6 +48,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= escapeHtml(tool.getToolName()) %> - AI Workflow Lab</title>
+  <meta name="description" content="<%= escapeHtmlAttribute(safeString(tool.getPurposeSummary(), tool.getToolName() + " 상세 정보, 가격, 기능, 장단점")) %>">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="<%= escapeHtmlAttribute(tool.getToolName()) %> - AI Workflow Lab">
+  <meta property="og:description" content="<%= escapeHtmlAttribute(safeString(tool.getPurposeSummary(), tool.getToolName() + "의 기능과 활용 사례를 확인하세요.")) %>">
+  <meta property="og:url" content="<%= request.getRequestURL().toString() %>?id=<%= tool.getId() %>">
+  <meta property="og:site_name" content="AI Workflow Lab">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<%= escapeHtmlAttribute(tool.getToolName()) %> - AI Workflow Lab">
+  <meta name="twitter:description" content="<%= escapeHtmlAttribute(safeString(tool.getPurposeSummary(), tool.getToolName() + " 상세 정보")) %>">
+  <link rel="canonical" href="<%= request.getRequestURL().toString() %>?id=<%= tool.getId() %>">
   <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,132 +67,183 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/AI/assets/css/dark-theme.css">
   <style>
-    body { padding-top: 44px; }
-
-    .tool-hero {
-      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-      border-bottom: 1px solid #334155;
-      padding: 48px 0 40px;
-    }
-    .tool-hero-logo {
-      width: 72px; height: 72px; border-radius: 16px;
-      object-fit: contain; background: #334155; padding: 8px;
-    }
-    .tool-hero-logo-fallback {
-      width: 72px; height: 72px; border-radius: 16px;
-      background: #334155; display: flex; align-items: center;
-      justify-content: center; font-size: 2rem;
-    }
-    .spec-card {
-      background: #1e293b; border: 1px solid #334155;
-      border-radius: 12px; padding: 20px; margin-bottom: 16px;
-    }
-    .spec-card h6 {
-      color: #6366f1; font-size: 12px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;
-    }
-    .spec-row {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      padding: 8px 0; border-bottom: 1px solid #334155; font-size: 14px;
-    }
+    body { padding-top: 60px; background: var(--bg-primary, #0a0f1e); color: var(--text-primary, #f1f5f9); font-family: 'Noto Sans KR', sans-serif; }
+    .pi { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    .hero-section { background: linear-gradient(135deg, rgba(17,24,39,0.9), rgba(10,15,30,1)); border-bottom: 1px solid rgba(255,255,255,0.07); padding: 40px 0 48px; }
+    .gc { background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.09); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+    .gc-title { font-size: 0.75rem; font-weight: 600; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 16px; }
+    .spec-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.875rem; }
     .spec-row:last-child { border-bottom: none; }
-    .spec-label { color: #64748b; flex-shrink: 0; margin-right: 16px; }
-    .spec-value { color: #e2e8f0; text-align: right; }
-    .tag-pill {
-      display: inline-block; padding: 4px 12px;
-      background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3);
-      border-radius: 20px; font-size: 12px; color: #a5b4fc; margin: 3px;
-    }
-    .use-case-item {
-      display: flex; gap: 10px; align-items: flex-start;
-      padding: 10px 0; border-bottom: 1px solid #334155; font-size: 14px; color: #94a3b8;
-    }
-    .use-case-item:last-child { border-bottom: none; }
-    .use-case-item i { color: #6366f1; margin-top: 2px; flex-shrink: 0; }
-    .action-btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 12px 24px; border-radius: 10px; font-size: 15px;
-      font-weight: 500; text-decoration: none; transition: all 0.2s;
-    }
-    .action-btn-primary {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none;
-    }
-    .action-btn-primary:hover { color: white; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,0.4); }
-    .action-btn-secondary {
-      background: transparent; color: #94a3b8; border: 1px solid #334155;
-    }
-    .action-btn-secondary:hover { color: #e2e8f0; border-color: #6366f1; }
-    .difficulty-badge {
-      display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
-    }
-    .related-card {
-      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
-      padding: 16px; transition: all 0.2s; text-decoration: none; display: block;
-    }
-    .related-card:hover { border-color: #6366f1; transform: translateY(-2px); }
+    .spec-label { color: var(--text-muted, #64748b); }
+    .spec-value { color: var(--text-primary, #f1f5f9); text-align: right; }
+    .cat-badge { display: inline-flex; align-items: center; padding: 3px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; margin-right: 6px; }
+    .feat-item { display: flex; gap: 8px; align-items: flex-start; font-size: 0.875rem; color: var(--text-secondary, #94a3b8); margin-bottom: 10px; }
+    .feat-item i { color: #4ade80; flex-shrink: 0; margin-top: 2px; }
+    .tag-pill { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 500; background: rgba(59,130,246,0.10); color: #60a5fa; border: 1px solid rgba(59,130,246,0.18); text-decoration: none; margin: 3px; transition: background 0.2s; }
+    .tag-pill:hover { background: rgba(59,130,246,0.18); color: #93c5fd; }
+    .btn-hero-primary { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 9px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: #fff; -webkit-text-fill-color: #fff; font-size: 0.875rem; font-weight: 600; text-decoration: none; border: none; transition: all 0.2s; }
+    .btn-hero-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,130,246,0.4); color: #fff; -webkit-text-fill-color: #fff; }
+    .btn-hero-outline { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 9px; background: rgba(255,255,255,0.06); color: var(--text-secondary, #94a3b8); -webkit-text-fill-color: var(--text-secondary, #94a3b8); font-size: 0.875rem; font-weight: 600; text-decoration: none; border: 1px solid rgba(255,255,255,0.12); transition: all 0.2s; }
+    .btn-hero-outline:hover { background: rgba(255,255,255,0.10); color: #f1f5f9; -webkit-text-fill-color: #f1f5f9; }
+    .rel-card { display: block; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px; text-decoration: none; transition: all 0.22s; }
+    .rel-card:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+    .breadcrumb-bar { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.8125rem; }
+    .breadcrumb-bar a { color: var(--text-muted, #64748b); text-decoration: none; }
+    .breadcrumb-bar a:hover { color: var(--text-secondary, #94a3b8); }
+    .breadcrumb-bar span { color: var(--text-secondary, #94a3b8); }
+    .stars { color: #f59e0b; letter-spacing: 1px; }
+    .gc-green { background: rgba(34,197,94,0.06); border-left: 3px solid rgba(34,197,94,0.4); }
+    .gc-red { background: rgba(239,68,68,0.05); border-left: 3px solid rgba(239,68,68,0.3); }
+    .kpi-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:22px; }
+    .kpi-card { padding:14px 16px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); }
+    .kpi-card span { display:block; }
+    .kpi-card__label { color:#64748b; font-size:.7rem; text-transform:uppercase; letter-spacing:.08em; }
+    .kpi-card__value { color:#f1f5f9; font-size:1rem; font-weight:700; margin-top:6px; }
+    @media (max-width: 992px) { .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width: 576px) { .kpi-grid { grid-template-columns:1fr; } }
   </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "<%= escapeJs(tool.getToolName()) %>",
+    "applicationCategory": "<%= escapeJs(safeString(tool.getCategory(), "AI Tool")) %>",
+    "operatingSystem": "<%= escapeJs(joinList(tool.getSupportedPlatforms(), "Web")) %>",
+    "description": "<%= escapeJs(safeString(tool.getPurposeSummary(), tool.getToolName() + " 상세 정보")) %>",
+    "offers": {
+      "@type": "Offer",
+      "price": "<%= escapeJs(safeString(tool.getPricingModel(), tool.isFreeTierAvailable() ? "0" : "Contact")) %>",
+      "priceCurrency": "KRW"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "<%= tool.getRating() != null ? String.format(java.util.Locale.US, "%.1f", tool.getRating()) : "0.0" %>",
+      "reviewCount": "<%= tool.getReviewCount() != null ? tool.getReviewCount() : 0 %>"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "<%= escapeJs(safeString(tool.getProviderName(), "AI Workflow Lab")) %>"
+    }
+  }
+  </script>
 </head>
 <body>
 <%@ include file="/AI/partials/header.jsp" %>
 
-<!-- 히어로 영역 -->
-<div class="tool-hero">
-  <div class="container">
-    <!-- 브레드크럼 -->
-    <nav aria-label="breadcrumb" class="mb-4">
-      <ol class="breadcrumb" style="font-size:13px;">
-        <li class="breadcrumb-item"><a href="/AI/user/home.jsp" style="color:#64748b; text-decoration:none;">홈</a></li>
-        <li class="breadcrumb-item"><a href="/AI/user/tools/navigator.jsp" style="color:#64748b; text-decoration:none;">AI 도구 탐색</a></li>
-        <li class="breadcrumb-item active" style="color:#94a3b8;"><%= escapeHtml(tool.getToolName()) %></li>
-      </ol>
-    </nav>
+<!-- 브레드크럼 -->
+<div class="hero-section">
+  <div class="pi">
+    <div class="breadcrumb-bar mb-4">
+      <a href="/AI/user/home.jsp">홈</a>
+      <span class="mx-2">›</span>
+      <a href="/AI/user/tools/navigator.jsp">AI 도구 탐색</a>
+      <span class="mx-2">›</span>
+      <span><%= escapeHtml(tool.getToolName()) %></span>
+    </div>
 
+    <!-- 히어로 콘텐츠 -->
     <div class="d-flex align-items-start gap-4 flex-wrap">
       <!-- 로고 -->
-      <img src="<%= logoInfo[0] %>" alt="<%= escapeHtml(tool.getProviderName()) %>"
-           class="tool-hero-logo"
-           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="tool-hero-logo-fallback" style="display:none;">🤖</div>
+      <div style="flex-shrink:0;">
+        <img src="<%= logoInfo[0] %>" alt="<%= escapeHtml(safeString(tool.getProviderName(), "")) %>"
+             style="width:64px;height:64px;border-radius:12px;object-fit:contain;background:rgba(255,255,255,0.06);padding:8px;"
+             onerror="this.style.display='none';document.getElementById('logo-fallback-<%= tool.getId() %>').style.display='flex';">
+        <div id="logo-fallback-<%= tool.getId() %>"
+             style="display:none;width:64px;height:64px;border-radius:12px;background:rgba(255,255,255,0.06);align-items:center;justify-content:center;font-size:1.75rem;">
+          <i class="bi bi-hexagon-fill"></i>
+        </div>
+      </div>
 
-      <!-- 기본 정보 -->
+      <!-- 정보 -->
       <div class="flex-grow-1">
-        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-          <span style="font-size:13px; color:#64748b;"><%= escapeHtml(safeString(tool.getProviderName(), "")) %></span>
-          <% if (tool.isFreeTierAvailable()) { %>
-          <span class="badge" style="background:rgba(16,185,129,0.2); color:#10b981; border:1px solid rgba(16,185,129,0.3); font-size:11px;">무료 플랜</span>
+        <!-- 배지 행 -->
+        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+          <%
+            String cat = safeString(tool.getCategory(), "");
+            String catBg, catColor;
+            if ("Text Generation".equals(cat)) { catBg = "rgba(59,130,246,0.15)"; catColor = "#60a5fa"; }
+            else if ("Code Generation".equals(cat)) { catBg = "rgba(34,197,94,0.15)"; catColor = "#4ade80"; }
+            else if ("Image Generation".equals(cat)) { catBg = "rgba(168,85,247,0.15)"; catColor = "#c084fc"; }
+            else if ("Voice Processing".equals(cat)) { catBg = "rgba(249,115,22,0.15)"; catColor = "#fb923c"; }
+            else { catBg = "rgba(100,116,139,0.15)"; catColor = "#94a3b8"; }
+          %>
+          <% if (!cat.isEmpty()) { %>
+          <span class="cat-badge" style="background:<%= catBg %>;color:<%= catColor %>;border:1px solid <%= catColor %>33;">
+            <%= escapeHtml(cat) %>
+          </span>
           <% } %>
           <% String diff = safeString(tool.getDifficultyLevel(), ""); if (!diff.isEmpty()) { %>
-          <span class="difficulty-badge badge-<%= diff.toLowerCase() %>"><%= escapeHtml(diff) %></span>
+          <span class="cat-badge" style="background:rgba(100,116,139,0.15);color:#94a3b8;border:1px solid rgba(100,116,139,0.25);">
+            <%= escapeHtml(diff) %>
+          </span>
+          <% } %>
+          <% if (tool.isFreeTierAvailable()) { %>
+          <span class="cat-badge" style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);">
+            무료
+          </span>
           <% } %>
         </div>
-        <h1 style="font-size:32px; font-weight:700; color:#e2e8f0; margin-bottom:8px;"><%= escapeHtml(tool.getToolName()) %></h1>
-        <p style="color:#94a3b8; font-size:16px; margin-bottom:16px;"><%= escapeHtml(safeString(tool.getPurposeSummary(), "")) %></p>
 
-        <!-- 평점 -->
+        <h1 style="font-size:2rem;font-weight:700;color:#f1f5f9;margin-bottom:8px;"><%= escapeHtml(tool.getToolName()) %></h1>
+        <p style="color:#94a3b8;font-size:1rem;margin-bottom:14px;"><%= escapeHtml(safeString(tool.getPurposeSummary(), "")) %></p>
+
+        <!-- 별점 -->
         <% if (tool.getRating() != null) { %>
-        <div style="color:#f59e0b; font-size:15px; margin-bottom:20px;">
-          <%= tool.getStarRating() %>
-          <span style="color:#64748b; font-size:13px; margin-left:6px;"><%= String.format("%.1f", tool.getRating()) %> (<%= tool.getReviewCount() != null ? tool.getReviewCount() : 0 %>개 리뷰)</span>
+        <div class="d-flex align-items-center gap-2 mb-18" style="margin-bottom:18px;">
+          <span class="stars"><%= tool.getStarRating() %></span>
+          <span style="color:#f59e0b;font-size:0.875rem;font-weight:600;"><%= String.format("%.1f", tool.getRating()) %></span>
+          <span style="color:#64748b;font-size:0.8125rem;">(<%= tool.getReviewCount() != null ? tool.getReviewCount() : 0 %>개 리뷰)</span>
         </div>
         <% } %>
 
-        <!-- 액션 버튼 -->
+        <!-- CTA 버튼 -->
         <div class="d-flex gap-2 flex-wrap">
           <% if (tool.getWebsiteUrl() != null && !tool.getWebsiteUrl().isEmpty()) { %>
-          <a href="<%= escapeHtml(tool.getWebsiteUrl()) %>" target="_blank" rel="noopener" class="action-btn action-btn-primary">
+          <a href="<%= escapeHtml(tool.getWebsiteUrl()) %>" target="_blank" rel="noopener" class="btn-hero-primary">
             <i class="bi bi-box-arrow-up-right"></i>공식 사이트
           </a>
           <% } %>
           <% if (tool.getPlaygroundUrl() != null && !tool.getPlaygroundUrl().isEmpty()) { %>
-          <a href="<%= escapeHtml(tool.getPlaygroundUrl()) %>" target="_blank" rel="noopener" class="action-btn action-btn-secondary">
+          <a href="<%= escapeHtml(tool.getPlaygroundUrl()) %>" target="_blank" rel="noopener" class="btn-hero-outline">
             <i class="bi bi-play-circle"></i>체험하기
           </a>
           <% } %>
           <% if (tool.getDocsUrl() != null && !tool.getDocsUrl().isEmpty()) { %>
-          <a href="<%= escapeHtml(tool.getDocsUrl()) %>" target="_blank" rel="noopener" class="action-btn action-btn-secondary">
+          <a href="<%= escapeHtml(tool.getDocsUrl()) %>" target="_blank" rel="noopener" class="btn-hero-outline">
             <i class="bi bi-book"></i>문서
           </a>
           <% } %>
+          <a href="/AI/user/tools/navigator.jsp" class="btn-hero-outline">
+            <i class="bi bi-arrow-left"></i>뒤로가기
+          </a>
+          <a href="/AI/user/tools/rankings.jsp?category=<%= java.net.URLEncoder.encode(safeString(tool.getCategory(), ""), "UTF-8") %>" class="btn-hero-outline">
+            <i class="bi bi-trophy"></i>카테고리 랭킹
+          </a>
+          <a href="/AI/user/tools/compare.jsp?ids=<%= tool.getId() %>" class="btn-hero-outline">
+            <i class="bi bi-layout-split"></i>비교
+          </a>
+          <a href="/AI/user/news/index.jsp" class="btn-hero-outline">
+            <i class="bi bi-newspaper"></i>뉴스
+          </a>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <span class="kpi-card__label">Global Rank</span>
+            <span class="kpi-card__value"><%= escapeHtml(tool.getRankDisplay()) %></span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-card__label">Trend Score</span>
+            <span class="kpi-card__value"><%= escapeHtml(tool.getTrendDisplay()) %></span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-card__label">Monthly Visits</span>
+            <span class="kpi-card__value"><%= escapeHtml(tool.getFormattedMonthlyVisits()) %></span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-card__label">Monthly Active Users</span>
+            <span class="kpi-card__value"><%= escapeHtml(tool.getFormattedMonthlyActiveUsers()) %></span>
+          </div>
         </div>
       </div>
     </div>
@@ -169,41 +251,32 @@
 </div>
 
 <!-- 메인 콘텐츠 -->
-<div class="container py-5">
+<div class="pi py-5">
   <div class="row g-4">
-    <!-- 왼쪽: 상세 정보 -->
+
+    <!-- 왼쪽 컬럼 -->
     <div class="col-lg-8">
 
-      <!-- 설명 -->
-      <% String desc = safeString(tool.getDescription(), safeString(tool.getPurposeSummary(), "")); if (!desc.isEmpty()) { %>
-      <div class="spec-card">
-        <h6><i class="bi bi-info-circle me-2"></i>도구 소개</h6>
-        <p style="color:#94a3b8; font-size:15px; line-height:1.7; margin:0;"><%= escapeHtml(desc) %></p>
-      </div>
-      <% } %>
-
-      <!-- 활용 사례 -->
-      <% if (tool.getUseCases() != null && !tool.getUseCases().isEmpty()) { %>
-      <div class="spec-card">
-        <h6><i class="bi bi-lightbulb me-2"></i>활용 사례</h6>
-        <% for (String uc : tool.getUseCases()) { %>
-        <div class="use-case-item">
-          <i class="bi bi-check2-circle"></i>
-          <span><%= escapeHtml(uc) %></span>
-        </div>
-        <% } %>
+      <!-- 도구 소개 -->
+      <%
+        String desc = safeString(tool.getDescription(), safeString(tool.getPurposeSummary(), ""));
+        if (!desc.isEmpty()) {
+      %>
+      <div class="gc">
+        <p class="gc-title"><i class="bi bi-info-circle me-2"></i>도구 소개</p>
+        <p style="color:#94a3b8;font-size:0.9375rem;line-height:1.75;margin:0;"><%= escapeHtml(desc) %></p>
       </div>
       <% } %>
 
       <!-- 주요 기능 -->
       <% if (tool.getFeatures() != null && !tool.getFeatures().isEmpty()) { %>
-      <div class="spec-card">
-        <h6><i class="bi bi-stars me-2"></i>주요 기능</h6>
+      <div class="gc">
+        <p class="gc-title"><i class="bi bi-stars me-2"></i>주요 기능</p>
         <div class="row g-2">
           <% for (String feat : tool.getFeatures()) { %>
           <div class="col-md-6">
-            <div style="display:flex; gap:8px; align-items:flex-start; font-size:14px; color:#94a3b8;">
-              <i class="bi bi-check-circle-fill" style="color:#6366f1; margin-top:2px; flex-shrink:0;"></i>
+            <div class="feat-item">
+              <i class="bi bi-check-circle-fill"></i>
               <span><%= escapeHtml(feat) %></span>
             </div>
           </div>
@@ -212,22 +285,54 @@
       </div>
       <% } %>
 
+      <!-- 활용 사례 / 장점 -->
+      <% if (tool.getUseCases() != null && !tool.getUseCases().isEmpty()) { %>
+      <div class="gc gc-green">
+        <p class="gc-title" style="color:#4ade80;"><i class="bi bi-lightbulb-fill me-2"></i>활용 사례 / 장점</p>
+        <% for (String uc : tool.getUseCases()) { %>
+        <div class="d-flex gap-2 align-items-start mb-2" style="font-size:0.875rem;color:#94a3b8;">
+          <i class="bi bi-check-circle-fill" style="color:#4ade80;flex-shrink:0;margin-top:2px;"></i>
+          <span><%= escapeHtml(uc) %></span>
+        </div>
+        <% } %>
+      </div>
+      <% } %>
+
+      <!-- 가격 정보 -->
+      <% if (tool.getPricingDetails() != null && !tool.getPricingDetails().isEmpty()) { %>
+      <div class="gc gc-red">
+        <p class="gc-title" style="color:#f87171;"><i class="bi bi-cash-coin me-2"></i>가격 정보</p>
+        <p style="color:#94a3b8;font-size:0.875rem;line-height:1.65;margin-bottom:12px;"><%= escapeHtml(tool.getPricingDetails()) %></p>
+        <% if (tool.isFreeTierAvailable()) { %>
+        <span class="cat-badge" style="background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);">무료 플랜 있음</span>
+        <% } else { %>
+        <span class="cat-badge" style="background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);">유료</span>
+        <% } %>
+      </div>
+      <% } %>
+
       <!-- 태그 -->
       <% if (tool.getTags() != null && !tool.getTags().isEmpty()) { %>
-      <div class="spec-card">
-        <h6><i class="bi bi-tags me-2"></i>태그</h6>
+      <div class="gc">
+        <p class="gc-title"><i class="bi bi-tags me-2"></i>태그</p>
         <% for (String tag : tool.getTags()) { %>
-        <a href="/AI/user/tools/navigator.jsp?keyword=<%= java.net.URLEncoder.encode(tag, "UTF-8") %>" class="tag-pill" style="text-decoration:none;"><%= escapeHtml(tag) %></a>
+        <a href="/AI/user/tools/navigator.jsp?keyword=<%= java.net.URLEncoder.encode(tag, "UTF-8") %>" class="tag-pill"><%= escapeHtml(tag) %></a>
         <% } %>
       </div>
       <% } %>
     </div>
 
-    <!-- 오른쪽: 스펙 -->
+    <!-- 오른쪽 컬럼 -->
     <div class="col-lg-4">
-      <div class="spec-card">
-        <h6><i class="bi bi-clipboard-data me-2"></i>기본 스펙</h6>
 
+      <!-- 기본 스펙 -->
+      <div class="gc">
+        <p class="gc-title"><i class="bi bi-clipboard-data me-2"></i>기본 스펙</p>
+
+        <div class="spec-row">
+          <span class="spec-label">제공 국가</span>
+          <span class="spec-value"><%= escapeHtml(countryLabel(tool.getProviderCountry())) %></span>
+        </div>
         <div class="spec-row">
           <span class="spec-label">카테고리</span>
           <span class="spec-value"><%= escapeHtml(safeString(tool.getCategory(), "-")) %></span>
@@ -243,12 +348,36 @@
           <span class="spec-value"><%= escapeHtml(safeString(tool.getDifficultyLevel(), "-")) %></span>
         </div>
         <div class="spec-row">
+          <span class="spec-label">글로벌 랭크</span>
+          <span class="spec-value"><%= escapeHtml(tool.getRankDisplay()) %></span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">트렌드 점수</span>
+          <span class="spec-value"><%= escapeHtml(tool.getTrendDisplay()) %></span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">성장률</span>
+          <span class="spec-value"><%= escapeHtml(tool.getGrowthDisplay()) %></span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">월간 방문</span>
+          <span class="spec-value"><%= escapeHtml(tool.getFormattedMonthlyVisits()) %></span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">활성 사용자</span>
+          <span class="spec-value"><%= escapeHtml(tool.getFormattedMonthlyActiveUsers()) %></span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">GitHub Stars</span>
+          <span class="spec-value"><%= escapeHtml(tool.getFormattedGithubStars()) %></span>
+        </div>
+        <div class="spec-row">
           <span class="spec-label">무료 플랜</span>
-          <span class="spec-value"><%= tool.isFreeTierAvailable() ? "✅ 있음" : "❌ 없음" %></span>
+          <span class="spec-value"><%= tool.isFreeTierAvailable() ? "<i class='bi bi-check-circle-fill' style='color:#34d399;margin-right:4px;'></i>있음" : "<i class='bi bi-x-circle-fill' style='color:#f87171;margin-right:4px;'></i>없음" %></span>
         </div>
         <div class="spec-row">
           <span class="spec-label">API 제공</span>
-          <span class="spec-value"><%= tool.isApiAvailable() ? "✅ 있음" : "❌ 없음" %></span>
+          <span class="spec-value"><%= tool.isApiAvailable() ? "<i class='bi bi-check-circle-fill' style='color:#34d399;margin-right:4px;'></i>있음" : "<i class='bi bi-x-circle-fill' style='color:#f87171;margin-right:4px;'></i>없음" %></span>
         </div>
         <% if (tool.getPricingModel() != null && !tool.getPricingModel().isEmpty()) { %>
         <div class="spec-row">
@@ -258,7 +387,7 @@
         <% } %>
         <div class="spec-row">
           <span class="spec-label">상업적 이용</span>
-          <span class="spec-value"><%= tool.isCommercialUseAllowed() ? "✅ 허용" : "❌ 제한" %></span>
+          <span class="spec-value"><%= tool.isCommercialUseAllowed() ? "<i class='bi bi-check-circle-fill' style='color:#34d399;margin-right:4px;'></i>허용" : "<i class='bi bi-x-circle-fill' style='color:#f87171;margin-right:4px;'></i>제한" %></span>
         </div>
         <% if (tool.getLicenseType() != null && !tool.getLicenseType().isEmpty()) { %>
         <div class="spec-row">
@@ -286,18 +415,18 @@
         <% } %>
       </div>
 
-      <!-- 요금 상세 -->
+      <!-- 요금 상세 (사이드) -->
       <% if (tool.getPricingDetails() != null && !tool.getPricingDetails().isEmpty()) { %>
-      <div class="spec-card">
-        <h6><i class="bi bi-cash-coin me-2"></i>요금 안내</h6>
-        <p style="color:#94a3b8; font-size:14px; line-height:1.6; margin:0;"><%= escapeHtml(tool.getPricingDetails()) %></p>
+      <div class="gc">
+        <p class="gc-title"><i class="bi bi-cash-coin me-2"></i>요금 상세</p>
+        <p style="color:#94a3b8;font-size:0.8125rem;line-height:1.65;margin:0;"><%= escapeHtml(tool.getPricingDetails()) %></p>
       </div>
       <% } %>
 
       <!-- 지원 언어 -->
       <% if (tool.getSupportedLanguages() != null && !tool.getSupportedLanguages().isEmpty()) { %>
-      <div class="spec-card">
-        <h6><i class="bi bi-translate me-2"></i>지원 언어</h6>
+      <div class="gc">
+        <p class="gc-title"><i class="bi bi-translate me-2"></i>지원 언어</p>
         <% for (String lang : tool.getSupportedLanguages()) { %>
         <span class="tag-pill"><%= escapeHtml(lang) %></span>
         <% } %>
@@ -309,23 +438,25 @@
   <!-- 관련 도구 -->
   <% if (!related.isEmpty()) { %>
   <div class="mt-5">
-    <h5 style="color:#e2e8f0; font-weight:600; margin-bottom:20px;">
-      <i class="bi bi-grid-3x3-gap me-2" style="color:#6366f1;"></i>같은 카테고리 도구
+    <h5 style="color:#f1f5f9;font-weight:600;margin-bottom:20px;">
+      <i class="bi bi-grid-3x3-gap me-2" style="color:#60a5fa;"></i>같은 카테고리 도구
     </h5>
     <div class="row g-3">
       <% for (AITool rel : related) {
-         String[] relLogo = getProviderLogo(rel.getProviderName(), rel.getToolName()); %>
-      <div class="col-lg-3 col-md-6">
-        <a href="/AI/user/tools/detail.jsp?id=<%= rel.getId() %>" class="related-card">
+           String[] relLogo = getProviderLogo(rel.getProviderName(), rel.getToolName()); %>
+      <div class="col-lg-4 col-md-6 col-12">
+        <a href="/AI/user/tools/detail.jsp?id=<%= rel.getId() %>" class="rel-card">
           <div class="d-flex align-items-center gap-2 mb-2">
-            <img src="<%= relLogo[0] %>" alt="" style="width:24px;height:24px;border-radius:6px;object-fit:contain;"
-                 onerror="this.style.display='none'">
-            <span style="font-size:12px;color:#64748b;"><%= escapeHtml(safeString(rel.getProviderName(), "")) %></span>
+            <img src="<%= relLogo[0] %>" alt=""
+                 style="width:24px;height:24px;border-radius:6px;object-fit:contain;background:rgba(255,255,255,0.06);padding:2px;"
+                 onerror="this.style.display='none';">
+            <span style="font-size:0.75rem;color:#64748b;"><%= escapeHtml(safeString(rel.getProviderName(), "")) %></span>
           </div>
-          <div style="font-size:15px;font-weight:600;color:#e2e8f0;margin-bottom:6px;"><%= escapeHtml(rel.getToolName()) %></div>
-          <div style="font-size:13px;color:#64748b;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+          <div style="font-size:0.9375rem;font-weight:600;color:#f1f5f9;margin-bottom:6px;"><%= escapeHtml(rel.getToolName()) %></div>
+          <div style="font-size:0.8125rem;color:#64748b;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:12px;">
             <%= escapeHtml(safeString(rel.getPurposeSummary(), "")) %>
           </div>
+          <span style="font-size:0.8125rem;color:#60a5fa;font-weight:500;">자세히 보기 →</span>
         </a>
       </div>
       <% } %>
@@ -335,6 +466,5 @@
 </div>
 
 <%@ include file="/AI/partials/footer.jsp" %>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -1,16 +1,11 @@
 package dao;
 
 import model.AIModel;
-import util.DBConnect;
+import db.DBConnect;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AIModelDAO {
-    private java.sql.Connection conn;
-    
-    public AIModelDAO() {
-        this.conn = DBConnect.getConnection();
-    }
     
     // 모든 AI 모델 가져오기 (페이징)
     public List<AIModel> getAllModels(int page, int pageSize) {
@@ -199,7 +194,7 @@ public class AIModelDAO {
             pstmt.setString(7, model.getInputModalities());
             pstmt.setString(8, model.getOutputModalities());
             pstmt.setInt(9, model.getCategoryId());
-            pstmt.setBoolean(10, model.isActive());
+            pstmt.setBoolean(10, model.getIsActive());
             
             int result = pstmt.executeUpdate();
             return result > 0;
@@ -230,7 +225,7 @@ public class AIModelDAO {
             pstmt.setString(7, model.getInputModalities());
             pstmt.setString(8, model.getOutputModalities());
             pstmt.setInt(9, model.getCategoryId());
-            pstmt.setBoolean(10, model.isActive());
+            pstmt.setBoolean(10, model.getIsActive());
             pstmt.setInt(11, model.getId());
             
             int result = pstmt.executeUpdate();

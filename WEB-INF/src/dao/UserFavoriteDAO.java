@@ -1,7 +1,7 @@
 package dao;
 
 import model.UserFavorite;
-import util.DBConnect;
+import db.DBConnect;
 import java.util.ArrayList;
 import java.util.List;
 

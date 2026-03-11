@@ -147,13 +147,13 @@
         <a href="/AI/user/tools/navigator.jsp" class="btn btn-outline-primary btn-sm mt-3">탐색하기 →</a>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">🧪</div>
+        <div class="feature-icon"><i class="bi bi-flask-fill"></i></div>
         <h3 class="feature-title">AI 실습 랩</h3>
         <p class="feature-desc">실제 비즈니스 시나리오로 AI를 활용하는 실전 프로젝트를 수행하고, 포트폴리오를 쌓으세요.</p>
         <a href="/AI/user/lab/index.jsp" class="btn btn-outline-success btn-sm mt-3">실습 시작 →</a>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">📊</div>
+        <div class="feature-icon"><i class="bi bi-bar-chart-fill"></i></div>
         <h3 class="feature-title">워크플로우 가이드</h3>
         <p class="feature-desc">마케팅, 개발, 디자인, 데이터 분석 등 분야별 AI 워크플로우를 단계적으로 학습하세요.</p>
         <a href="/AI/user/guides/index.jsp" class="btn btn-outline-secondary btn-sm mt-3">가이드 보기 →</a>

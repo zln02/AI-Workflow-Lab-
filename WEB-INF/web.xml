@@ -140,9 +140,65 @@
     <servlet-name>AIToolServlet</servlet-name>
     <servlet-class>servlet.AIToolServlet</servlet-class>
   </servlet>
+  <servlet>
+    <servlet-name>NewsServlet</servlet-name>
+    <servlet-class>servlet.NewsServlet</servlet-class>
+  </servlet>
+  <servlet>
+    <servlet-name>RankingServlet</servlet-name>
+    <servlet-class>servlet.RankingServlet</servlet-class>
+  </servlet>
+  <servlet>
+    <servlet-name>LabSessionServlet</servlet-name>
+    <servlet-class>servlet.LabSessionServlet</servlet-class>
+  </servlet>
+  <servlet>
+    <servlet-name>PaymentServlet</servlet-name>
+    <servlet-class>servlet.PaymentServlet</servlet-class>
+  </servlet>
+  <servlet>
+    <servlet-name>SubscriptionServlet</servlet-name>
+    <servlet-class>servlet.SubscriptionServlet</servlet-class>
+  </servlet>
+  <servlet>
+    <servlet-name>UserAPIKeyServlet</servlet-name>
+    <servlet-class>servlet.UserAPIKeyServlet</servlet-class>
+  </servlet>
+  <servlet>
+    <servlet-name>SitemapServlet</servlet-name>
+    <servlet-class>servlet.SitemapServlet</servlet-class>
+  </servlet>
   <servlet-mapping>
     <servlet-name>AIToolServlet</servlet-name>
     <url-pattern>/AI/api/ai-tools/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>NewsServlet</servlet-name>
+    <url-pattern>/AI/api/news/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>RankingServlet</servlet-name>
+    <url-pattern>/AI/api/rankings/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>LabSessionServlet</servlet-name>
+    <url-pattern>/AI/api/lab-sessions/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>PaymentServlet</servlet-name>
+    <url-pattern>/AI/api/payments/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>SubscriptionServlet</servlet-name>
+    <url-pattern>/AI/api/subscriptions/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>UserAPIKeyServlet</servlet-name>
+    <url-pattern>/AI/api/user/api-keys/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>SitemapServlet</servlet-name>
+    <url-pattern>/sitemap.xml</url-pattern>
   </servlet-mapping>
 
   <!-- 소셜 로그인 -->

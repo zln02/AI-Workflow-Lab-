@@ -14,24 +14,14 @@ import java.lang.reflect.Type;
  * AI Workflow Lab의 핵심 도구 정보 관리
  */
 public class AIToolDAO {
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
+    private final Type listType = new TypeToken<List<String>>(){}.getType();
     
     /**
      * 모든 AI 도구 조회
      */
     public List<AITool> findAll() throws SQLException {
-        List<AITool> tools = new ArrayList<>();
-        String sql = "SELECT * FROM ai_tools ORDER BY rating DESC, review_count DESC";
-        
-        try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            
-            while (rs.next()) {
-                tools.add(mapResultSetToAITool(rs));
-            }
-        }
-        return tools;
+        return findFiltered(null, null, null, null, false, false, "default", null, null);
     }
     
     /**
@@ -57,122 +47,135 @@ public class AIToolDAO {
      * 카테고리별 AI 도구 조회
      */
     public List<AITool> findByCategory(String category) throws SQLException {
-        List<AITool> tools = new ArrayList<>();
-        String sql = "SELECT * FROM ai_tools WHERE category = ? ORDER BY rating DESC";
-        
-        try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, category);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    tools.add(mapResultSetToAITool(rs));
-                }
-            }
-        }
-        return tools;
+        return findFiltered(null, category, null, null, false, false, "default", null, null);
     }
     
     /**
      * 난이도별 AI 도구 조회
      */
     public List<AITool> findByDifficulty(String difficultyLevel) throws SQLException {
-        List<AITool> tools = new ArrayList<>();
-        String sql = "SELECT * FROM ai_tools WHERE difficulty_level = ? ORDER BY rating DESC";
-        
-        try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, difficultyLevel);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    tools.add(mapResultSetToAITool(rs));
-                }
-            }
-        }
-        return tools;
+        return findFiltered(null, null, difficultyLevel, null, false, false, "default", null, null);
     }
     
     /**
      * 인기 AI 도구 조회 (상위 N개)
      */
     public List<AITool> findPopular(int limit) throws SQLException {
-        List<AITool> tools = new ArrayList<>();
-        String sql = "SELECT * FROM ai_tools WHERE rating > 0 ORDER BY rating DESC, review_count DESC LIMIT ?";
-        
-        try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, limit);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    tools.add(mapResultSetToAITool(rs));
-                }
-            }
-        }
-        return tools;
+        return findFiltered(null, null, null, null, false, false, "rating", limit, 0);
     }
     
     /**
      * 무료 플랜이 있는 AI 도구 조회
      */
     public List<AITool> findFreeTierAvailable() throws SQLException {
-        List<AITool> tools = new ArrayList<>();
-        String sql = "SELECT * FROM ai_tools WHERE free_tier_available = true ORDER BY rating DESC";
-        
-        try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            
-            while (rs.next()) {
-                tools.add(mapResultSetToAITool(rs));
-            }
-        }
-        return tools;
+        return findFiltered(null, null, null, null, true, false, "default", null, null);
     }
     
     /**
      * 키워드로 AI 도구 검색
      */
     public List<AITool> searchByKeyword(String keyword) throws SQLException {
+        return findFiltered(keyword, null, null, null, false, false, "default", null, null);
+    }
+
+    public List<AITool> findFiltered(String keyword, String category, String difficultyLevel,
+                                     String country, boolean freeOnly, boolean apiOnly,
+                                     String sort, Integer limit, Integer offset) throws SQLException {
         List<AITool> tools = new ArrayList<>();
-        String sql = "SELECT * FROM ai_tools WHERE " +
-                    "MATCH(tool_name, description, purpose_summary) AGAINST(? IN NATURAL LANGUAGE MODE) " +
-                    "ORDER BY rating DESC, review_count DESC";
-        
+        StringBuilder sql = new StringBuilder("SELECT * FROM ai_tools WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String searchPattern = "%" + keyword.trim() + "%";
+            sql.append(" AND (tool_name LIKE ? OR description LIKE ? OR purpose_summary LIKE ? OR provider_name LIKE ? OR tags LIKE ?)");
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+        }
+
+        if (category != null && !category.trim().isEmpty()) {
+            sql.append(" AND category = ?");
+            params.add(category.trim());
+        }
+
+        if (difficultyLevel != null && !difficultyLevel.trim().isEmpty()) {
+            sql.append(" AND difficulty_level = ?");
+            params.add(difficultyLevel.trim());
+        }
+
+        if (country != null && !country.trim().isEmpty()) {
+            sql.append(" AND provider_country = ?");
+            params.add(country.trim());
+        }
+
+        if (freeOnly) {
+            sql.append(" AND free_tier_available = TRUE");
+        }
+
+        if (apiOnly) {
+            sql.append(" AND api_available = TRUE");
+        }
+
+        sql.append(" ORDER BY ").append(resolveSortClause(sort));
+
+        if (limit != null && limit > 0) {
+            sql.append(" LIMIT ?");
+            params.add(limit);
+            if (offset != null && offset >= 0) {
+                sql.append(" OFFSET ?");
+                params.add(offset);
+            }
+        }
+
         try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, keyword);
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            bindParams(ps, params);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     tools.add(mapResultSetToAITool(rs));
                 }
             }
         }
-        
-        // Full-text search가 없는 경우를 대비한 LIKE 검색
-        if (tools.isEmpty()) {
-            sql = "SELECT * FROM ai_tools WHERE " +
-                  "tool_name LIKE ? OR description LIKE ? OR purpose_summary LIKE ? " +
-                  "ORDER BY rating DESC, review_count DESC";
-            
-            try (Connection conn = DBConnect.getConnection();
-                 PreparedStatement ps = conn.prepareStatement(sql)) {
-                
-                String searchPattern = "%" + keyword + "%";
-                ps.setString(1, searchPattern);
-                ps.setString(2, searchPattern);
-                ps.setString(3, searchPattern);
-                
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        tools.add(mapResultSetToAITool(rs));
+
+        return tools;
+    }
+
+    public List<AITool> findByIds(List<Integer> ids) throws SQLException {
+        List<AITool> tools = new ArrayList<>();
+        if (ids == null || ids.isEmpty()) {
+            return tools;
+        }
+
+        StringBuilder sql = new StringBuilder("SELECT * FROM ai_tools WHERE id IN (");
+        for (int i = 0; i < ids.size(); i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+            sql.append("?");
+        }
+        sql.append(")");
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            bindParams(ps, new ArrayList<Object>(ids));
+            try (ResultSet rs = ps.executeQuery()) {
+                Map<Integer, AITool> toolMap = new HashMap<>();
+                while (rs.next()) {
+                    AITool tool = mapResultSetToAITool(rs);
+                    toolMap.put(tool.getId(), tool);
+                }
+
+                for (Integer id : ids) {
+                    AITool tool = toolMap.get(id);
+                    if (tool != null) {
+                        tools.add(tool);
                     }
                 }
             }
         }
-        
+
         return tools;
     }
     
@@ -209,7 +212,7 @@ public class AIToolDAO {
             params.add(category);
         }
         
-        sql.append("ORDER BY relevance_score DESC, rating DESC LIMIT 10");
+        sql.append("ORDER BY relevance_score DESC, trend_score DESC, rating DESC LIMIT 10");
         
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -233,44 +236,65 @@ public class AIToolDAO {
      */
     public boolean create(AITool tool) throws SQLException {
         String sql = "INSERT INTO ai_tools (" +
-                    "tool_name, provider_name, category, subcategory, description, " +
+                    "tool_name, provider_name, provider_country, category, subcategory, description, " +
                     "purpose_summary, use_cases, features, pricing_model, pricing_details, " +
                     "api_available, free_tier_available, website_url, docs_url, " +
-                    "playground_url, supported_languages, input_modalities, output_modalities, " +
-                    "max_file_size_mb, rate_limit_per_min, commercial_use_allowed, " +
-                    "onprem_available, license_type, difficulty_level, tags, rating, review_count" +
-                    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    "playground_url, supported_languages, supported_platforms, input_modalities, output_modalities, " +
+                    "max_file_size_mb, rate_limit_per_min, monthly_active_users, launch_date, last_major_update, " +
+                    "global_rank, category_rank, trend_score, growth_rate, pros, cons, alternatives, integrations, " +
+                    "data_privacy_score, enterprise_ready, open_source, github_url, github_stars, monthly_visits, " +
+                    "commercial_use_allowed, onprem_available, license_type, difficulty_level, tags, rating, review_count" +
+                    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
             ps.setString(1, tool.getToolName());
             ps.setString(2, tool.getProviderName());
-            ps.setString(3, tool.getCategory());
-            ps.setString(4, tool.getSubcategory());
-            ps.setString(5, tool.getDescription());
-            ps.setString(6, tool.getPurposeSummary());
-            ps.setString(7, tool.getUseCases() != null ? gson.toJson(tool.getUseCases()) : null);
-            ps.setString(8, tool.getFeatures() != null ? gson.toJson(tool.getFeatures()) : null);
-            ps.setString(9, tool.getPricingModel());
-            ps.setString(10, tool.getPricingDetails());
-            ps.setBoolean(11, tool.isApiAvailable());
-            ps.setBoolean(12, tool.isFreeTierAvailable());
-            ps.setString(13, tool.getWebsiteUrl());
-            ps.setString(14, tool.getDocsUrl());
-            ps.setString(15, tool.getPlaygroundUrl());
-            ps.setString(16, tool.getSupportedLanguages() != null ? gson.toJson(tool.getSupportedLanguages()) : null);
-            ps.setString(17, tool.getInputModalities());
-            ps.setString(18, tool.getOutputModalities());
-            ps.setObject(19, tool.getMaxFileSizeMb());
-            ps.setObject(20, tool.getRateLimitPerMin());
-            ps.setBoolean(21, tool.isCommercialUseAllowed());
-            ps.setBoolean(22, tool.isOnpremAvailable());
-            ps.setString(23, tool.getLicenseType());
-            ps.setString(24, tool.getDifficultyLevel());
-            ps.setString(25, tool.getTags() != null ? gson.toJson(tool.getTags()) : null);
-            ps.setObject(26, tool.getRating());
-            ps.setObject(27, tool.getReviewCount());
+            ps.setString(3, tool.getProviderCountry());
+            ps.setString(4, tool.getCategory());
+            ps.setString(5, tool.getSubcategory());
+            ps.setString(6, tool.getDescription());
+            ps.setString(7, tool.getPurposeSummary());
+            ps.setString(8, toJson(tool.getUseCases()));
+            ps.setString(9, toJson(tool.getFeatures()));
+            ps.setString(10, tool.getPricingModel());
+            ps.setString(11, tool.getPricingDetails());
+            ps.setBoolean(12, tool.isApiAvailable());
+            ps.setBoolean(13, tool.isFreeTierAvailable());
+            ps.setString(14, tool.getWebsiteUrl());
+            ps.setString(15, tool.getDocsUrl());
+            ps.setString(16, tool.getPlaygroundUrl());
+            ps.setString(17, toJson(tool.getSupportedLanguages()));
+            ps.setString(18, toJson(tool.getSupportedPlatforms()));
+            ps.setString(19, tool.getInputModalities());
+            ps.setString(20, tool.getOutputModalities());
+            ps.setObject(21, tool.getMaxFileSizeMb());
+            ps.setObject(22, tool.getRateLimitPerMin());
+            ps.setObject(23, tool.getMonthlyActiveUsers());
+            ps.setDate(24, tool.getLaunchDate());
+            ps.setDate(25, tool.getLastMajorUpdate());
+            ps.setObject(26, tool.getGlobalRank());
+            ps.setObject(27, tool.getCategoryRank());
+            ps.setObject(28, tool.getTrendScore());
+            ps.setObject(29, tool.getGrowthRate());
+            ps.setString(30, toJson(tool.getPros()));
+            ps.setString(31, toJson(tool.getCons()));
+            ps.setString(32, toJson(tool.getAlternatives()));
+            ps.setString(33, toJson(tool.getIntegrations()));
+            ps.setObject(34, tool.getDataPrivacyScore());
+            ps.setBoolean(35, tool.isEnterpriseReady());
+            ps.setBoolean(36, tool.isOpenSource());
+            ps.setString(37, tool.getGithubUrl());
+            ps.setObject(38, tool.getGithubStars());
+            ps.setObject(39, tool.getMonthlyVisits());
+            ps.setBoolean(40, tool.isCommercialUseAllowed());
+            ps.setBoolean(41, tool.isOnpremAvailable());
+            ps.setString(42, tool.getLicenseType());
+            ps.setString(43, tool.getDifficultyLevel());
+            ps.setString(44, toJson(tool.getTags()));
+            ps.setObject(45, tool.getRating());
+            ps.setObject(46, tool.getReviewCount());
             
             int result = ps.executeUpdate();
             
@@ -291,12 +315,15 @@ public class AIToolDAO {
      */
     public boolean update(AITool tool) throws SQLException {
         String sql = "UPDATE ai_tools SET " +
-                    "tool_name = ?, provider_name = ?, category = ?, subcategory = ?, " +
+                    "tool_name = ?, provider_name = ?, provider_country = ?, category = ?, subcategory = ?, " +
                     "description = ?, purpose_summary = ?, use_cases = ?, features = ?, " +
                     "pricing_model = ?, pricing_details = ?, api_available = ?, " +
                     "free_tier_available = ?, website_url = ?, docs_url = ?, " +
-                    "playground_url = ?, supported_languages = ?, input_modalities = ?, " +
-                    "output_modalities = ?, max_file_size_mb = ?, rate_limit_per_min = ?, " +
+                    "playground_url = ?, supported_languages = ?, supported_platforms = ?, input_modalities = ?, " +
+                    "output_modalities = ?, max_file_size_mb = ?, rate_limit_per_min = ?, monthly_active_users = ?, " +
+                    "launch_date = ?, last_major_update = ?, global_rank = ?, category_rank = ?, trend_score = ?, growth_rate = ?, " +
+                    "pros = ?, cons = ?, alternatives = ?, integrations = ?, data_privacy_score = ?, " +
+                    "enterprise_ready = ?, open_source = ?, github_url = ?, github_stars = ?, monthly_visits = ?, " +
                     "commercial_use_allowed = ?, onprem_available = ?, license_type = ?, " +
                     "difficulty_level = ?, tags = ?, rating = ?, review_count = ?, " +
                     "updated_at = CURRENT_TIMESTAMP " +
@@ -307,32 +334,51 @@ public class AIToolDAO {
             
             ps.setString(1, tool.getToolName());
             ps.setString(2, tool.getProviderName());
-            ps.setString(3, tool.getCategory());
-            ps.setString(4, tool.getSubcategory());
-            ps.setString(5, tool.getDescription());
-            ps.setString(6, tool.getPurposeSummary());
-            ps.setString(7, tool.getUseCases() != null ? gson.toJson(tool.getUseCases()) : null);
-            ps.setString(8, tool.getFeatures() != null ? gson.toJson(tool.getFeatures()) : null);
-            ps.setString(9, tool.getPricingModel());
-            ps.setString(10, tool.getPricingDetails());
-            ps.setBoolean(11, tool.isApiAvailable());
-            ps.setBoolean(12, tool.isFreeTierAvailable());
-            ps.setString(13, tool.getWebsiteUrl());
-            ps.setString(14, tool.getDocsUrl());
-            ps.setString(15, tool.getPlaygroundUrl());
-            ps.setString(16, tool.getSupportedLanguages() != null ? gson.toJson(tool.getSupportedLanguages()) : null);
-            ps.setString(17, tool.getInputModalities());
-            ps.setString(18, tool.getOutputModalities());
-            ps.setObject(19, tool.getMaxFileSizeMb());
-            ps.setObject(20, tool.getRateLimitPerMin());
-            ps.setBoolean(21, tool.isCommercialUseAllowed());
-            ps.setBoolean(22, tool.isOnpremAvailable());
-            ps.setString(23, tool.getLicenseType());
-            ps.setString(24, tool.getDifficultyLevel());
-            ps.setString(25, tool.getTags() != null ? gson.toJson(tool.getTags()) : null);
-            ps.setObject(26, tool.getRating());
-            ps.setObject(27, tool.getReviewCount());
-            ps.setInt(28, tool.getId());
+            ps.setString(3, tool.getProviderCountry());
+            ps.setString(4, tool.getCategory());
+            ps.setString(5, tool.getSubcategory());
+            ps.setString(6, tool.getDescription());
+            ps.setString(7, tool.getPurposeSummary());
+            ps.setString(8, toJson(tool.getUseCases()));
+            ps.setString(9, toJson(tool.getFeatures()));
+            ps.setString(10, tool.getPricingModel());
+            ps.setString(11, tool.getPricingDetails());
+            ps.setBoolean(12, tool.isApiAvailable());
+            ps.setBoolean(13, tool.isFreeTierAvailable());
+            ps.setString(14, tool.getWebsiteUrl());
+            ps.setString(15, tool.getDocsUrl());
+            ps.setString(16, tool.getPlaygroundUrl());
+            ps.setString(17, toJson(tool.getSupportedLanguages()));
+            ps.setString(18, toJson(tool.getSupportedPlatforms()));
+            ps.setString(19, tool.getInputModalities());
+            ps.setString(20, tool.getOutputModalities());
+            ps.setObject(21, tool.getMaxFileSizeMb());
+            ps.setObject(22, tool.getRateLimitPerMin());
+            ps.setObject(23, tool.getMonthlyActiveUsers());
+            ps.setDate(24, tool.getLaunchDate());
+            ps.setDate(25, tool.getLastMajorUpdate());
+            ps.setObject(26, tool.getGlobalRank());
+            ps.setObject(27, tool.getCategoryRank());
+            ps.setObject(28, tool.getTrendScore());
+            ps.setObject(29, tool.getGrowthRate());
+            ps.setString(30, toJson(tool.getPros()));
+            ps.setString(31, toJson(tool.getCons()));
+            ps.setString(32, toJson(tool.getAlternatives()));
+            ps.setString(33, toJson(tool.getIntegrations()));
+            ps.setObject(34, tool.getDataPrivacyScore());
+            ps.setBoolean(35, tool.isEnterpriseReady());
+            ps.setBoolean(36, tool.isOpenSource());
+            ps.setString(37, tool.getGithubUrl());
+            ps.setObject(38, tool.getGithubStars());
+            ps.setObject(39, tool.getMonthlyVisits());
+            ps.setBoolean(40, tool.isCommercialUseAllowed());
+            ps.setBoolean(41, tool.isOnpremAvailable());
+            ps.setString(42, tool.getLicenseType());
+            ps.setString(43, tool.getDifficultyLevel());
+            ps.setString(44, toJson(tool.getTags()));
+            ps.setObject(45, tool.getRating());
+            ps.setObject(46, tool.getReviewCount());
+            ps.setInt(47, tool.getId());
             
             return ps.executeUpdate() > 0;
         }
@@ -376,17 +422,21 @@ public class AIToolDAO {
         tool.setId(rs.getInt("id"));
         tool.setToolName(rs.getString("tool_name"));
         tool.setProviderName(rs.getString("provider_name"));
+        tool.setProviderCountry(rs.getString("provider_country"));
         tool.setCategory(rs.getString("category"));
         tool.setSubcategory(rs.getString("subcategory"));
         tool.setDescription(rs.getString("description"));
         tool.setPurposeSummary(rs.getString("purpose_summary"));
         
-        // JSON 필드 파싱
-        Type listType = new TypeToken<List<String>>(){}.getType();
-        tool.setUseCases(gson.fromJson(rs.getString("use_cases"), listType));
-        tool.setFeatures(gson.fromJson(rs.getString("features"), listType));
-        tool.setSupportedLanguages(gson.fromJson(rs.getString("supported_languages"), listType));
-        tool.setTags(gson.fromJson(rs.getString("tags"), listType));
+        tool.setUseCases(fromJsonList(rs.getString("use_cases")));
+        tool.setFeatures(fromJsonList(rs.getString("features")));
+        tool.setSupportedLanguages(fromJsonList(rs.getString("supported_languages")));
+        tool.setSupportedPlatforms(fromJsonList(rs.getString("supported_platforms")));
+        tool.setPros(fromJsonList(rs.getString("pros")));
+        tool.setCons(fromJsonList(rs.getString("cons")));
+        tool.setAlternatives(fromJsonList(rs.getString("alternatives")));
+        tool.setIntegrations(fromJsonList(rs.getString("integrations")));
+        tool.setTags(fromJsonList(rs.getString("tags")));
         
         tool.setPricingModel(rs.getString("pricing_model"));
         tool.setPricingDetails(rs.getString("pricing_details"));
@@ -399,6 +449,19 @@ public class AIToolDAO {
         tool.setOutputModalities(rs.getString("output_modalities"));
         tool.setMaxFileSizeMb(rs.getObject("max_file_size_mb", Double.class));
         tool.setRateLimitPerMin(rs.getObject("rate_limit_per_min", Integer.class));
+        tool.setMonthlyActiveUsers(rs.getObject("monthly_active_users", Long.class));
+        tool.setLaunchDate(rs.getDate("launch_date"));
+        tool.setLastMajorUpdate(rs.getDate("last_major_update"));
+        tool.setGlobalRank(rs.getObject("global_rank", Integer.class));
+        tool.setCategoryRank(rs.getObject("category_rank", Integer.class));
+        tool.setTrendScore(rs.getObject("trend_score", Double.class));
+        tool.setGrowthRate(rs.getObject("growth_rate", Double.class));
+        tool.setDataPrivacyScore(rs.getObject("data_privacy_score", Integer.class));
+        tool.setEnterpriseReady(rs.getBoolean("enterprise_ready"));
+        tool.setOpenSource(rs.getBoolean("open_source"));
+        tool.setGithubUrl(rs.getString("github_url"));
+        tool.setGithubStars(rs.getObject("github_stars", Integer.class));
+        tool.setMonthlyVisits(rs.getObject("monthly_visits", Long.class));
         tool.setCommercialUseAllowed(rs.getBoolean("commercial_use_allowed"));
         tool.setOnpremAvailable(rs.getBoolean("onprem_available"));
         tool.setLicenseType(rs.getString("license_type"));
@@ -409,5 +472,50 @@ public class AIToolDAO {
         tool.setUpdatedAt(rs.getTimestamp("updated_at"));
         
         return tool;
+    }
+
+    private void bindParams(PreparedStatement ps, List<Object> params) throws SQLException {
+        for (int i = 0; i < params.size(); i++) {
+            ps.setObject(i + 1, params.get(i));
+        }
+    }
+
+    private String resolveSortClause(String sort) {
+        if ("rating".equalsIgnoreCase(sort)) {
+            return "COALESCE(rating, 0) DESC, COALESCE(review_count, 0) DESC, tool_name ASC";
+        }
+        if ("reviews".equalsIgnoreCase(sort) || "popular".equalsIgnoreCase(sort)) {
+            return "COALESCE(monthly_active_users, 0) DESC, COALESCE(review_count, 0) DESC, tool_name ASC";
+        }
+        if ("trend".equalsIgnoreCase(sort)) {
+            return "COALESCE(trend_score, 0) DESC, COALESCE(growth_rate, 0) DESC, tool_name ASC";
+        }
+        if ("visits".equalsIgnoreCase(sort)) {
+            return "COALESCE(monthly_visits, 0) DESC, COALESCE(trend_score, 0) DESC, tool_name ASC";
+        }
+        if ("growth".equalsIgnoreCase(sort) || "rising".equalsIgnoreCase(sort)) {
+            return "COALESCE(growth_rate, 0) DESC, COALESCE(trend_score, 0) DESC, tool_name ASC";
+        }
+        if ("github".equalsIgnoreCase(sort)) {
+            return "COALESCE(github_stars, 0) DESC, COALESCE(trend_score, 0) DESC, tool_name ASC";
+        }
+        if ("newest".equalsIgnoreCase(sort)) {
+            return "COALESCE(last_major_update, created_at) DESC, id DESC";
+        }
+        if ("rank".equalsIgnoreCase(sort)) {
+            return "CASE WHEN global_rank IS NULL THEN 1 ELSE 0 END ASC, global_rank ASC, COALESCE(trend_score, 0) DESC";
+        }
+        return "CASE WHEN global_rank IS NULL THEN 1 ELSE 0 END ASC, global_rank ASC, COALESCE(trend_score, 0) DESC, COALESCE(rating, 0) DESC, tool_name ASC";
+    }
+
+    private List<String> fromJsonList(String json) {
+        if (json == null || json.trim().isEmpty()) {
+            return null;
+        }
+        return gson.fromJson(json, listType);
+    }
+
+    private String toJson(List<String> values) {
+        return values != null ? gson.toJson(values) : null;
     }
 }

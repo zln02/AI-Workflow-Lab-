@@ -6,6 +6,7 @@ import dao.UserDAO;
 import model.User;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,6 +34,9 @@ public class KakaoAuthServlet extends HttpServlet {
     private static final String KAKAO_AUTH_URL  = "https://kauth.kakao.com/oauth/authorize";
     private static final String KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String KAKAO_USER_URL  = "https://kapi.kakao.com/v2/user/me";
+    private static final String STATE_COOKIE_NAME = "kakao_oauth_state";
+    private static final String REDIRECT_COOKIE_NAME = "kakao_oauth_redirect";
+    private static final int OAUTH_COOKIE_MAX_AGE = 600;
 
     private String getRestApiKey() {
         return System.getenv("KAKAO_REST_API_KEY");
@@ -72,11 +76,15 @@ public class KakaoAuthServlet extends HttpServlet {
 
         HttpSession session = request.getSession(true);
         session.setAttribute("kakao_oauth_state", state);
+        addCookie(request, response, STATE_COOKIE_NAME, state, OAUTH_COOKIE_MAX_AGE);
 
         // 로그인 후 돌아갈 URL 저장 (Open Redirect 방지: 상대경로만)
         String redirect = request.getParameter("redirect");
         if (redirect != null && redirect.startsWith("/") && !redirect.startsWith("//")) {
             session.setAttribute("kakao_oauth_redirect", redirect);
+            addCookie(request, response, REDIRECT_COOKIE_NAME, encodeCookieValue(redirect), OAUTH_COOKIE_MAX_AGE);
+        } else {
+            clearCookie(request, response, REDIRECT_COOKIE_NAME);
         }
 
         String authUrl = KAKAO_AUTH_URL
@@ -98,13 +106,25 @@ public class KakaoAuthServlet extends HttpServlet {
 
         // state 검증
         String returnedState = request.getParameter("state");
-        if (session == null || returnedState == null) {
+        String cookieState = getCookieValue(request, STATE_COOKIE_NAME);
+        if (returnedState == null || ((session == null || session.getAttribute("kakao_oauth_state") == null)
+                && (cookieState == null || cookieState.isEmpty()))) {
+            clearCookie(request, response, STATE_COOKIE_NAME);
+            clearCookie(request, response, REDIRECT_COOKIE_NAME);
             response.sendRedirect("/AI/user/login.jsp?kakao_error=state_invalid");
             return;
         }
-        String savedState = (String) session.getAttribute("kakao_oauth_state");
-        session.removeAttribute("kakao_oauth_state");
-        if (!returnedState.equals(savedState)) {
+        String savedState = session != null ? (String) session.getAttribute("kakao_oauth_state") : null;
+        if (session != null) {
+            session.removeAttribute("kakao_oauth_state");
+        }
+        clearCookie(request, response, STATE_COOKIE_NAME);
+
+        boolean stateMatches = returnedState.equals(savedState) || returnedState.equals(cookieState);
+        if (!stateMatches) {
+            getServletContext().log("카카오 state mismatch: returned=" + returnedState
+                    + ", session=" + savedState + ", cookie=" + cookieState);
+            clearCookie(request, response, REDIRECT_COOKIE_NAME);
             response.sendRedirect("/AI/user/login.jsp?kakao_error=state_mismatch");
             return;
         }
@@ -122,7 +142,14 @@ public class KakaoAuthServlet extends HttpServlet {
         }
 
         // 저장된 리다이렉트 URL (session 무효화 전에 미리 읽기)
-        String savedRedirect = (String) session.getAttribute("kakao_oauth_redirect");
+        String savedRedirect = session != null ? (String) session.getAttribute("kakao_oauth_redirect") : null;
+        if (session != null) {
+            session.removeAttribute("kakao_oauth_redirect");
+        }
+        if (savedRedirect == null || savedRedirect.isEmpty()) {
+            savedRedirect = decodeCookieValue(getCookieValue(request, REDIRECT_COOKIE_NAME));
+        }
+        clearCookie(request, response, REDIRECT_COOKIE_NAME);
 
         // 토큰 교환
         String accessToken = exchangeCodeForToken(code);
@@ -236,7 +263,9 @@ public class KakaoAuthServlet extends HttpServlet {
         }
 
         // 세션 재생성 (session fixation 방지)
-        session.invalidate();
+        if (session != null) {
+            session.invalidate();
+        }
         HttpSession newSession = request.getSession(true);
         newSession.setAttribute("user", user);
 
@@ -304,5 +333,56 @@ public class KakaoAuthServlet extends HttpServlet {
             while ((line = reader.readLine()) != null) sb.append(line);
         }
         return sb.toString();
+    }
+
+    private String getCookieValue(HttpServletRequest request, String name) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) return null;
+        for (Cookie cookie : cookies) {
+            if (name.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
+    }
+
+    private void addCookie(HttpServletRequest request, HttpServletResponse response,
+                           String name, String value, int maxAge) {
+        StringBuilder cookie = new StringBuilder();
+        cookie.append(name).append("=").append(value == null ? "" : value)
+                .append("; Max-Age=").append(maxAge)
+                .append("; Path=/")
+                .append("; HttpOnly")
+                .append("; SameSite=Lax");
+        if (isSecureRequest(request)) {
+            cookie.append("; Secure");
+        }
+        response.addHeader("Set-Cookie", cookie.toString());
+    }
+
+    private void clearCookie(HttpServletRequest request, HttpServletResponse response, String name) {
+        addCookie(request, response, name, "", 0);
+    }
+
+    private boolean isSecureRequest(HttpServletRequest request) {
+        if (request.isSecure()) return true;
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        return forwardedProto != null && forwardedProto.toLowerCase().contains("https");
+    }
+
+    private String encodeCookieValue(String value) {
+        if (value == null || value.isEmpty()) return "";
+        return Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private String decodeCookieValue(String value) {
+        if (value == null || value.isEmpty()) return null;
+        try {
+            return new String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            getServletContext().log("카카오 OAuth redirect cookie decode 실패", e);
+            return null;
+        }
     }
 }

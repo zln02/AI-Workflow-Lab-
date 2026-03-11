@@ -1,8 +1,13 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="dao.AIToolDAO" %>
-<%@ page import="dao.LabProjectDAO" %>
-<%@ page import="java.util.List" %>
 <%@ page import="java.sql.*" %>
+<%@ page import="java.time.YearMonth" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="java.util.LinkedHashMap" %>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Locale" %>
+<%@ page import="java.util.Map" %>
 <%@ page import="db.DBConnect" %>
 <%
   if (session.getAttribute("admin") == null) {
@@ -13,32 +18,205 @@
   String adminRole = (String) session.getAttribute("adminRole");
   boolean isSuperadmin = "superadmin".equals(adminRole) || "SUPER".equals(adminRole);
 
-  int toolCount = 0, projectCount = 0, userCount = 0, orderCount = 0;
-  double totalRevenue = 0.0;
-  String topCategory = "-";
+  int toolCount = 0;
+  int userCount = 0;
+  int orderCount = 0;
+  int newToolsThisWeek = 0;
+  int newUsersThisWeek = 0;
+  long totalGrantedCredits = 0L;
+  long totalUsedCredits = 0L;
+  double creditUsageRate = 0.0;
+  double monthRevenue = 0.0;
+  double previousMonthRevenue = 0.0;
+  double revenueGrowthRate = 0.0;
+
+  List<String> monthLabels = new ArrayList<>();
+  List<Integer> signupSeries = new ArrayList<>();
+  List<Double> revenueSeries = new ArrayList<>();
+  List<String> categoryLabels = new ArrayList<>();
+  List<Integer> categorySeries = new ArrayList<>();
+  List<String> planLabels = new ArrayList<>();
+  List<Integer> planSeries = new ArrayList<>();
+  List<Map<String, Object>> recentUsers = new ArrayList<>();
+  List<Map<String, Object>> recentOrders = new ArrayList<>();
+  List<Map<String, Object>> topTools = new ArrayList<>();
+
+  DateTimeFormatter monthKeyFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
+  LinkedHashMap<String, Integer> signupMap = new LinkedHashMap<>();
+  LinkedHashMap<String, Double> revenueMap = new LinkedHashMap<>();
+  YearMonth currentMonth = YearMonth.now();
+  for (int i = 5; i >= 0; i--) {
+    YearMonth month = currentMonth.minusMonths(i);
+    String key = month.format(monthKeyFormatter);
+    monthLabels.add(month.getMonthValue() + "월");
+    signupMap.put(key, 0);
+    revenueMap.put(key, 0.0);
+  }
+
   try (Connection c = DBConnect.getConnection()) {
     try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM ai_tools");
          ResultSet rs = ps.executeQuery()) {
       if (rs.next()) toolCount = rs.getInt(1);
     }
-    try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM lab_projects");
-         ResultSet rs = ps.executeQuery()) {
-      if (rs.next()) projectCount = rs.getInt(1);
-    }
+
     try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM users WHERE is_active = 1");
          ResultSet rs = ps.executeQuery()) {
       if (rs.next()) userCount = rs.getInt(1);
     }
-    try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*), COALESCE(SUM(total_price),0) FROM orders");
+
+    try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM orders");
          ResultSet rs = ps.executeQuery()) {
-      if (rs.next()) { orderCount = rs.getInt(1); totalRevenue = rs.getDouble(2); }
+      if (rs.next()) orderCount = rs.getInt(1);
     }
+
+    try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM ai_tools WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
+         ResultSet rs = ps.executeQuery()) {
+      if (rs.next()) newToolsThisWeek = rs.getInt(1);
+    } catch (Exception ignored) {}
+
+    try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
+         ResultSet rs = ps.executeQuery()) {
+      if (rs.next()) newUsersThisWeek = rs.getInt(1);
+    } catch (Exception ignored) {}
+
+    try (PreparedStatement ps = c.prepareStatement("SELECT COALESCE(SUM(total_granted),0), COALESCE(SUM(total_used),0) FROM user_credits");
+         ResultSet rs = ps.executeQuery()) {
+      if (rs.next()) {
+        totalGrantedCredits = rs.getLong(1);
+        totalUsedCredits = rs.getLong(2);
+        if (totalGrantedCredits > 0) {
+          creditUsageRate = (totalUsedCredits * 100.0) / totalGrantedCredits;
+        }
+      }
+    } catch (Exception ignored) {}
+
     try (PreparedStatement ps = c.prepareStatement(
-           "SELECT category, COUNT(*) AS cnt FROM ai_tools GROUP BY category ORDER BY cnt DESC LIMIT 1");
+        "SELECT COALESCE(SUM(total_price),0) FROM orders WHERE order_status = 'COMPLETED' " +
+        "AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND created_at < DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH)");
          ResultSet rs = ps.executeQuery()) {
-      if (rs.next()) topCategory = rs.getString("category");
+      if (rs.next()) monthRevenue = rs.getDouble(1);
+    } catch (Exception ignored) {}
+
+    try (PreparedStatement ps = c.prepareStatement(
+        "SELECT COALESCE(SUM(total_price),0) FROM orders WHERE order_status = 'COMPLETED' " +
+        "AND created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01') " +
+        "AND created_at < DATE_FORMAT(CURDATE(), '%Y-%m-01')");
+         ResultSet rs = ps.executeQuery()) {
+      if (rs.next()) previousMonthRevenue = rs.getDouble(1);
+    } catch (Exception ignored) {}
+
+    if (previousMonthRevenue > 0) {
+      revenueGrowthRate = ((monthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100.0;
+    } else if (monthRevenue > 0) {
+      revenueGrowthRate = 100.0;
     }
-  } catch (Exception e) { /* 기본값 유지 */ }
+
+    try (PreparedStatement ps = c.prepareStatement(
+        "SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, COUNT(*) AS cnt " +
+        "FROM users WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) " +
+        "GROUP BY DATE_FORMAT(created_at, '%Y-%m') ORDER BY ym");
+         ResultSet rs = ps.executeQuery()) {
+      while (rs.next()) {
+        signupMap.put(rs.getString("ym"), rs.getInt("cnt"));
+      }
+    } catch (Exception ignored) {}
+
+    try (PreparedStatement ps = c.prepareStatement(
+        "SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, COALESCE(SUM(total_price),0) AS amount " +
+        "FROM orders WHERE order_status = 'COMPLETED' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) " +
+        "GROUP BY DATE_FORMAT(created_at, '%Y-%m') ORDER BY ym");
+         ResultSet rs = ps.executeQuery()) {
+      while (rs.next()) {
+        revenueMap.put(rs.getString("ym"), rs.getDouble("amount"));
+      }
+    } catch (Exception ignored) {}
+
+    try (PreparedStatement ps = c.prepareStatement(
+        "SELECT category, COUNT(*) AS cnt FROM ai_tools " +
+        "WHERE category IS NOT NULL AND category <> '' GROUP BY category ORDER BY cnt DESC LIMIT 6");
+         ResultSet rs = ps.executeQuery()) {
+      while (rs.next()) {
+        categoryLabels.add(rs.getString("category"));
+        categorySeries.add(rs.getInt("cnt"));
+      }
+    } catch (Exception ignored) {}
+
+    try (PreparedStatement ps = c.prepareStatement(
+        "SELECT COALESCE(plan_code, 'free') AS plan_code, COUNT(*) AS cnt " +
+        "FROM subscriptions WHERE status = 'ACTIVE' GROUP BY COALESCE(plan_code, 'free') ORDER BY cnt DESC");
+         ResultSet rs = ps.executeQuery()) {
+      while (rs.next()) {
+        planLabels.add(rs.getString("plan_code"));
+        planSeries.add(rs.getInt("cnt"));
+      }
+    } catch (Exception ignored) {}
+
+    try (PreparedStatement ps = c.prepareStatement(
+        "SELECT id, name, email, created_at FROM users ORDER BY created_at DESC LIMIT 5");
+         ResultSet rs = ps.executeQuery()) {
+      while (rs.next()) {
+        Map<String, Object> row = new HashMap<>();
+        row.put("id", rs.getInt("id"));
+        row.put("name", rs.getString("name"));
+        row.put("email", rs.getString("email"));
+        row.put("created_at", rs.getTimestamp("created_at"));
+        recentUsers.add(row);
+      }
+    } catch (Exception ignored) {}
+
+    try (PreparedStatement ps = c.prepareStatement(
+        "SELECT id, customer_name, customer_email, total_price, order_status, created_at FROM orders ORDER BY created_at DESC LIMIT 5");
+         ResultSet rs = ps.executeQuery()) {
+      while (rs.next()) {
+        Map<String, Object> row = new HashMap<>();
+        row.put("id", rs.getInt("id"));
+        row.put("customer_name", rs.getString("customer_name"));
+        row.put("customer_email", rs.getString("customer_email"));
+        row.put("total_price", rs.getDouble("total_price"));
+        row.put("order_status", rs.getString("order_status"));
+        row.put("created_at", rs.getTimestamp("created_at"));
+        recentOrders.add(row);
+      }
+    } catch (Exception ignored) {}
+
+    try (PreparedStatement ps = c.prepareStatement(
+        "SELECT id, tool_name, category, COALESCE(trend_score, 0) AS trend_score, COALESCE(growth_rate, 0) AS growth_rate, COALESCE(monthly_visits, 0) AS monthly_visits " +
+        "FROM ai_tools ORDER BY COALESCE(trend_score, 0) DESC, COALESCE(monthly_visits, 0) DESC LIMIT 5");
+         ResultSet rs = ps.executeQuery()) {
+      while (rs.next()) {
+        Map<String, Object> row = new HashMap<>();
+        row.put("id", rs.getInt("id"));
+        row.put("tool_name", rs.getString("tool_name"));
+        row.put("category", rs.getString("category"));
+        row.put("trend_score", rs.getDouble("trend_score"));
+        row.put("growth_rate", rs.getDouble("growth_rate"));
+        row.put("monthly_visits", rs.getLong("monthly_visits"));
+        topTools.add(row);
+      }
+    } catch (Exception ignored) {}
+  } catch (Exception ignored) {
+  }
+
+  signupSeries.addAll(signupMap.values());
+  revenueSeries.addAll(revenueMap.values());
+%>
+<%!
+  private String escapeJs(String value) {
+    if (value == null) return "";
+    return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("'", "\\'").replace("\r", "\\r").replace("\n", "\\n");
+  }
+
+  private String formatTimestamp(Object value) {
+    if (value == null) return "-";
+    return new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(value);
+  }
+
+  private String compactNumber(long value) {
+    if (value >= 1000000000L) return String.format(Locale.US, "%.1fB", value / 1000000000.0);
+    if (value >= 1000000L) return String.format(Locale.US, "%.1fM", value / 1000000.0);
+    if (value >= 1000L) return String.format(Locale.US, "%.1fK", value / 1000.0);
+    return String.format(Locale.US, "%d", value);
+  }
 %>
 <%@ include file="/AI/admin/layout/header.jspf" %>
 <div class="admin-layout">
@@ -46,237 +224,187 @@
   <div class="admin-main-wrapper">
     <%@ include file="/AI/admin/layout/topbar.jspf" %>
     <main class="admin-content">
-
       <header class="admin-dashboard-header" style="margin-bottom:2rem;">
-        <h1>AI Workflow Lab 대시보드</h1>
-        <p>플랫폼 콘텐츠 현황을 한눈에 확인하세요.</p>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
+          <div>
+            <h1>AI Workflow Lab 대시보드</h1>
+            <p>운영 KPI, 성장 추이, 결제/크레딧 사용률을 한 화면에서 확인합니다.</p>
+          </div>
+          <div class="dashboard-pill-group">
+            <a class="dashboard-pill" href="/AI/admin/statistics/index.jsp"><i class="bi bi-bar-chart"></i>인사이트</a>
+            <a class="dashboard-pill" href="/AI/admin/orders/index.jsp"><i class="bi bi-receipt"></i>주문</a>
+            <a class="dashboard-pill" href="/AI/admin/users/index.jsp"><i class="bi bi-people"></i>사용자</a>
+          </div>
+        </div>
       </header>
 
-      <!-- KPI 카드 -->
-      <section class="kpi-grid">
+      <section class="kpi-grid" style="margin-bottom:1.5rem;">
         <article class="kpi-card kpi-tools">
           <div class="kpi-icon"><i class="bi bi-cpu-fill"></i></div>
           <div class="kpi-body">
-            <span class="kpi-label">AI 도구</span>
+            <span class="kpi-label">총 도구</span>
             <span class="kpi-value"><%= toolCount %></span>
-            <span class="kpi-desc">등록된 AI 도구 수</span>
-          </div>
-        </article>
-        <article class="kpi-card kpi-lab">
-          <div class="kpi-icon"><i class="bi bi-flask-fill"></i></div>
-          <div class="kpi-body">
-            <span class="kpi-label">실습 프로젝트</span>
-            <span class="kpi-value"><%= projectCount %></span>
-            <span class="kpi-desc">등록된 랩 프로젝트 수</span>
+            <span class="kpi-desc">이번 주 +<%= newToolsThisWeek %>개</span>
           </div>
         </article>
         <article class="kpi-card kpi-users">
           <div class="kpi-icon"><i class="bi bi-people-fill"></i></div>
           <div class="kpi-body">
-            <span class="kpi-label">활성 사용자</span>
+            <span class="kpi-label">활성 유저</span>
             <span class="kpi-value"><%= userCount %></span>
-            <span class="kpi-desc">is_active 회원 수</span>
+            <span class="kpi-desc">금주 +<%= newUsersThisWeek %>명</span>
           </div>
         </article>
-        <article class="kpi-card kpi-orders" style="cursor:pointer;" onclick="location.href='/AI/admin/orders/index.jsp'">
-          <div class="kpi-icon"><i class="bi bi-receipt-cutoff"></i></div>
+        <article class="kpi-card kpi-orders">
+          <div class="kpi-icon"><i class="bi bi-cash-stack"></i></div>
           <div class="kpi-body">
-            <span class="kpi-label">총 주문</span>
-            <span class="kpi-value"><%= orderCount %></span>
-            <span class="kpi-desc">누적 결제 건수</span>
+            <span class="kpi-label">월 매출</span>
+            <span class="kpi-value kpi-value-sm">₩<%= String.format(Locale.US, "%,.0f", monthRevenue) %></span>
+            <span class="kpi-desc"><%= String.format(Locale.US, "%+.1f%% MoM", revenueGrowthRate) %></span>
           </div>
         </article>
-        <article class="kpi-card kpi-revenue" style="cursor:pointer;" onclick="location.href='/AI/admin/orders/index.jsp'">
-          <div class="kpi-icon"><i class="bi bi-currency-dollar"></i></div>
+        <article class="kpi-card kpi-revenue">
+          <div class="kpi-icon"><i class="bi bi-coin"></i></div>
           <div class="kpi-body">
-            <span class="kpi-label">총 매출</span>
-            <span class="kpi-value kpi-value-sm">$<%= String.format("%,.0f", totalRevenue) %></span>
-            <span class="kpi-desc">누적 결제 금액</span>
+            <span class="kpi-label">총 크레딧</span>
+            <span class="kpi-value"><%= compactNumber(totalGrantedCredits) %></span>
+            <span class="kpi-desc">사용률 <%= String.format(Locale.US, "%.1f%%", creditUsageRate) %></span>
           </div>
         </article>
       </section>
 
-      <!-- 빠른 관리 -->
-      <section class="admin-notice" style="margin-bottom:2.5rem;">
-        <h2 style="margin-bottom:1.25rem;">빠른 관리</h2>
-        <div class="quick-links-grid">
-          <a class="quick-link-card quick-primary" href="/AI/admin/tools/index.jsp">
-            <i class="bi bi-cpu"></i>
-            <span>AI 도구 관리</span>
-          </a>
-          <a class="quick-link-card" href="/AI/admin/lab/index.jsp">
-            <i class="bi bi-flask"></i>
-            <span>실습 랩 관리</span>
-          </a>
-          <a class="quick-link-card" href="/AI/admin/users/index.jsp">
-            <i class="bi bi-people"></i>
-            <span>사용자 관리</span>
-          </a>
-          <a class="quick-link-card" href="/AI/admin/orders/index.jsp">
-            <i class="bi bi-receipt"></i>
-            <span>주문 관리</span>
-          </a>
-          <a class="quick-link-card" href="/AI/admin/packages/index.jsp">
-            <i class="bi bi-credit-card"></i>
-            <span>구독 플랜</span>
-          </a>
-          <a class="quick-link-card" href="/AI/admin/categories/index.jsp">
-            <i class="bi bi-folder2-open"></i>
-            <span>카테고리</span>
-          </a>
-          <% if (isSuperadmin) { /* superadmin quick link */ %>
-          <a class="quick-link-card" href="/AI/admin/admins/index.jsp">
-            <i class="bi bi-shield-lock"></i>
-            <span>관리자 관리</span>
-          </a>
-          <% } %>
-        </div>
+      <section class="dashboard-grid" style="margin-bottom:1.5rem;">
+        <article class="dashboard-card dashboard-chart-card">
+          <header class="dashboard-card__header">
+            <div>
+              <h2>월간 가입자 추이</h2>
+              <p>최근 6개월 활성 가입 흐름</p>
+            </div>
+          </header>
+          <div class="chart-wrap"><canvas id="signupChart"></canvas></div>
+        </article>
+        <article class="dashboard-card dashboard-chart-card">
+          <header class="dashboard-card__header">
+            <div>
+              <h2>카테고리 분포</h2>
+              <p>상위 카테고리 6개</p>
+            </div>
+          </header>
+          <div class="chart-wrap"><canvas id="categoryChart"></canvas></div>
+        </article>
+        <article class="dashboard-card dashboard-chart-card">
+          <header class="dashboard-card__header">
+            <div>
+              <h2>매출 추이</h2>
+              <p>완료 주문 기준 최근 6개월</p>
+            </div>
+          </header>
+          <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+        </article>
+        <article class="dashboard-card dashboard-chart-card">
+          <header class="dashboard-card__header">
+            <div>
+              <h2>플랜 분포</h2>
+              <p>활성 구독 플랜 구성</p>
+            </div>
+          </header>
+          <div class="chart-wrap"><canvas id="planChart"></canvas></div>
+        </article>
       </section>
 
-      <!-- 최근 등록 AI 도구 -->
-      <section style="margin-bottom:2.5rem;background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:var(--radius-xl);padding:var(--spacing-xl);">
-        <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
-          <div>
-            <h2 style="margin:0;">최근 등록된 AI 도구</h2>
-            <p style="margin:.25rem 0 0;font-size:.85rem;color:var(--text-secondary);">최근 추가된 AI 도구 5개</p>
+      <section class="dashboard-secondary-grid" style="margin-bottom:1.5rem;">
+        <article class="dashboard-card">
+          <header class="dashboard-card__header">
+            <div>
+              <h2>최근 가입 유저</h2>
+              <p>신규 회원 5명</p>
+            </div>
+            <a class="btn" href="/AI/admin/users/index.jsp" style="padding:8px 14px;">전체 보기</a>
+          </header>
+          <div class="dashboard-list">
+            <% if (recentUsers.isEmpty()) { %>
+              <p class="dashboard-empty">표시할 가입 이력이 없습니다.</p>
+            <% } else { for (Map<String, Object> row : recentUsers) { %>
+              <div class="dashboard-list__item">
+                <div>
+                  <strong><%= row.get("name") != null ? row.get("name") : "이름 없음" %></strong>
+                  <p><%= row.get("email") != null ? row.get("email") : "-" %></p>
+                </div>
+                <span><%= formatTimestamp(row.get("created_at")) %></span>
+              </div>
+            <% }} %>
           </div>
-          <a class="btn" href="/AI/admin/tools/index.jsp" style="padding:6px 14px;font-size:.85rem;">전체 보기</a>
+        </article>
+        <article class="dashboard-card">
+          <header class="dashboard-card__header">
+            <div>
+              <h2>최근 주문</h2>
+              <p>결제 상태 포함 최근 5건</p>
+            </div>
+            <a class="btn" href="/AI/admin/orders/index.jsp" style="padding:8px 14px;">전체 보기</a>
+          </header>
+          <div class="dashboard-list">
+            <% if (recentOrders.isEmpty()) { %>
+              <p class="dashboard-empty">주문 데이터가 없습니다.</p>
+            <% } else { for (Map<String, Object> row : recentOrders) { %>
+              <div class="dashboard-list__item">
+                <div>
+                  <strong>#<%= row.get("id") %> <%= row.get("customer_name") != null ? row.get("customer_name") : "고객" %></strong>
+                  <p><%= row.get("customer_email") != null ? row.get("customer_email") : "-" %></p>
+                </div>
+                <div style="text-align:right;">
+                  <strong>₩<%= String.format(Locale.US, "%,.0f", row.get("total_price")) %></strong>
+                  <p><%= row.get("order_status") != null ? row.get("order_status") : "-" %> · <%= formatTimestamp(row.get("created_at")) %></p>
+                </div>
+              </div>
+            <% }} %>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard-card" style="margin-bottom:2rem;">
+        <header class="dashboard-card__header">
+          <div>
+            <h2>인기 도구 TOP 5</h2>
+            <p>트렌드 점수와 방문량 기준</p>
+          </div>
+          <a class="btn" href="/AI/admin/tools/index.jsp" style="padding:8px 14px;">도구 관리</a>
         </header>
         <div class="admin-table-section">
           <table class="admin-table">
             <thead>
-              <tr><th>도구명</th><th>카테고리</th><th>난이도</th><th>평점</th><th>상태</th></tr>
+              <tr>
+                <th>도구명</th>
+                <th>카테고리</th>
+                <th>트렌드 점수</th>
+                <th>성장률</th>
+                <th>월 방문량</th>
+              </tr>
             </thead>
             <tbody>
-              <%
-                try (Connection c2 = DBConnect.getConnection();
-                     PreparedStatement ps2 = c2.prepareStatement(
-                       "SELECT name, category, difficulty_level, rating, is_active FROM ai_tools ORDER BY created_at DESC LIMIT 5");
-                     ResultSet rs2 = ps2.executeQuery()) {
-                  int rowCount = 0;
-                  while (rs2.next()) {
-                    rowCount++;
-              %>
-              <tr>
-                <td><strong><%= rs2.getString("name") != null ? rs2.getString("name") : "-" %></strong></td>
-                <td><%= rs2.getString("category") != null ? rs2.getString("category") : "-" %></td>
-                <td><%= rs2.getString("difficulty_level") != null ? rs2.getString("difficulty_level") : "-" %></td>
-                <td><i class="bi bi-star-fill" style="color:#f59e0b;margin-right:3px;"></i><%= rs2.getObject("rating") != null ? String.format("%.1f", rs2.getDouble("rating")) : "-" %></td>
-                <td><span class="status-badge <%= rs2.getBoolean("is_active") ? "status-active" : "status-inactive" %>">
-                  <%= rs2.getBoolean("is_active") ? "활성" : "비활성" %>
-                </span></td>
-              </tr>
-              <%
-                  }
-                  if (rowCount == 0) {
-              %>
-              <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:2rem;">등록된 AI 도구가 없습니다.</td></tr>
-              <% } } catch (Exception e2) { %>
-              <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:2rem;">데이터를 불러올 수 없습니다.</td></tr>
-              <% } %>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- 최근 등록 실습 프로젝트 -->
-      <section style="margin-bottom:2.5rem;background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:var(--radius-xl);padding:var(--spacing-xl);">
-        <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
-          <div>
-            <h2 style="margin:0;">최근 등록된 실습 프로젝트</h2>
-            <p style="margin:.25rem 0 0;font-size:.85rem;color:var(--text-secondary);">최근 추가된 랩 프로젝트 5개</p>
-          </div>
-          <a class="btn" href="/AI/admin/lab/index.jsp" style="padding:6px 14px;font-size:.85rem;">전체 보기</a>
-        </header>
-        <div class="admin-table-section">
-          <table class="admin-table">
-            <thead>
-              <tr><th>프로젝트명</th><th>카테고리</th><th>난이도</th><th>유형</th><th>예상 시간</th></tr>
-            </thead>
-            <tbody>
-              <%
-                try (Connection c3 = DBConnect.getConnection();
-                     PreparedStatement ps3 = c3.prepareStatement(
-                       "SELECT title, category, difficulty_level, project_type, estimated_duration_hours FROM lab_projects ORDER BY created_at DESC LIMIT 5");
-                     ResultSet rs3 = ps3.executeQuery()) {
-                  int rowCount3 = 0;
-                  while (rs3.next()) {
-                    rowCount3++;
-              %>
-              <tr>
-                <td><strong><%= rs3.getString("title") != null ? rs3.getString("title") : "-" %></strong></td>
-                <td><%= rs3.getString("category") != null ? rs3.getString("category") : "-" %></td>
-                <td><%= rs3.getString("difficulty_level") != null ? rs3.getString("difficulty_level") : "-" %></td>
-                <td><%= rs3.getString("project_type") != null ? rs3.getString("project_type") : "-" %></td>
-                <td><%= rs3.getObject("estimated_duration_hours") != null ? rs3.getDouble("estimated_duration_hours") + "h" : "-" %></td>
-              </tr>
-              <%
-                  }
-                  if (rowCount3 == 0) {
-              %>
-              <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:2rem;">등록된 프로젝트가 없습니다.</td></tr>
-              <% } } catch (Exception e3) { %>
-              <tr><td colspan="5" style="text-align:center;color:var(--text-secondary);padding:2rem;">데이터를 불러올 수 없습니다.</td></tr>
-              <% } %>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- 최근 주문 -->
-      <section style="margin-bottom:2.5rem;background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:var(--radius-xl);padding:var(--spacing-xl);">
-        <header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
-          <div>
-            <h2 style="margin:0;">최근 주문</h2>
-            <p style="margin:.25rem 0 0;font-size:.85rem;color:var(--text-secondary);">최근 결제된 주문 5건</p>
-          </div>
-          <a class="btn" href="/AI/admin/orders/index.jsp" style="padding:6px 14px;font-size:.85rem;">전체 보기</a>
-        </header>
-        <div class="admin-table-section">
-          <table class="admin-table">
-            <thead>
-              <tr><th>주문번호</th><th>고객명</th><th>이메일</th><th>결제금액</th><th>결제수단</th><th>상태</th><th>주문일시</th></tr>
-            </thead>
-            <tbody>
-              <%
-                try (Connection co = DBConnect.getConnection();
-                     PreparedStatement pso = co.prepareStatement(
-                       "SELECT id, customer_name, customer_email, total_price, payment_method, order_status, created_at FROM orders ORDER BY created_at DESC LIMIT 5");
-                     ResultSet rso = pso.executeQuery()) {
-                  int rowCo = 0;
-                  while (rso.next()) {
-                    rowCo++;
-                    String status = rso.getString("order_status");
-                    String statusClass = "COMPLETED".equals(status) ? "status-active" : "PENDING".equals(status) ? "status-pending" : "status-inactive";
-                    String statusLabel = "COMPLETED".equals(status) ? "완료" : "PENDING".equals(status) ? "대기" : "CANCELLED".equals(status) ? "취소" : status;
-              %>
-              <tr>
-                <td><strong>#<%= rso.getInt("id") %></strong></td>
-                <td><%= rso.getString("customer_name") != null ? rso.getString("customer_name") : "-" %></td>
-                <td style="font-size:.82rem;color:var(--text-secondary);"><%= rso.getString("customer_email") != null ? rso.getString("customer_email") : "-" %></td>
-                <td><strong>$<%= rso.getObject("total_price") != null ? String.format("%.2f", rso.getDouble("total_price")) : "0.00" %></strong></td>
-                <td><%= rso.getString("payment_method") != null ? rso.getString("payment_method") : "-" %></td>
-                <td><span class="status-badge <%= statusClass %>"><%= statusLabel %></span></td>
-                <td style="font-size:.82rem;color:var(--text-secondary);"><%= rso.getString("created_at") != null ? rso.getString("created_at").substring(0, 16) : "-" %></td>
-              </tr>
-              <%
-                  }
-                  if (rowCo == 0) {
-              %>
-              <tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem;">주문 내역이 없습니다.</td></tr>
-              <% } } catch (Exception eo) { %>
-              <tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:2rem;">데이터를 불러올 수 없습니다.</td></tr>
-              <% } %>
+              <% if (topTools.isEmpty()) { %>
+                <tr><td colspan="5" style="text-align:center;padding:2rem;">도구 통계가 없습니다.</td></tr>
+              <% } else { for (Map<String, Object> row : topTools) { %>
+                <tr>
+                  <td><strong><%= row.get("tool_name") %></strong></td>
+                  <td><%= row.get("category") != null ? row.get("category") : "-" %></td>
+                  <td><%= String.format(Locale.US, "%.1f", row.get("trend_score")) %></td>
+                  <td><%= String.format(Locale.US, "%+.1f%%", row.get("growth_rate")) %></td>
+                  <td><%= compactNumber(((Number) row.get("monthly_visits")).longValue()) %></td>
+                </tr>
+              <% }} %>
             </tbody>
           </table>
         </div>
       </section>
 
       <% if (isSuperadmin) { %>
-      <section style="margin-bottom:2rem;background:var(--glass-bg);backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:var(--radius-xl);padding:var(--spacing-xl);">
-        <header style="margin-bottom:1.5rem;">
-          <h2>Superadmin 요청 대기열</h2>
-          <p>관리자 생성 요청을 승인하거나 거절하세요.</p>
+      <section class="dashboard-card">
+        <header class="dashboard-card__header">
+          <div>
+            <h2>Superadmin 요청 대기열</h2>
+            <p>관리자 생성 요청 승인/거절</p>
+          </div>
         </header>
         <div id="superadminQueueFeedback" class="admin-queue-feedback" aria-live="polite"></div>
         <div class="admin-table-section" style="margin-top:1.5rem;">
@@ -290,5 +418,132 @@
         </div>
       </section>
       <% } %>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+      <script src="/AI/assets/js/charts.js"></script>
+      <script>
+  const monthLabels = [<% for (int i = 0; i < monthLabels.size(); i++) { %><%= i > 0 ? "," : "" %>"<%= escapeJs(monthLabels.get(i)) %>"<% } %>];
+  const signupSeries = [<% for (int i = 0; i < signupSeries.size(); i++) { %><%= i > 0 ? "," : "" %><%= signupSeries.get(i) %><% } %>];
+  const revenueSeries = [<% for (int i = 0; i < revenueSeries.size(); i++) { %><%= i > 0 ? "," : "" %><%= String.format(Locale.US, "%.2f", revenueSeries.get(i)) %><% } %>];
+  const categoryLabels = [<% for (int i = 0; i < categoryLabels.size(); i++) { %><%= i > 0 ? "," : "" %>"<%= escapeJs(categoryLabels.get(i)) %>"<% } %>];
+  const categorySeries = [<% for (int i = 0; i < categorySeries.size(); i++) { %><%= i > 0 ? "," : "" %><%= categorySeries.get(i) %><% } %>];
+  const planLabels = [<% for (int i = 0; i < planLabels.size(); i++) { %><%= i > 0 ? "," : "" %>"<%= escapeJs(planLabels.get(i)) %>"<% } %>];
+  const planSeries = [<% for (int i = 0; i < planSeries.size(); i++) { %><%= i > 0 ? "," : "" %><%= planSeries.get(i) %><% } %>];
+  const palette = window.getChartPalette ? window.getChartPalette() : ['#3b82f6', '#06b6d4', '#22c55e', '#f59e0b'];
 
+  renderLineChart('signupChart', monthLabels, [{
+    label: '신규 가입자',
+    data: signupSeries,
+    borderColor: palette[0],
+    backgroundColor: 'rgba(59,130,246,.18)',
+    tension: 0.35,
+    fill: true,
+    pointRadius: 3
+  }], {});
+
+  renderDoughnutChart('categoryChart', categoryLabels, categorySeries, {});
+
+  renderBarChart('revenueChart', monthLabels, revenueSeries, {
+    label: '월 매출',
+    backgroundColor: palette[2],
+    scales: {
+      x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,.08)' } },
+      y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,.08)' } }
+    }
+  });
+
+  renderDoughnutChart('planChart', planLabels, planSeries, {});
+      </script>
+      <style>
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+  .dashboard-secondary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+  .dashboard-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    backdrop-filter: blur(20px);
+  }
+  .dashboard-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .dashboard-card__header h2 {
+    margin: 0 0 .25rem;
+    font-size: 1.05rem;
+  }
+  .dashboard-card__header p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: .85rem;
+  }
+  .chart-wrap {
+    height: 300px;
+  }
+  .dashboard-pill-group {
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+  }
+  .dashboard-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .7rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    color: var(--text-primary);
+    text-decoration: none;
+    background: rgba(15, 23, 42, 0.45);
+  }
+  .dashboard-list {
+    display: grid;
+    gap: .75rem;
+  }
+  .dashboard-list__item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: .9rem 1rem;
+    border-radius: 1rem;
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+  }
+  .dashboard-list__item strong {
+    display: block;
+    color: #f8fafc;
+  }
+  .dashboard-list__item p {
+    margin: .15rem 0 0;
+    color: var(--text-secondary);
+    font-size: .82rem;
+  }
+  .dashboard-list__item span {
+    color: var(--text-secondary);
+    font-size: .82rem;
+    white-space: nowrap;
+  }
+  .dashboard-empty {
+    margin: 0;
+    padding: 1rem;
+    color: var(--text-secondary);
+  }
+  @media (max-width: 1100px) {
+    .dashboard-grid,
+    .dashboard-secondary-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+      </style>
 <%@ include file="/AI/admin/layout/footer.jspf" %>

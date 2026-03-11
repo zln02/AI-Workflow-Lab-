@@ -69,7 +69,7 @@ public class FavoritesServlet extends HttpServlet {
             
             if (pathInfo == null || pathInfo.equals("/")) {
                 // 전체 즐겨찾기 목록
-                List<UserFavorite> favorites = favoriteDAO.getUserFavorites(currentUser.getId());
+                List<UserFavorite> favorites = favoriteDAO.getUserFavorites((int) currentUser.getId());
                 List<Map<String, Object>> favoriteDetails = new ArrayList<>();
                 
                 for (UserFavorite fav : favorites) {
@@ -79,11 +79,11 @@ public class FavoritesServlet extends HttpServlet {
                     // 해당 카테고리의 아이템 정보 가져오기
                     switch (fav.getCategory()) {
                         case "tool":
-                            AITool tool = toolDAO.getToolById(fav.getToolId());
+                            AITool tool = toolDAO.findById(fav.getToolId());
                             detail.put("item", tool);
                             break;
                         case "lab":
-                            LabProject lab = labDAO.getLabProjectById(fav.getToolId());
+                            LabProject lab = labDAO.findById(fav.getToolId());
                             detail.put("item", lab);
                             break;
                         case "package":
@@ -100,7 +100,7 @@ public class FavoritesServlet extends HttpServlet {
                 
             } else if (category != null) {
                 // 특정 카테고리의 즐겨찾기
-                List<UserFavorite> favorites = favoriteDAO.getUserFavoritesByCategory(currentUser.getId(), category);
+                List<UserFavorite> favorites = favoriteDAO.getUserFavoritesByCategory((int) currentUser.getId(), category);
                 ApiResponse<List<UserFavorite>> apiResponse = ApiResponse.success(favorites);
                 out.print(gson.toJson(apiResponse));
                 
@@ -165,7 +165,7 @@ public class FavoritesServlet extends HttpServlet {
             }
             
             // 즐겨찾기 추가
-            UserFavorite favorite = new UserFavorite(currentUser.getId(), itemId, category);
+            UserFavorite favorite = new UserFavorite((int) currentUser.getId(), itemId, category);
             boolean added = favoriteDAO.addFavorite(favorite);
             
             if (added) {
@@ -235,7 +235,7 @@ public class FavoritesServlet extends HttpServlet {
             }
             
             // 즐겨찾기 삭제
-            boolean removed = favoriteDAO.removeFavorite(currentUser.getId(), itemId, category);
+            boolean removed = favoriteDAO.removeFavorite((int) currentUser.getId(), itemId, category);
             
             if (removed) {
                 ApiResponse<Object> apiResponse = ApiResponse.success("즐겨찾기에서 제거되었습니다.", null);
@@ -296,8 +296,8 @@ public class FavoritesServlet extends HttpServlet {
             }
             
             // 즐겨찾기 토글
-            boolean toggled = favoriteDAO.toggleFavorite(currentUser.getId(), itemId, category);
-            boolean isFavorite = favoriteDAO.isFavorite(currentUser.getId(), itemId, category);
+            boolean toggled = favoriteDAO.toggleFavorite((int) currentUser.getId(), itemId, category);
+            boolean isFavorite = favoriteDAO.isFavorite((int) currentUser.getId(), itemId, category);
             
             Map<String, Object> result = new HashMap<>();
             result.put("toggled", toggled);

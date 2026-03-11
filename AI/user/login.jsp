@@ -19,10 +19,14 @@
   if (socialErrorParam != null) {
     switch (socialErrorParam) {
       case "not_configured":  errorMessage = socialProvider + " 로그인이 아직 설정되지 않았습니다."; break;
+      case "state_invalid":   errorMessage = socialProvider + " 로그인 세션이 만료되었습니다. 다시 시도해주세요."; break;
+      case "state_mismatch":  errorMessage = socialProvider + " 로그인 검증에 실패했습니다. 다시 시도해주세요."; break;
       case "access_denied":   errorMessage = socialProvider + " 로그인을 취소하셨습니다."; break;
+      case "no_code":         errorMessage = socialProvider + " 인증 코드가 전달되지 않았습니다."; break;
       case "token_failed":    errorMessage = socialProvider + " 인증에 실패했습니다. 다시 시도해주세요."; break;
       case "userinfo_failed": errorMessage = socialProvider + " 사용자 정보를 가져올 수 없습니다."; break;
       case "create_failed":   errorMessage = socialProvider + " 계정 연동에 실패했습니다."; break;
+      case "server_error":    errorMessage = socialProvider + " 로그인 처리 중 서버 오류가 발생했습니다."; break;
       case "account_inactive":errorMessage = "비활성화된 계정입니다. 고객센터로 문의해주세요."; break;
       default:                errorMessage = socialProvider + " 로그인 중 오류가 발생했습니다."; break;
     }

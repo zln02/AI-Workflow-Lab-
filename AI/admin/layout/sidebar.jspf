@@ -41,6 +41,14 @@
       <span class="sidebar-icon"><i class="bi bi-people"></i></span>
       <span class="sidebar-text">사용자 관리</span>
     </a>
+    <a href="/AI/admin/statistics/index.jsp" class="sidebar-item" data-path="/admin/statistics">
+      <span class="sidebar-icon"><i class="bi bi-bar-chart"></i></span>
+      <span class="sidebar-text">통계/인사이트</span>
+    </a>
+    <a href="/AI/admin/analytics/index.jsp" class="sidebar-item" data-path="/admin/analytics">
+      <span class="sidebar-icon"><i class="bi bi-graph-up"></i></span>
+      <span class="sidebar-text">Analytics Hub</span>
+    </a>
     <a href="/AI/admin/packages/index.jsp" class="sidebar-item" data-path="/admin/packages">
       <span class="sidebar-icon"><i class="bi bi-credit-card"></i></span>
       <span class="sidebar-text">구독 플랜</span>

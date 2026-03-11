@@ -44,6 +44,24 @@
       .replace("<", "&lt;")
       .replace(">", "&gt;");
   }
+
+  /**
+   * JavaScript 문자열 리터럴용 이스케이프
+   * @param input 이스케이프할 문자열
+   * @return JS 문자열에 안전한 값
+   */
+  public String escapeJs(String input) {
+    if (input == null || input.isEmpty()) {
+      return "";
+    }
+    return input
+      .replace("\\", "\\\\")
+      .replace("\"", "\\\"")
+      .replace("'", "\\'")
+      .replace("\r", "\\r")
+      .replace("\n", "\\n")
+      .replace("</", "<\\/");
+  }
   
   /**
    * CSRF 토큰 가져오기
@@ -141,12 +159,56 @@
   }
   
   /**
-   * Provider 로고 정보 반환
+   * Provider 도메인 매핑 (Favicon 서비스용)
+   */
+  private static final java.util.Map<String, String> PROVIDER_DOMAINS;
+  static {
+    PROVIDER_DOMAINS = new java.util.HashMap<>();
+    PROVIDER_DOMAINS.put("openai",        "openai.com");
+    PROVIDER_DOMAINS.put("anthropic",     "anthropic.com");
+    PROVIDER_DOMAINS.put("google",        "google.com");
+    PROVIDER_DOMAINS.put("meta",          "meta.com");
+    PROVIDER_DOMAINS.put("microsoft",     "microsoft.com");
+    PROVIDER_DOMAINS.put("github",        "github.com");
+    PROVIDER_DOMAINS.put("githubmicrosoft", "github.com");
+    PROVIDER_DOMAINS.put("midjourney",    "midjourney.com");
+    PROVIDER_DOMAINS.put("midjourneylabs","midjourney.com");
+    PROVIDER_DOMAINS.put("stabilityai",   "stability.ai");
+    PROVIDER_DOMAINS.put("stability",     "stability.ai");
+    PROVIDER_DOMAINS.put("mistralai",     "mistral.ai");
+    PROVIDER_DOMAINS.put("mistral",       "mistral.ai");
+    PROVIDER_DOMAINS.put("cohere",        "cohere.com");
+    PROVIDER_DOMAINS.put("huggingface",   "huggingface.co");
+    PROVIDER_DOMAINS.put("perplexity",    "perplexity.ai");
+    PROVIDER_DOMAINS.put("xai",           "x.ai");
+    PROVIDER_DOMAINS.put("canva",         "canva.com");
+    PROVIDER_DOMAINS.put("adobe",         "adobe.com");
+    PROVIDER_DOMAINS.put("notion",        "notion.so");
+    PROVIDER_DOMAINS.put("anysphere",     "cursor.sh");
+    PROVIDER_DOMAINS.put("codeium",       "codeium.com");
+    PROVIDER_DOMAINS.put("replit",        "replit.com");
+    PROVIDER_DOMAINS.put("elevenlabs",    "elevenlabs.io");
+    PROVIDER_DOMAINS.put("suno",          "suno.ai");
+    PROVIDER_DOMAINS.put("runway",        "runwayml.com");
+    PROVIDER_DOMAINS.put("zapier",        "zapier.com");
+  }
+
+  /**
+   * Provider 로고 정보 반환 — Favicon 서비스 우선
    * @param providerName 제공사 이름
    * @param modelName 모델명
    * @return [로고 경로, 제공사명] 배열
    */
   public String[] getProviderLogo(String providerName, String modelName) {
+    if (providerName != null && !providerName.trim().isEmpty()) {
+      String key = providerName.toLowerCase().trim()
+          .replace(" ", "").replace(".", "").replace("-", "").replace("/","");
+      String domain = PROVIDER_DOMAINS.get(key);
+      if (domain != null) {
+        return new String[]{"https://www.google.com/s2/favicons?domain=" + domain + "&sz=64", providerName};
+      }
+    }
+    // fallback to local SVG
     String logoFileName = getProviderLogoFileName(providerName);
     String logoPath = "/AI/assets/img/providers/" + logoFileName + ".svg";
     return new String[]{logoPath, providerName != null ? providerName : "Unknown"};
@@ -163,4 +225,3 @@
     currency = "USD";
   }
 %>
-

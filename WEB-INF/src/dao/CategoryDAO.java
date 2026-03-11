@@ -1,16 +1,11 @@
 package dao;
 
 import model.Category;
-import util.DBConnect;
+import db.DBConnect;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CategoryDAO {
-    private java.sql.Connection conn;
-    
-    public CategoryDAO() {
-        this.conn = DBConnect.getConnection();
-    }
     
     // 활성화된 모든 카테고리 가져오기
     public List<Category> getAllActiveCategories() {

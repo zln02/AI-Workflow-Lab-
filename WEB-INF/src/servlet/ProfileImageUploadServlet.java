@@ -95,7 +95,7 @@ public class ProfileImageUploadServlet extends HttpServlet {
             }
             
             // 새 이미지 업로드
-            String newImageName = FileUploadUtil.uploadProfileImage(filePart, currentUser.getId());
+            String newImageName = FileUploadUtil.uploadProfileImage(filePart, (int) currentUser.getId());
             if (newImageName == null) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
@@ -107,7 +107,7 @@ public class ProfileImageUploadServlet extends HttpServlet {
             
             // 사용자 정보 업데이트
             currentUser.setProfileImageUrl(newImageName);
-            boolean updated = userDAO.updateProfileImage(currentUser.getId(), newImageName);
+            boolean updated = userDAO.updateProfileImage((int) currentUser.getId(), newImageName);
             
             if (updated) {
                 // 세션 정보 업데이트
@@ -168,7 +168,7 @@ public class ProfileImageUploadServlet extends HttpServlet {
                 
                 // 사용자 정보 업데이트
                 currentUser.setProfileImageUrl(null);
-                boolean updated = userDAO.updateProfileImage(currentUser.getId(), null);
+                boolean updated = userDAO.updateProfileImage((int) currentUser.getId(), null);
                 
                 if (updated) {
                     // 세션 정보 업데이트

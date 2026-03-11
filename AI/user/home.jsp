@@ -1,829 +1,695 @@
 <%--
-  AI Workflow Lab 홈페이지 — 리디자인 (Linear/Raycast dark theme)
+  AI Workflow Lab — 홈페이지 리디자인 (Hancom Docs AI Style)
 --%>
 <%@ page contentType="text/html; charset=UTF-8" buffer="128kb" autoFlush="true" %>
 <%@ page isELIgnored="true" %>
 <%@ page import="dao.AIToolDAO" %>
+<%@ page import="dao.AIToolNewsDAO" %>
+<%@ page import="dao.LabProjectDAO" %>
+<%@ page import="dao.PlanDAO" %>
 <%@ page import="model.AITool" %>
+<%@ page import="model.AIToolNews" %>
+<%@ page import="model.LabProject" %>
+<%@ page import="model.Plan" %>
 <%@ page import="model.User" %>
+<%@ page import="java.sql.*" %>
+<%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
+<%@ page import="db.DBConnect" %>
 <%@ include file="/AI/user/_common.jsp" %>
-
 <%
   User user = (User) session.getAttribute("user");
+  boolean loggedIn = user != null && user.isActive();
+  AIToolDAO homeToolDao = new AIToolDAO();
+  AIToolNewsDAO homeNewsDao = new AIToolNewsDAO();
+  LabProjectDAO homeLabDao = new LabProjectDAO();
+  PlanDAO homePlanDao = new PlanDAO();
+  List<AITool> trendingTools = java.util.Collections.emptyList();
+  List<AITool> rankedTools = java.util.Collections.emptyList();
+  List<AIToolNews> latestNews = java.util.Collections.emptyList();
+  List<LabProject> popularLabs = java.util.Collections.emptyList();
+  List<Plan> featuredPlans = java.util.Collections.emptyList();
+  List<String[]> countrySnapshots = new ArrayList<>();
 
-  AIToolDAO toolDao = new AIToolDAO();
-  List<AITool> allPopular = toolDao.findPopular(8);
-  List<AITool> popularTools = allPopular.subList(0, Math.min(4, allPopular.size()));
+  int toolCount = 0, userCount = 0, labCount = 0;
+  try (Connection _c = DBConnect.getConnection()) {
+    try (PreparedStatement ps = _c.prepareStatement("SELECT COUNT(*) FROM ai_tools");
+         ResultSet rs = ps.executeQuery()) { if (rs.next()) toolCount = rs.getInt(1); }
+    try (PreparedStatement ps = _c.prepareStatement("SELECT COUNT(*) FROM users WHERE is_active=1");
+         ResultSet rs = ps.executeQuery()) { if (rs.next()) userCount = rs.getInt(1); }
+    try (PreparedStatement ps = _c.prepareStatement("SELECT COUNT(*) FROM lab_projects WHERE is_active=1");
+         ResultSet rs = ps.executeQuery()) { if (rs.next()) labCount = rs.getInt(1); }
+    try (PreparedStatement ps = _c.prepareStatement(
+        "SELECT provider_country, COUNT(*) AS cnt, COALESCE(AVG(trend_score), 0) AS avg_trend " +
+        "FROM ai_tools WHERE provider_country IS NOT NULL AND provider_country <> '' " +
+        "GROUP BY provider_country ORDER BY cnt DESC, avg_trend DESC LIMIT 6");
+         ResultSet rs = ps.executeQuery()) {
+      while (rs.next()) {
+        countrySnapshots.add(new String[]{
+          rs.getString("provider_country"),
+          String.valueOf(rs.getInt("cnt")),
+          String.format(java.util.Locale.US, "%.1f", rs.getDouble("avg_trend"))
+        });
+      }
+    }
+  } catch (Exception _e) { /* 기본값 유지 */ }
+  try {
+    trendingTools = homeToolDao.findFiltered(null, null, null, null, false, false, "trend", 6, 0);
+    rankedTools = homeToolDao.findFiltered(null, null, null, null, false, false, "rank", 5, 0);
+    latestNews = homeNewsDao.findLatest(4);
+    popularLabs = homeLabDao.findPopular(6);
+    featuredPlans = homePlanDao.findAllActive();
+    if (featuredPlans.size() > 3) featuredPlans = featuredPlans.subList(0, 3);
+  } catch (Exception _e) { /* 기본값 유지 */ }
 %>
+<%!
+  private String countryName(String code) {
+    if (code == null || code.isEmpty()) return "-";
+    switch (code) {
+      case "US": return "미국";
+      case "KR": return "대한민국";
+      case "CN": return "중국";
+      case "JP": return "일본";
+      case "FR": return "프랑스";
+      case "DE": return "독일";
+      case "CA": return "캐나다";
+      case "IN": return "인도";
+      case "GB": return "영국";
+      default: return code;
+    }
+  }
 
+  private String countryFlag(String code) {
+    if (code == null || code.length() != 2) return "🌐";
+    int first = Character.codePointAt(code.toUpperCase(), 0) - 'A' + 0x1F1E6;
+    int second = Character.codePointAt(code.toUpperCase(), 1) - 'A' + 0x1F1E6;
+    return new String(Character.toChars(first)) + new String(Character.toChars(second));
+  }
+%>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Workflow Lab — AI 도구 탐색과 실습 프로젝트 플랫폼</title>
-  <meta name="description" content="AI 도구 탐색부터 실습 프로젝트까지, AI 실무 역량을 키우는 통합 플랫폼.">
+  <title>AI Workflow Lab — AI의 모든 것, 한곳에서</title>
+  <meta name="description" content="수백 개의 AI 모델을 한눈에 비교하고, 실습 프로젝트로 실력을 키우세요.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AI Workflow Lab — AI의 모든 것, 한곳에서">
+  <meta property="og:description" content="AI 도구 탐색, 순위 비교, 실습 랩, 구독 결제까지 한 번에 제공하는 통합 플랫폼입니다.">
+  <meta property="og:url" content="<%= request.getRequestURL().toString() %>">
+  <meta property="og:site_name" content="AI Workflow Lab">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AI Workflow Lab — AI의 모든 것, 한곳에서">
+  <meta name="twitter:description" content="수백 개의 AI 도구를 탐색하고 실습 랩으로 바로 검증하세요.">
+  <link rel="canonical" href="<%= request.getRequestURL().toString() %>">
   <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/AI/assets/css/dark-theme.css">
-  <link rel="stylesheet" href="/AI/assets/css/tools.css">
-  <link rel="stylesheet" href="/AI/assets/css/animations.css">
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/ScrollTrigger.min.js"></script>
-
+  <link rel="stylesheet" href="/AI/assets/css/home.css">
   <style>
-    /* ===== Reset / Base ===== */
-    body {
-      padding-top: 60px;
-      background: var(--bg-primary, #0a0f1e);
-      color: var(--text-primary, #f1f5f9);
-      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
-      overflow-x: hidden;
+    .home-addon-grid { display:grid; gap:28px; margin-top:34px; }
+    .lab-showcase-grid, .ecosystem-grid, .pricing-mini-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+    .lab-card, .ecosystem-card, .pricing-mini-card {
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.09);
+      border-radius:22px;
+      padding:22px;
+      color:#e2e8f0;
+      text-decoration:none;
+      transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease;
     }
-
-    /* ===== Hero ===== */
-    .home-hero {
-      position: relative;
-      min-height: 80vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      padding: 80px 24px 96px;
+    .lab-card:hover, .ecosystem-card:hover, .pricing-mini-card:hover {
+      transform:translateY(-4px);
+      border-color:rgba(59,130,246,.35);
+      box-shadow:0 18px 40px rgba(2,6,23,.28);
     }
-
-    /* Mesh gradient orbs */
-    .home-hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 60% 50% at 20% 30%,  rgba(59,130,246,0.18) 0%, transparent 70%),
-        radial-gradient(ellipse 50% 60% at 80% 20%,  rgba(139,92,246,0.16) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 40% at 50% 80%,  rgba(6,182,212,0.12)  0%, transparent 70%),
-        radial-gradient(ellipse 70% 70% at 50% 50%,  rgba(10,15,30,0.0)    0%, transparent 100%);
-      pointer-events: none;
-      z-index: 0;
+    .lab-card__meta, .ecosystem-card__meta, .pricing-mini-card__meta {
+      color:#94a3b8;
+      font-size:.8rem;
+      margin-bottom:10px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
     }
-
-    /* Subtle grid overlay */
-    .home-hero::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
-      pointer-events: none;
-      z-index: 0;
+    .lab-card__title, .ecosystem-card__title, .pricing-mini-card__title {
+      font-size:1.12rem;
+      font-weight:700;
+      color:#f8fafc;
+      margin-bottom:8px;
     }
-
-    .home-hero__content {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      max-width: 760px;
-      width: 100%;
+    .lab-card__desc, .pricing-mini-card__desc {
+      color:#cbd5e1;
+      font-size:.92rem;
+      line-height:1.6;
+      margin:0;
     }
-
-    .home-hero__eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 14px;
-      border-radius: 999px;
-      background: rgba(59,130,246,0.12);
-      border: 1px solid rgba(59,130,246,0.25);
-      font-size: 0.8125rem;
-      font-weight: 500;
-      color: #60a5fa;
-      margin-bottom: 28px;
-      letter-spacing: 0.01em;
+    .ecosystem-card__metric {
+      margin-top:14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding-top:14px;
+      border-top:1px solid rgba(255,255,255,.08);
+      color:#e2e8f0;
+      font-size:.9rem;
     }
-
-    .home-hero__title {
-      font-size: clamp(2.25rem, 6vw, 3.75rem);
-      font-weight: 700;
-      line-height: 1.15;
-      letter-spacing: -0.03em;
-      margin: 0 0 20px;
-      color: var(--text-primary, #f1f5f9);
+    .pricing-mini-card__price {
+      font-size:1.65rem;
+      font-weight:800;
+      color:#f8fafc;
+      margin:10px 0 14px;
     }
-
-    .home-hero__title .accent {
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .pricing-mini-card__list {
+      list-style:none;
+      margin:0 0 18px;
+      padding:0;
+      display:grid;
+      gap:8px;
+      color:#cbd5e1;
+      font-size:.9rem;
     }
-
-    .home-hero__sub {
-      font-size: clamp(1rem, 2.5vw, 1.125rem);
-      color: var(--text-secondary, #94a3b8);
-      line-height: 1.7;
-      margin: 0 0 40px;
-      max-width: 520px;
-      margin-left: auto;
-      margin-right: auto;
+    .pricing-mini-card__list li::before { content:"• "; color:#60a5fa; }
+    .pricing-mini-card--popular {
+      background:linear-gradient(180deg, rgba(59,130,246,.18), rgba(255,255,255,.05));
+      border-color:rgba(96,165,250,.42);
     }
-
-    .home-hero__cta {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .hero-btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 13px 28px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      color: #fff;
-      -webkit-text-fill-color: #fff;
-      font-size: 0.9375rem;
-      font-weight: 600;
-      text-decoration: none;
-      border: none;
-      box-shadow: 0 4px 20px rgba(59,130,246,0.4);
-      transition: all 0.2s ease;
-    }
-
-    .hero-btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(59,130,246,0.55);
-      color: #fff;
-      -webkit-text-fill-color: #fff;
-    }
-
-    .hero-btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 13px 28px;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.06);
-      color: var(--text-primary, #f1f5f9);
-      -webkit-text-fill-color: var(--text-primary, #f1f5f9);
-      font-size: 0.9375rem;
-      font-weight: 600;
-      text-decoration: none;
-      border: 1px solid rgba(255,255,255,0.14);
-      transition: all 0.2s ease;
-    }
-
-    .hero-btn-secondary:hover {
-      background: rgba(255,255,255,0.10);
-      border-color: rgba(255,255,255,0.24);
-      color: #fff;
-      -webkit-text-fill-color: #fff;
-      transform: translateY(-2px);
-    }
-
-    /* ===== Logo Scroll Banner ===== */
-    .logos-banner {
-      padding: 28px 0;
-      overflow: hidden;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      background: rgba(255,255,255,0.015);
-    }
-
-    .logos-track {
-      display: flex;
-      gap: 44px;
-      align-items: center;
-      animation: scrollLogos 28s linear infinite;
-      width: max-content;
-    }
-
-    .logos-track:hover { animation-play-state: paused; }
-
-    @keyframes scrollLogos {
-      0%   { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-
-    .logos-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      opacity: 0.4;
-      transition: opacity 0.2s;
-      flex-shrink: 0;
-      cursor: default;
-    }
-
-    .logos-item:hover { opacity: 0.85; }
-    .logos-item img { width: 36px; height: 36px; border-radius: 8px; object-fit: contain; }
-    .logos-item span { font-size: 10px; color: var(--text-muted, #64748b); font-weight: 500; white-space: nowrap; }
-
-    /* ===== Section Shared ===== */
-    .home-section {
-      padding: 88px 0;
-    }
-
-    .home-section + .home-section {
-      border-top: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .section-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-
-    .section-header {
-      margin-bottom: 48px;
-    }
-
-    .section-eyebrow {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #60a5fa;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 10px;
-    }
-
-    .section-title {
-      font-size: clamp(1.5rem, 3.5vw, 2rem);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      color: var(--text-primary, #f1f5f9);
-      margin: 0 0 10px;
-    }
-
-    .section-sub {
-      font-size: 1rem;
-      color: var(--text-secondary, #94a3b8);
-      margin: 0;
-    }
-
-    /* ===== Feature Cards ===== */
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
-
-    .feature-card {
-      background: var(--glass-bg, rgba(255,255,255,0.05));
-      border: 1px solid var(--glass-border, rgba(255,255,255,0.10));
-      border-radius: 16px;
-      padding: 32px 28px;
-      transition: all 0.25s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 16px;
-      opacity: 0;
-      transition: opacity 0.25s ease;
-    }
-
-    .feature-card--blue::before  { background: radial-gradient(ellipse 60% 40% at 30% 20%, rgba(59,130,246,0.12), transparent); }
-    .feature-card--purple::before { background: radial-gradient(ellipse 60% 40% at 30% 20%, rgba(139,92,246,0.12), transparent); }
-    .feature-card--cyan::before   { background: radial-gradient(ellipse 60% 40% at 30% 20%, rgba(6,182,212,0.12), transparent); }
-
-    .feature-card:hover {
-      border-color: rgba(59,130,246,0.30);
-      transform: translateY(-5px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(59,130,246,0.08);
-    }
-
-    .feature-card:hover::before { opacity: 1; }
-
-    .feature-icon {
-      font-size: 2.25rem;
-      line-height: 1;
-      margin-bottom: 20px;
-      display: block;
-      position: relative;
-      z-index: 1;
-    }
-
-    .feature-card__name {
-      font-size: 1.0625rem;
-      font-weight: 700;
-      color: var(--text-primary, #f1f5f9);
-      margin: 0 0 10px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .feature-card__desc {
-      font-size: 0.875rem;
-      color: var(--text-secondary, #94a3b8);
-      line-height: 1.7;
-      margin: 0 0 20px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .feature-card__link {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: #60a5fa;
-      -webkit-text-fill-color: #60a5fa;
-      text-decoration: none;
-      transition: gap 0.2s;
-      position: relative;
-      z-index: 1;
-    }
-
-    .feature-card__link:hover { gap: 8px; color: #93c5fd; -webkit-text-fill-color: #93c5fd; }
-
-    /* ===== Tools Section ===== */
-    .tools-section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-bottom: 32px;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .view-all-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #60a5fa;
-      -webkit-text-fill-color: #60a5fa;
-      text-decoration: none;
-      transition: gap 0.2s;
-      flex-shrink: 0;
-    }
-
-    .view-all-link:hover { gap: 8px; color: #93c5fd; -webkit-text-fill-color: #93c5fd; }
-
-    /* Tool card (dark variant matching tools.css) */
-    .h-tool-card {
-      background: var(--glass-bg, rgba(255,255,255,0.05));
-      border: 1px solid var(--glass-border, rgba(255,255,255,0.10));
-      border-radius: 14px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      transition: all 0.22s ease;
-    }
-
-    .h-tool-card:hover {
-      border-color: rgba(59,130,246,0.35);
-      transform: translateY(-4px);
-      box-shadow: 0 0 24px rgba(59,130,246,0.18), 0 12px 32px rgba(0,0,0,0.3);
-    }
-
-    .h-tool-card__header {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.10));
-      background: rgba(255,255,255,0.03);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .h-tool-card__provider {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-    }
-
-    .h-tool-card__logo {
-      width: 22px;
-      height: 22px;
-      border-radius: 5px;
-      object-fit: contain;
-      flex-shrink: 0;
-    }
-
-    .h-tool-card__provider-name {
-      font-size: 0.75rem;
-      color: var(--text-muted, #64748b);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .h-tool-card__free {
-      font-size: 0.6875rem;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: rgba(34,197,94,0.12);
-      color: #4ade80;
-      border: 1px solid rgba(34,197,94,0.25);
-      flex-shrink: 0;
-    }
-
-    .h-tool-card__body {
-      padding: 16px;
-      flex: 1;
-    }
-
-    .h-tool-card__name {
-      font-size: 0.9375rem;
-      font-weight: 700;
-      color: var(--text-primary, #f1f5f9);
-      margin: 0 0 8px;
-    }
-
-    .h-tool-card__desc {
-      font-size: 0.8125rem;
-      color: var(--text-secondary, #94a3b8);
-      line-height: 1.6;
-      margin: 0 0 14px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .h-tool-card__tags {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .h-tool-card__cat {
-      font-size: 0.6875rem;
-      font-weight: 500;
-      padding: 2px 8px;
-      border-radius: 5px;
-      background: rgba(59,130,246,0.10);
-      color: #60a5fa;
-      border: 1px solid rgba(59,130,246,0.20);
-    }
-
-    .h-tool-card__diff {
-      font-size: 0.6875rem;
-      font-weight: 500;
-      padding: 2px 8px;
-      border-radius: 5px;
-    }
-
-    .h-tool-card__diff--beginner     { background: rgba(34,197,94,0.10); color: #4ade80; border: 1px solid rgba(34,197,94,0.20); }
-    .h-tool-card__diff--intermediate { background: rgba(245,158,11,0.10); color: #fbbf24; border: 1px solid rgba(245,158,11,0.20); }
-    .h-tool-card__diff--advanced     { background: rgba(239,68,68,0.10);  color: #f87171; border: 1px solid rgba(239,68,68,0.20); }
-
-    .h-tool-card__footer {
-      padding: 12px 16px;
-      border-top: 1px solid var(--glass-border, rgba(255,255,255,0.10));
-    }
-
-    .h-tool-card__btn {
-      display: block;
-      text-align: center;
-      padding: 8px 16px;
-      border-radius: 8px;
-      background: rgba(59,130,246,0.12);
-      color: #60a5fa;
-      -webkit-text-fill-color: #60a5fa;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      text-decoration: none;
-      border: 1px solid rgba(59,130,246,0.22);
-      transition: all 0.2s ease;
-    }
-
-    .h-tool-card__btn:hover {
-      background: rgba(59,130,246,0.22);
-      color: #93c5fd;
-      -webkit-text-fill-color: #93c5fd;
-    }
-
-    /* ===== Stats Section ===== */
-    .stats-section {
-      background: rgba(255,255,255,0.015);
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-    }
-
-    .stat-card {
-      background: var(--glass-bg, rgba(255,255,255,0.05));
-      border: 1px solid var(--glass-border, rgba(255,255,255,0.10));
-      border-radius: 14px;
-      padding: 28px 24px;
-      text-align: center;
-      transition: all 0.22s ease;
-    }
-
-    .stat-card:hover {
-      border-color: rgba(59,130,246,0.25);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    }
-
-    .stat-card__number {
-      font-size: 2.25rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 6px;
-      display: block;
-    }
-
-    .stat-card__label {
-      font-size: 0.875rem;
-      color: var(--text-secondary, #94a3b8);
-      font-weight: 500;
-    }
-
-    /* ===== Responsive ===== */
-    @media (max-width: 992px) {
-      .feature-grid { grid-template-columns: 1fr; gap: 16px; }
-      .stats-grid   { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (max-width: 768px) {
-      .home-hero { min-height: 70vh; padding: 60px 20px 72px; }
-      .home-section { padding: 64px 0; }
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (max-width: 480px) {
-      .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
-      .stat-card  { padding: 20px 16px; }
-      .stat-card__number { font-size: 1.75rem; }
+    @media (max-width: 1080px) {
+      .lab-showcase-grid, .ecosystem-grid, .pricing-mini-grid { grid-template-columns:1fr; }
     }
   </style>
 </head>
 <body>
-  <%@ include file="/AI/partials/header.jsp" %>
 
-  <!-- ================================================================
-       Hero Section
-       ================================================================ -->
-  <section class="home-hero" id="hero">
-    <div class="home-hero__content">
-      <div class="home-hero__eyebrow" id="heroEyebrow">
-        <i class="bi bi-stars"></i>
-        AI 실무 학습 플랫폼
-      </div>
-      <h1 class="home-hero__title" id="heroTitle">
-        AI 도구 탐색부터<br>
-        <span class="accent">실습 프로젝트</span>까지
-      </h1>
-      <p class="home-hero__sub" id="heroSub">
-        실무 AI 역량을 키우는 통합 플랫폼
-      </p>
-      <div class="home-hero__cta" id="heroCta">
-        <a href="/AI/user/tools/navigator.jsp" class="hero-btn-primary">
-          <i class="bi bi-compass"></i>
-          도구 탐색하기
-        </a>
-        <a href="/AI/user/lab/index.jsp" class="hero-btn-secondary">
-          <i class="bi bi-flask"></i>
-          실습 시작하기
-        </a>
-      </div>
+<%@ include file="/AI/partials/header.jsp" %>
+
+<!-- ============================================================
+     SECTION 1 — HERO
+     ============================================================ -->
+<section class="hero-section">
+
+  <!-- Video background -->
+  <div class="hero-video-wrap">
+    <video autoplay muted loop playsinline preload="auto">
+      <source src="/AI/assets/video/main.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <!-- Orbs -->
+  <div class="hero-orbs">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-orb hero-orb-3"></div>
+  </div>
+
+  <!-- Grid overlay -->
+  <div class="hero-grid"></div>
+
+  <!-- Content -->
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      AI 모델 마켓플레이스 플랫폼
     </div>
-  </section>
 
-  <!-- ================================================================
-       AI Provider Logo Scroll
-       ================================================================ -->
-  <div class="logos-banner">
-    <div class="logos-track">
-      <!-- 1세트 -->
-      <div class="logos-item"><img src="/AI/assets/img/providers/openai.svg"    alt="OpenAI"><span>ChatGPT</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/google.svg"    alt="Google"><span>Gemini</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/anthropic.svg" alt="Anthropic"><span>Claude</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/meta.svg"      alt="Meta"><span>Llama</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/microsoft.svg" alt="Microsoft"><span>Copilot</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/mistral.svg"   alt="Mistral"><span>Mistral</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/stability.svg" alt="Stability"><span>Stable Diffusion</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/cohere.svg"    alt="Cohere"><span>Cohere</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/huggingface.svg" alt="HuggingFace"><span>HuggingFace</span></div>
-      <!-- 2세트 (무한 루프) -->
-      <div class="logos-item"><img src="/AI/assets/img/providers/openai.svg"    alt="OpenAI"><span>ChatGPT</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/google.svg"    alt="Google"><span>Gemini</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/anthropic.svg" alt="Anthropic"><span>Claude</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/meta.svg"      alt="Meta"><span>Llama</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/microsoft.svg" alt="Microsoft"><span>Copilot</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/mistral.svg"   alt="Mistral"><span>Mistral</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/stability.svg" alt="Stability"><span>Stable Diffusion</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/cohere.svg"    alt="Cohere"><span>Cohere</span></div>
-      <div class="logos-item"><img src="/AI/assets/img/providers/huggingface.svg" alt="HuggingFace"><span>HuggingFace</span></div>
+    <h1 class="hero-title">
+      <span class="line">AI의 모든 것,</span>
+      <span class="line highlight">한곳에서 탐색하세요</span>
+    </h1>
+
+    <p class="hero-sub">
+      수백 개의 AI 도구를 한눈에 비교하고,<br>
+      실습 프로젝트로 실무 역량을 키우는 통합 플랫폼입니다.
+    </p>
+
+    <div class="hero-cta">
+      <a href="/AI/user/tools/navigator.jsp" class="btn-hero-primary">
+        <i class="bi bi-compass-fill"></i>
+        AI 도구 탐색하기
+      </a>
+      <a href="/AI/user/tools/compare.jsp" class="btn-hero-outline">
+        <i class="bi bi-layout-split"></i>
+        도구 비교하기
+      </a>
+      <% if (!loggedIn) { %>
+      <a href="/AI/user/signup.jsp" class="btn-hero-outline">
+        <i class="bi bi-person-plus"></i>
+        무료로 시작하기
+      </a>
+      <% } else { %>
+      <a href="/AI/user/lab/index.jsp" class="btn-hero-outline">
+        <i class="bi bi-flask"></i>
+        실습 랩 입장
+      </a>
+      <% } %>
+    </div>
+
+    <!-- Stats -->
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="num" data-target="<%= toolCount %>" data-suffix="+"><%= toolCount %>+</span>
+        <span class="lbl">AI 도구</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num" data-target="<%= userCount %>" data-suffix="+"><%= userCount %>+</span>
+        <span class="lbl">활성 사용자</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num" data-target="<%= labCount %>" data-suffix="+"><%= labCount %>+</span>
+        <span class="lbl">실습 프로젝트</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num" data-target="5" data-suffix="개">5개</span>
+        <span class="lbl">AI 모달리티</span>
+      </div>
     </div>
   </div>
 
-  <!-- ================================================================
-       Feature Cards — 핵심 기능 3개
-       ================================================================ -->
-  <section class="home-section">
-    <div class="section-inner">
-      <div class="section-header scroll-reveal">
-        <p class="section-eyebrow">PLATFORM</p>
-        <h2 class="section-title">AI 실무 역량을 키우는 모든 것</h2>
-        <p class="section-sub">도구 탐색, 실습 랩, 구독 플랜 — 한 플랫폼에서</p>
-      </div>
-
-      <div class="feature-grid">
-        <!-- 1 -->
-        <div class="feature-card feature-card--blue scroll-reveal">
-          <span class="feature-icon">🔍</span>
-          <h3 class="feature-card__name">AI 도구 탐색기</h3>
-          <p class="feature-card__desc">카테고리·난이도·키워드로 AI 도구를 검색하고 비교하세요. 50+ 도구 수록.</p>
-          <a href="/AI/user/tools/navigator.jsp" class="feature-card__link">
-            탐색하기 <i class="bi bi-arrow-right"></i>
-          </a>
-        </div>
-        <!-- 2 -->
-        <div class="feature-card feature-card--purple scroll-reveal">
-          <span class="feature-icon">🧪</span>
-          <h3 class="feature-card__name">실습 랩</h3>
-          <p class="feature-card__desc">비즈니스 시나리오 기반 Tutorial · Real-world · Challenge 프로젝트로 실전 역량을 쌓으세요.</p>
-          <a href="/AI/user/lab/index.jsp" class="feature-card__link">
-            랩 입장하기 <i class="bi bi-arrow-right"></i>
-          </a>
-        </div>
-        <!-- 3 -->
-        <div class="feature-card feature-card--cyan scroll-reveal">
-          <span class="feature-icon">💎</span>
-          <h3 class="feature-card__name">구독 플랜</h3>
-          <p class="feature-card__desc">Starter · Growth · Enterprise 단계별 플랜으로 나에게 맞는 AI 학습 환경을 구성하세요.</p>
-          <a href="/AI/user/pricing.jsp" class="feature-card__link">
-            요금제 보기 <i class="bi bi-arrow-right"></i>
-          </a>
-        </div>
-      </div>
+  <!-- Scroll indicator -->
+  <div class="scroll-indicator">
+    <div class="scroll-arrow">
+      <i class="bi bi-chevron-down" style="font-size:.875rem;"></i>
     </div>
-  </section>
+    <span>SCROLL</span>
+  </div>
 
-  <!-- ================================================================
-       Popular Tools — 인기 AI 도구 4개
-       ================================================================ -->
-  <section class="home-section" style="background: rgba(255,255,255,0.015);">
-    <div class="section-inner">
-      <div class="tools-section-header scroll-reveal">
-        <div>
-          <p class="section-eyebrow">POPULAR</p>
-          <h2 class="section-title">🔥 인기 AI 도구</h2>
-          <p class="section-sub">가장 많이 활용되는 AI 도구들을 만나보세요</p>
+</section>
+
+
+<!-- ============================================================
+     SECTION 2 — PROBLEM
+     ============================================================ -->
+<section class="hl-section problem-section">
+  <div class="section-inner">
+    <div class="problem-lines">
+      <p class="problem-line">수천 개의 AI 도구 중</p>
+      <p class="problem-line"><span class="accent">어떤 것을 선택</span>해야 할지 모르겠다면,</p>
+      <p class="problem-line">비교가 <span class="accent2">너무 복잡하고</span> 시간이 걸린다면,</p>
+      <p class="problem-line">실습할 곳이 <span class="accent2">마땅히 없다면—</span></p>
+      <p class="problem-line"><span class="accent3">AI Workflow Lab이 해결합니다.</span></p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     SECTION 3 — FEATURES
+     ============================================================ -->
+<section class="hl-section features-section">
+  <div class="section-inner">
+    <div class="fade-up" style="text-align:center;">
+      <span class="section-label"><i class="bi bi-stars"></i>핵심 기능</span>
+      <h2 class="section-heading">
+        AI 탐색부터 결제까지,<br>
+        <span class="grad-text">하나의 플랫폼</span>에서
+      </h2>
+      <p class="section-sub" style="margin: 0 auto;">
+        AI 도구 발견, 비교, 구독, 실습까지 — 필요한 모든 것이 여기 있습니다.
+      </p>
+    </div>
+
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon feature-icon-1">
+          <i class="bi bi-compass-fill"></i>
         </div>
-        <a href="/AI/user/tools/navigator.jsp" class="view-all-link">
-          전체 보기 <i class="bi bi-arrow-right"></i>
+        <div class="feature-title">AI 도구 탐색기</div>
+        <div class="feature-desc">
+          Text, Image, Code, Voice 등 다양한 카테고리의 AI 도구를 탐색하고 상세 정보를 한눈에 비교하세요.
+        </div>
+        <a href="/AI/user/tools/navigator.jsp" class="feature-link">
+          탐색하러 가기 <i class="bi bi-arrow-right"></i>
         </a>
       </div>
 
-      <div class="row g-4">
-        <% if (popularTools.isEmpty()) { %>
-        <div class="col-12 text-center py-5" style="color: var(--text-muted, #64748b);">
-          <i class="bi bi-robot" style="font-size: 2.5rem;"></i>
-          <p class="mt-3">등록된 AI 도구가 없습니다.</p>
+      <div class="feature-card">
+        <div class="feature-icon feature-icon-2">
+          <i class="bi bi-flask-fill"></i>
         </div>
-        <% } %>
+        <div class="feature-title">실습 랩</div>
+        <div class="feature-desc">
+          Beginner부터 Advanced까지 단계별 실습 프로젝트로 AI 실무 역량을 키우고 포트폴리오를 완성하세요.
+        </div>
+        <a href="/AI/user/lab/index.jsp" class="feature-link">
+          실습 시작하기 <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
 
-        <% for (AITool tool : popularTools) {
-             String[] logoInfo = getProviderLogo(tool.getProviderName(), tool.getToolName());
-             String diffLevel = tool.getDifficultyLevel() != null ? tool.getDifficultyLevel().toLowerCase() : "beginner";
-        %>
-        <div class="col-lg-3 col-md-6 scroll-reveal">
-          <div class="h-tool-card">
-            <div class="h-tool-card__header">
-              <div class="h-tool-card__provider">
-                <img src="<%= logoInfo[0] %>"
-                     alt="<%= escapeHtml(tool.getProviderName()) %>"
-                     class="h-tool-card__logo"
-                     onerror="this.style.display='none'">
-                <span class="h-tool-card__provider-name">
-                  <%= escapeHtml(safeString(tool.getProviderName(), "")) %>
-                </span>
-              </div>
-              <% if (tool.isFreeTierAvailable()) { %>
-              <span class="h-tool-card__free">무료</span>
-              <% } %>
-            </div>
+      <div class="feature-card">
+        <div class="feature-icon feature-icon-3">
+          <i class="bi bi-credit-card-fill"></i>
+        </div>
+        <div class="feature-title">구독 플랜</div>
+        <div class="feature-desc">
+          Starter, Growth, Enterprise 플랜으로 필요한 만큼만 구독하세요. 신용카드, 카카오페이, 네이버페이 지원.
+        </div>
+        <a href="/AI/user/pricing.jsp" class="feature-link">
+          요금제 보기 <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
 
-            <div class="h-tool-card__body">
-              <h5 class="h-tool-card__name"><%= escapeHtml(tool.getToolName()) %></h5>
-              <p class="h-tool-card__desc"><%= escapeHtml(safeString(tool.getPurposeSummary(), "")) %></p>
-              <div class="h-tool-card__tags">
-                <span class="h-tool-card__cat"><%= escapeHtml(safeString(tool.getCategory(), "기타")) %></span>
-                <span class="h-tool-card__diff h-tool-card__diff--<%= diffLevel %>">
-                  <%= escapeHtml(safeString(tool.getDifficultyLevel(), "")) %>
-                </span>
-              </div>
-            </div>
+      <div class="feature-card">
+        <div class="feature-icon feature-icon-4">
+          <i class="bi bi-person-circle"></i>
+        </div>
+        <div class="feature-title">마이페이지</div>
+        <div class="feature-desc">
+          구독 현황, 주문 내역, 프로필 설정을 한곳에서 관리하세요. 북마크한 AI 도구도 쉽게 확인할 수 있습니다.
+        </div>
+        <a href="<%= loggedIn ? "/AI/user/mypage.jsp" : "/AI/user/login.jsp" %>" class="feature-link">
+          <%= loggedIn ? "마이페이지 열기" : "로그인하기" %> <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
 
-            <div class="h-tool-card__footer">
-              <a href="/AI/user/tools/detail.jsp?id=<%= tool.getId() %>" class="h-tool-card__btn">
-                자세히 보기
-              </a>
-            </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     SECTION 4A — POPULAR LABS
+     ============================================================ -->
+<section class="hl-section">
+  <div class="section-inner">
+    <div class="fade-up" style="text-align:center;">
+      <span class="section-label"><i class="bi bi-bezier2"></i>실전 실습</span>
+      <h2 class="section-heading">
+        바로 실행해보는<br>
+        <span class="grad-text">인기 실습 랩</span>
+      </h2>
+      <p class="section-sub" style="margin:0 auto;">
+        참여자 수가 높은 프로젝트 중심으로 초급부터 고급까지 바로 시작할 수 있습니다.
+      </p>
+    </div>
+
+    <div class="home-addon-grid">
+      <div class="lab-showcase-grid">
+        <% if (popularLabs.isEmpty()) { %>
+        <div class="lab-card">
+          <div class="lab-card__title">인기 실습 준비 중</div>
+          <p class="lab-card__desc">실습 프로젝트 데이터가 준비되면 이 영역에 추천 랩이 표시됩니다.</p>
+        </div>
+        <% } else { for (LabProject lab : popularLabs) { %>
+        <a href="/AI/user/lab/detail.jsp?id=<%= lab.getId() %>" class="lab-card">
+          <div class="lab-card__meta">
+            <span><%= escapeHtml(safeString(lab.getCategory(), "Lab")) %></span>
+            <span><%= escapeHtml(safeString(lab.getDifficultyLevel(), "Beginner")) %></span>
+            <span><%= lab.getCurrentParticipants() != null ? lab.getCurrentParticipants() : 0 %>명 참여</span>
           </div>
+          <div class="lab-card__title"><%= escapeHtml(lab.getTitle()) %></div>
+          <p class="lab-card__desc"><%= escapeHtml(safeString(lab.getDescription(), "실전형 AI 워크플로우 실습")) %></p>
+        </a>
+        <% }} %>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SECTION 4 — LIVE DATA
+     ============================================================ -->
+<section class="hl-section live-section">
+  <div class="section-inner">
+    <div class="fade-up" style="text-align:center;">
+      <span class="section-label"><i class="bi bi-broadcast"></i>실시간 카탈로그</span>
+      <h2 class="section-heading">
+        홈에서 바로 보는<br>
+        <span class="grad-text">트렌드와 뉴스</span>
+      </h2>
+      <p class="section-sub" style="margin: 0 auto;">
+        새로 추가한 랭킹, 비교, 뉴스 레이어를 홈페이지에서 바로 이어지게 구성했습니다.
+      </p>
+    </div>
+
+    <div class="live-grid">
+      <div class="live-panel">
+        <div class="live-panel__head">
+          <div>
+            <span class="live-panel__eyebrow">Trend</span>
+            <h3 class="live-panel__title">트렌드 도구</h3>
+          </div>
+          <a href="/AI/user/tools/rankings.jsp?sort=trend" class="live-link">전체 보기</a>
         </div>
+        <div class="live-list">
+          <% for (AITool tool : trendingTools) { %>
+          <a href="/AI/user/tools/detail.jsp?id=<%= tool.getId() %>" class="live-item">
+            <div class="live-item__main">
+              <div class="live-item__title"><%= escapeHtml(tool.getToolName()) %></div>
+              <div class="live-item__sub"><%= escapeHtml(safeString(tool.getProviderName(), "")) %> · Growth <%= escapeHtml(tool.getGrowthDisplay()) %></div>
+            </div>
+            <div class="live-item__metric">
+              <span>Trend</span>
+              <strong><%= escapeHtml(tool.getTrendDisplay()) %></strong>
+            </div>
+          </a>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="live-panel">
+        <div class="live-panel__head">
+          <div>
+            <span class="live-panel__eyebrow">Rank</span>
+            <h3 class="live-panel__title">랭킹 스냅샷</h3>
+          </div>
+          <a href="/AI/user/tools/rankings.jsp" class="live-link">전체 보기</a>
+        </div>
+        <div class="rank-snapshot">
+          <% for (AITool tool : rankedTools) { %>
+          <a href="/AI/user/tools/detail.jsp?id=<%= tool.getId() %>" class="rank-snapshot__card">
+            <div class="rank-snapshot__badge"><%= escapeHtml(tool.getRankDisplay()) %></div>
+            <div class="rank-snapshot__body">
+              <div class="rank-snapshot__title"><%= escapeHtml(tool.getToolName()) %></div>
+              <div class="rank-snapshot__sub"><%= escapeHtml(safeString(tool.getCategory(), "-")) %> · <%= escapeHtml(tool.getFormattedMonthlyVisits()) %>/월</div>
+            </div>
+          </a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="news-strip">
+      <div class="live-panel__head" style="margin-bottom:16px;">
+        <div>
+          <span class="live-panel__eyebrow">News</span>
+          <h3 class="live-panel__title">최신 뉴스</h3>
+        </div>
+        <a href="/AI/user/news/index.jsp" class="live-link">뉴스룸</a>
+      </div>
+      <div class="news-strip__grid">
+        <% for (AIToolNews item : latestNews) { %>
+        <a href="/AI/user/news/detail.jsp?id=<%= item.getId() %>" class="news-strip__card">
+          <span class="news-strip__badge"><%= escapeHtml(safeString(item.getNewsType(), "update")) %></span>
+          <div class="news-strip__title"><%= escapeHtml(item.getTitle()) %></div>
+          <div class="news-strip__summary"><%= escapeHtml(item.getSummary()) %></div>
+        </a>
         <% } %>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- ================================================================
-       Stats Section — 통계
-       ================================================================ -->
-  <section class="home-section stats-section">
-    <div class="section-inner">
-      <div class="stats-grid">
-        <div class="stat-card scroll-reveal">
-          <span class="stat-card__number" data-target="50" data-suffix="+">0</span>
-          <span class="stat-card__label">AI 도구</span>
+
+<!-- ============================================================
+     SECTION 4B — ECOSYSTEM
+     ============================================================ -->
+<section class="hl-section">
+  <div class="section-inner">
+    <div class="fade-up" style="text-align:center;">
+      <span class="section-label"><i class="bi bi-globe-central-south-asia"></i>국가별 AI 생태계</span>
+      <h2 class="section-heading">
+        지금 뜨는 국가와<br>
+        <span class="grad-text">도구 밀집도</span>
+      </h2>
+      <p class="section-sub" style="margin:0 auto;">
+        도구 수와 평균 트렌드 점수 기준으로 국가별 AI 생태계를 빠르게 스캔할 수 있습니다.
+      </p>
+    </div>
+
+    <div class="home-addon-grid">
+      <div class="ecosystem-grid">
+        <% if (countrySnapshots.isEmpty()) { %>
+        <div class="ecosystem-card">
+          <div class="ecosystem-card__title">국가 통계 준비 중</div>
+          <div class="ecosystem-card__metric"><span>데이터 적재 후 표시됩니다.</span><span>🌐</span></div>
         </div>
-        <div class="stat-card scroll-reveal">
-          <span class="stat-card__number" data-target="30" data-suffix="+">0</span>
-          <span class="stat-card__label">실습 프로젝트</span>
-        </div>
-        <div class="stat-card scroll-reveal">
-          <span class="stat-card__number" data-target="8" data-suffix="+">0</span>
-          <span class="stat-card__label">카테고리</span>
-        </div>
-        <div class="stat-card scroll-reveal">
-          <span class="stat-card__number" data-target="1000" data-suffix="+">0</span>
-          <span class="stat-card__label">활성 사용자</span>
-        </div>
+        <% } else { for (String[] country : countrySnapshots) { %>
+        <a href="/AI/user/tools/rankings.jsp?country=<%= escapeHtmlAttribute(country[0]) %>" class="ecosystem-card">
+          <div class="ecosystem-card__meta"><span><%= countryFlag(country[0]) %></span><span><%= escapeHtml(country[0]) %></span></div>
+          <div class="ecosystem-card__title"><%= escapeHtml(countryName(country[0])) %></div>
+          <div class="ecosystem-card__metric">
+            <span>등록 도구 <strong><%= escapeHtml(country[1]) %></strong></span>
+            <span>Trend <strong><%= escapeHtml(country[2]) %></strong></span>
+          </div>
+        </a>
+        <% }} %>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <%@ include file="/AI/partials/footer.jsp" %>
+<!-- ============================================================
+     SECTION 4C — PRICING
+     ============================================================ -->
+<section class="hl-section">
+  <div class="section-inner">
+    <div class="fade-up" style="text-align:center;">
+      <span class="section-label"><i class="bi bi-wallet2"></i>플랜 미리보기</span>
+      <h2 class="section-heading">
+        탐색부터 실습까지 맞는<br>
+        <span class="grad-text">요금제를 선택하세요</span>
+      </h2>
+      <p class="section-sub" style="margin:0 auto;">
+        인기 플랜만 추려서 한 번에 비교하고, 결제로 바로 이어질 수 있게 연결했습니다.
+      </p>
+    </div>
 
-  <!-- ================================================================
-       GSAP Animations
-       ================================================================ -->
-  <script>
-  (function () {
-    if (typeof gsap === 'undefined') return;
+    <div class="home-addon-grid">
+      <div class="pricing-mini-grid">
+        <% if (featuredPlans.isEmpty()) { %>
+        <div class="pricing-mini-card">
+          <div class="pricing-mini-card__title">플랜 정보 준비 중</div>
+          <p class="pricing-mini-card__desc">요금제 데이터가 없으면 기본 가격 페이지로 바로 이동해 확인할 수 있습니다.</p>
+        </div>
+        <% } else { for (Plan plan : featuredPlans) { %>
+        <a href="/AI/user/pricing.jsp" class="pricing-mini-card <%= plan.isPopular() ? "pricing-mini-card--popular" : "" %>">
+          <div class="pricing-mini-card__meta">
+            <span><%= escapeHtml(safeString(plan.getNameKo(), plan.getName())) %></span>
+            <span><%= escapeHtml(safeString(plan.getBillingCycle(), "monthly")) %></span>
+          </div>
+          <div class="pricing-mini-card__title"><%= escapeHtml(safeString(plan.getName(), "Plan")) %></div>
+          <div class="pricing-mini-card__price">₩<%= plan.getPriceUsd() != null ? String.format(java.util.Locale.US, "%,.0f", plan.getPriceUsd()) : "0" %></div>
+          <ul class="pricing-mini-card__list">
+            <li>월 크레딧 <%= plan.getCreditsMonthly() %></li>
+            <li>일 API 호출 <%= plan.getMaxApiCallsDaily() != null ? plan.getMaxApiCallsDaily() : "-" %></li>
+            <li>프로젝트 수 <%= plan.getMaxProjects() != null ? plan.getMaxProjects() : "-" %></li>
+          </ul>
+          <p class="pricing-mini-card__desc">도구 탐색, Playground, 실습 랩, 결제 흐름까지 한 번에 연결됩니다.</p>
+        </a>
+        <% }} %>
+      </div>
+    </div>
+  </div>
+</section>
 
-    gsap.registerPlugin(ScrollTrigger);
+<!-- ============================================================
+     SECTION 5 — MODALITIES
+     ============================================================ -->
+<section class="hl-section modality-section">
+  <div class="section-inner">
+    <div class="fade-up" style="text-align:center;">
+      <span class="section-label"><i class="bi bi-grid-3x3-gap"></i>지원 모달리티</span>
+      <h2 class="section-heading">
+        모든 형태의 AI,<br>
+        <span class="grad-text">한곳에서 찾으세요</span>
+      </h2>
+      <p class="section-sub" style="margin: 0 auto;">
+        텍스트, 이미지, 음성, 코드, 영상까지 — 5가지 AI 모달리티를 모두 지원합니다.
+      </p>
+    </div>
 
-    /* --- Hero fade-in sequence --- */
-    var tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    <div class="modality-grid">
 
-    tl.from('#heroEyebrow', { opacity: 0, y: 24, duration: 0.6 })
-      .from('#heroTitle',   { opacity: 0, y: 40, duration: 0.7 }, '-=0.35')
-      .from('#heroSub',     { opacity: 0, y: 28, duration: 0.6 }, '-=0.45')
-      .from('#heroCta > *', { opacity: 0, y: 24, duration: 0.5, stagger: 0.12 }, '-=0.4');
+      <div class="modality-card">
+        <i class="bi bi-chat-dots-fill modality-icon"></i>
+        <div class="modality-name">텍스트 생성</div>
+        <div class="modality-desc">GPT-4, Claude, Gemini 등 언어 모델</div>
+      </div>
 
-    /* --- Scroll reveal (all .scroll-reveal elements) --- */
-    document.querySelectorAll('.scroll-reveal').forEach(function (el) {
-      ScrollTrigger.create({
-        trigger: el,
-        start: 'top 88%',
-        onEnter: function () { el.classList.add('revealed'); }
-      });
-    });
+      <div class="modality-card">
+        <i class="bi bi-image-fill modality-icon"></i>
+        <div class="modality-name">이미지 생성</div>
+        <div class="modality-desc">DALL-E, Midjourney, Stable Diffusion</div>
+      </div>
 
-    /* --- Stats count-up --- */
-    document.querySelectorAll('.stat-card__number[data-target]').forEach(function (el) {
-      var target = parseInt(el.dataset.target, 10);
-      var suffix = el.dataset.suffix || '';
+      <div class="modality-card">
+        <i class="bi bi-code-slash modality-icon"></i>
+        <div class="modality-name">코드 생성</div>
+        <div class="modality-desc">GitHub Copilot, CodeLlama, Codex</div>
+      </div>
 
-      ScrollTrigger.create({
-        trigger: el,
-        start: 'top 85%',
-        once: true,
-        onEnter: function () {
-          gsap.to({ val: 0 }, {
-            val: target,
-            duration: 1.6,
-            ease: 'power2.out',
-            onUpdate: function () {
-              el.textContent = Math.round(this.targets()[0].val).toLocaleString() + suffix;
-            }
-          });
-        }
-      });
-    });
-  })();
-  </script>
+      <div class="modality-card">
+        <i class="bi bi-soundwave modality-icon"></i>
+        <div class="modality-name">음성 처리</div>
+        <div class="modality-desc">Whisper, ElevenLabs, Bark</div>
+      </div>
+
+      <div class="modality-card">
+        <i class="bi bi-camera-video-fill modality-icon"></i>
+        <div class="modality-name">영상 생성</div>
+        <div class="modality-desc">Sora, Runway, Pika Labs</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     SECTION 5 — CTA
+     ============================================================ -->
+<section class="hl-section cta-section">
+  <div class="section-inner">
+    <div class="cta-inner">
+      <h2 class="cta-title">
+        지금 바로<br>
+        <span class="grad-text">AI의 세계로 입장하세요</span>
+      </h2>
+      <p class="cta-sub">
+        무료로 시작하고, 언제든 업그레이드하세요.<br>
+        신용카드 없이 바로 탐색을 시작할 수 있습니다.
+      </p>
+      <div class="cta-buttons">
+        <% if (!loggedIn) { %>
+        <a href="/AI/user/signup.jsp" class="btn-hero-primary" style="font-size:.9375rem;padding:13px 28px;">
+          <i class="bi bi-person-plus-fill"></i>
+          무료로 시작하기
+        </a>
+        <a href="/AI/user/pricing.jsp" class="btn-hero-outline" style="font-size:.9375rem;padding:13px 28px;">
+          <i class="bi bi-tag"></i>
+          요금제 보기
+        </a>
+        <% } else { %>
+        <a href="/AI/user/tools/navigator.jsp" class="btn-hero-primary" style="font-size:.9375rem;padding:13px 28px;">
+          <i class="bi bi-compass-fill"></i>
+          AI 도구 탐색하기
+        </a>
+        <a href="/AI/user/lab/index.jsp" class="btn-hero-outline" style="font-size:.9375rem;padding:13px 28px;">
+          <i class="bi bi-flask"></i>
+          실습 랩 입장
+        </a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="home-footer">
+  <div class="home-footer__inner">
+    <a href="/AI/user/home.jsp" class="home-footer__brand">
+      <i class="bi bi-hexagon-fill" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;"></i> AI Workflow Lab
+    </a>
+    <div class="home-footer__links">
+      <a href="/AI/user/tools/navigator.jsp">AI 도구</a>
+      <a href="/AI/user/lab/index.jsp">실습 랩</a>
+      <a href="/AI/user/pricing.jsp">요금제</a>
+      <a href="/AI/user/mypage.jsp">마이페이지</a>
+    </div>
+    <p class="home-footer__copy">&copy; 2026 AI Workflow Lab. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/AI/assets/js/home.js"></script>
 </body>
 </html>

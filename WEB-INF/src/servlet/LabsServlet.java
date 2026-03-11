@@ -45,7 +45,7 @@ public class LabsServlet extends HttpServlet {
             
             if (pathInfo == null || pathInfo.equals("/")) {
                 // 전체 랩 프로젝트 목록
-                List<LabProject> labs = labDAO.getAllLabProjects();
+                List<LabProject> labs = labDAO.findAll();
                 ApiResponse<List<LabProject>> apiResponse = ApiResponse.success(labs);
                 out.print(gson.toJson(apiResponse));
                 
@@ -53,7 +53,7 @@ public class LabsServlet extends HttpServlet {
                 // 특정 랩 프로젝트 정보
                 try {
                     int labId = Integer.parseInt(pathInfo.substring(1));
-                    LabProject lab = labDAO.getLabProjectById(labId);
+                    LabProject lab = labDAO.findById(labId);
                     
                     if (lab != null) {
                         ApiResponse<LabProject> apiResponse = ApiResponse.success(lab);
@@ -114,12 +114,12 @@ public class LabsServlet extends HttpServlet {
             LabProject newLab = new LabProject();
             newLab.setTitle(title);
             newLab.setDescription(description);
-            newLab.setDifficulty(difficulty);
+            newLab.setDifficultyLevel(difficulty);
             newLab.setCategory(category);
-            newLab.setDuration(duration);
+            newLab.setEstimatedDurationHours(duration != null ? duration.doubleValue() : null);
             newLab.setActive(true);
-            
-            boolean created = labDAO.createLabProject(newLab);
+
+            boolean created = labDAO.create(newLab);
             
             if (created) {
                 ApiResponse<LabProject> apiResponse = ApiResponse.success("랩 프로젝트가 생성되었습니다.", newLab);
@@ -158,38 +158,38 @@ public class LabsServlet extends HttpServlet {
             }
             
             int labId = Integer.parseInt(pathInfo.substring(1));
-            LabProject lab = labDAO.getLabProjectById(labId);
-            
+            LabProject lab = labDAO.findById(labId);
+
             if (lab == null) {
                 ApiResponse<Object> apiResponse = ApiResponse.notFound("랩 프로젝트를 찾을 수 없습니다.");
                 response.setStatus(404);
                 out.print(gson.toJson(apiResponse));
                 return;
             }
-            
+
             // 랩 프로젝트 정보 업데이트
             String title = request.getParameter("title");
             String description = request.getParameter("description");
             String difficulty = request.getParameter("difficulty");
             String category = request.getParameter("category");
             String status = request.getParameter("status");
-            
+
             if (title != null) lab.setTitle(title);
             if (description != null) lab.setDescription(description);
-            if (difficulty != null) lab.setDifficulty(difficulty);
+            if (difficulty != null) lab.setDifficultyLevel(difficulty);
             if (category != null) lab.setCategory(category);
             if (status != null) lab.setActive("active".equalsIgnoreCase(status));
-            
+
             try {
                 String durationStr = request.getParameter("duration");
                 if (durationStr != null) {
-                    lab.setDuration(Integer.parseInt(durationStr));
+                    lab.setEstimatedDurationHours(Double.parseDouble(durationStr));
                 }
             } catch (NumberFormatException e) {
                 // duration은 선택적 파라미터
             }
-            
-            boolean updated = labDAO.updateLabProject(lab);
+
+            boolean updated = labDAO.update(lab);
             
             if (updated) {
                 ApiResponse<LabProject> apiResponse = ApiResponse.success("랩 프로젝트 정보가 업데이트되었습니다.", lab);
@@ -231,16 +231,16 @@ public class LabsServlet extends HttpServlet {
             }
             
             int labId = Integer.parseInt(pathInfo.substring(1));
-            LabProject lab = labDAO.getLabProjectById(labId);
-            
+            LabProject lab = labDAO.findById(labId);
+
             if (lab == null) {
                 ApiResponse<Object> apiResponse = ApiResponse.notFound("랩 프로젝트를 찾을 수 없습니다.");
                 response.setStatus(404);
                 out.print(gson.toJson(apiResponse));
                 return;
             }
-            
-            boolean deleted = labDAO.deleteLabProject(labId);
+
+            boolean deleted = labDAO.delete(labId);
             
             if (deleted) {
                 ApiResponse<Object> apiResponse = ApiResponse.success("랩 프로젝트가 삭제되었습니다.", null);
