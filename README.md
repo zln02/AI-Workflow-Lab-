@@ -38,7 +38,27 @@ AI Workflow Lab은 다양한 AI 도구를 목적에 맞게 탐색·비교하고,
 | Axios | 최신 | HTTP 클라이언트 |
 
 ### 아키텍처
-- **MVC + DAO 패턴**: JSP + Servlet + DAO 기반 구조
+```mermaid
+graph LR
+
+A["Client (Browser)"] --> B["Apache Tomcat 9"]
+
+B --> C["SecurityHeadersFilter\nRateLimitFilter"]
+
+C --> D["Servlet (REST API)"]
+
+D --> E["Service Layer"]
+
+E --> F["DAO Layer"]
+
+F --> G["MySQL 8.0\n(HikariCP)"]
+
+D --> H["JSP View"]
+
+H --> A
+```
+
+- **MVC + DAO + Service 패턴**: JSP + Servlet + Service + DAO 기반 구조, 명확한 관심사 분리 (3-tier)
 - **RESTful Servlet**: `/AI/api/*`, `/AI/api/news/*`, `/AI/api/rankings/*`, `/AI/api/lab-sessions/*`
 - **세션 기반 인증**: 사용자·관리자 분리 인증, OAuth 로그인 지원
 - **보안 필터 기반 배포**: CSP, X-Frame-Options, Rate Limit, Sitemap/robots 운영
@@ -102,6 +122,7 @@ ROOT/
 │   │   ├── model/              # 모델 클래스
 │   │   ├── servlet/            # 서블릿
 │   │   ├── filter/             # 필터 (보안, Rate Limiting 등)
+│   │   ├── service/            # 서비스 레이어
 │   │   ├── util/               # 유틸리티
 │   │   ├── dto/                # API 응답 DTO
 │   │   └── constants/          # 상수
@@ -227,6 +248,7 @@ sudo systemctl restart tomcat9
 | `util.PasswordUtil` | BCrypt 비밀번호 해싱 |
 | `util.EscapeUtil` | XSS 방지 HTML 이스케이프 |
 | `util.CSRFUtil` | CSRF 토큰 생성·검증 |
+| `service.AIToolService` | AI 도구 비즈니스 로직 (DAO ↔ Servlet 중간 레이어) |
 
 ---
 
@@ -238,7 +260,7 @@ sudo systemctl restart tomcat9
 - **CSRF 보호**: 폼 제출 시 토큰 검증
 - **Rate Limiting**: IP 기반 요청 제한 (로그인 5회/분, 일반 60회/분)
 - **보안 헤더**: `X-Content-Type-Options`, `X-Frame-Options`, `CSP` 자동 적용
-- **API 키 암호화 저장**: 사용자 BYOK는 `EncryptionUtil`로 AES-GCM 암호화 후 DB 저장
+- **API 키 암호화 저장**: 사용자 BYOK API 키를 AES-GCM으로 암호화 후 DB 저장 (`EncryptionUtil`)
 - **역할 기반 접근 제어**: 사용자 / 관리자 / Superadmin 분리
 
 ---
@@ -250,4 +272,4 @@ sudo systemctl restart tomcat9
 ## 작성자
 
 - **박진영**
-- GitHub: [zln02](https://github.com/zln02)
+- GitHub: [AI-Workflow-Lab-](https://github.com/zln02/AI-Workflow-Lab-)
