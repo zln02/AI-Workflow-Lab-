@@ -8,10 +8,11 @@ AI Workflow Lab은 다양한 AI 도구를 목적에 맞게 탐색·비교하고,
 
 ### 핵심 기능
 
-- **AI 도구 탐색기**: 카테고리·난이도·키워드 필터로 원하는 AI 도구 검색 및 비교
-- **실습 랩 (AI Lab)**: 실제 비즈니스 시나리오 기반 프로젝트 수행 (Tutorial / Real-world / Challenge)
-- **구독 플랜**: Starter / Growth / Enterprise 플랜 선택
-- **관리자 대시보드**: AI 도구·실습 프로젝트·사용자·구독 플랜·주문 통합 관리
+- **AI 도구 탐색기**: 카테고리·국가·난이도·키워드 필터, 비교, 랭킹 조회
+- **실습 랩 (AI Lab)**: 프로젝트형 실습, Playground, AI 도우미, 실행 이력 저장
+- **뉴스·벤치마크**: 도구별 뉴스, 성장 랭킹, 벤치마크 스냅샷 제공
+- **결제·구독**: 플랜 구독, 크레딧 패키지 구매, 주문/구독 관리
+- **관리자 대시보드**: 도구·뉴스·벤치마크·사용자·매출·분석 통합 관리
 
 ---
 
@@ -37,10 +38,10 @@ AI Workflow Lab은 다양한 AI 도구를 목적에 맞게 탐색·비교하고,
 | Axios | 최신 | HTTP 클라이언트 |
 
 ### 아키텍처
-- **MVC + DAO 패턴**: 명확한 관심사 분리
-- **RESTful Servlet**: `/api/tools` JSON API
-- **세션 기반 인증**: 사용자·관리자 분리 인증
-- **Glassmorphism UI**: 다크모드 중심 현대적 디자인
+- **MVC + DAO 패턴**: JSP + Servlet + DAO 기반 구조
+- **RESTful Servlet**: `/AI/api/*`, `/AI/api/news/*`, `/AI/api/rankings/*`, `/AI/api/lab-sessions/*`
+- **세션 기반 인증**: 사용자·관리자 분리 인증, OAuth 로그인 지원
+- **보안 필터 기반 배포**: CSP, X-Frame-Options, Rate Limit, Sitemap/robots 운영
 
 ---
 
@@ -59,7 +60,8 @@ ROOT/
 │   │   ├── categories/         # 카테고리 관리
 │   │   ├── admins/             # 관리자 계정 관리
 │   │   └── layout/             # 공통 레이아웃 (sidebar, topbar 등)
-│   ├── api/                    # API 엔드포인트
+│   ├── api/                    # JSP 기반 API 엔드포인트
+│   │   ├── chat.jsp            # AI 실행 API
 │   │   ├── subscribe.jsp       # 구독 처리
 │   │   └── ...
 │   ├── error/                  # 에러 페이지
@@ -68,12 +70,17 @@ ROOT/
 │   │   └── 500.jsp
 │   ├── user/                   # 사용자 페이지
 │   │   ├── home.jsp            # 메인 홈
+│   │   ├── news/               # 뉴스 페이지
 │   │   ├── tools/
 │   │   │   ├── navigator.jsp   # AI 도구 탐색기
-│   │   │   └── detail.jsp      # AI 도구 상세
+│   │   │   ├── detail.jsp      # AI 도구 상세
+│   │   │   ├── compare.jsp     # 비교
+│   │   │   └── rankings.jsp    # 랭킹/차트
 │   │   ├── lab/
 │   │   │   ├── index.jsp       # 실습 랩 목록
-│   │   │   └── detail.jsp      # 실습 프로젝트 상세
+│   │   │   ├── detail.jsp      # 실습 프로젝트 상세
+│   │   │   ├── session.jsp     # 실습 세션
+│   │   │   └── playground.jsp  # 자유 실습
 │   │   ├── pricing.jsp         # 요금제
 │   │   ├── checkout.jsp        # 결제
 │   │   ├── mypage.jsp          # 마이페이지
@@ -95,8 +102,8 @@ ROOT/
 │   │   ├── model/              # 모델 클래스
 │   │   ├── servlet/            # 서블릿
 │   │   ├── filter/             # 필터 (보안, Rate Limiting 등)
-│   │   ├── service/            # 서비스 레이어
 │   │   ├── util/               # 유틸리티
+│   │   ├── dto/                # API 응답 DTO
 │   │   └── constants/          # 상수
 │   └── web.xml
 ├── docs/                       # 프로젝트 문서
@@ -144,38 +151,57 @@ Environment="ENVIRONMENT=production"
 Environment="DB_URL=jdbc:mysql://localhost:3306/ai_navigator?useSSL=true&serverTimezone=UTC&requireSSL=false&verifyServerCertificate=false"
 Environment="DB_USER=aiworkflow"
 Environment="DB_PASSWORD=your_secure_password"
+Environment="ENCRYPTION_KEY=your_32_plus_char_random_secret"
+Environment="ANTHROPIC_API_KEY="
 EOF
 
 sudo systemctl daemon-reload
 ```
 
-### 3. Java 클래스 컴파일
+### 3. DB 마이그레이션 적용
 
 ```bash
 cd /var/lib/tomcat9/webapps/ROOT
 
-javac -encoding UTF-8 \
-  -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*" \
-  -d WEB-INF/classes \
-  WEB-INF/src/**/*.java \
-  WEB-INF/classes/db/DBConnect.java
+mysql -u aiworkflow -p ai_navigator < AI/database/ai_workflow_lab_schema.sql
+
+# 추가 마이그레이션
+for f in AI/database/migrations/*.sql; do
+  mysql -u aiworkflow -p ai_navigator < "$f"
+done
 ```
 
-### 4. Tomcat 시작
+### 4. Java 클래스 컴파일
+
+```bash
+cd /var/lib/tomcat9/webapps/ROOT
+
+find WEB-INF/src -name "*.java" > /tmp/ai-workflow-lab-java-files.txt
+
+javac -encoding UTF-8 \
+  -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*:WEB-INF/classes" \
+  -d WEB-INF/classes \
+  @/tmp/ai-workflow-lab-java-files.txt
+```
+
+### 5. Tomcat 시작
 
 ```bash
 sudo systemctl restart tomcat9
 ```
 
-### 5. 접속 확인
+### 6. 접속 확인
 
 | 경로 | 설명 |
 |---|---|
 | `http://localhost:8080/` | 메인 홈 (리다이렉트) |
 | `http://localhost:8080/AI/user/home.jsp` | 사용자 홈 |
 | `http://localhost:8080/AI/user/tools/navigator.jsp` | AI 도구 탐색기 |
+| `http://localhost:8080/AI/user/tools/rankings.jsp` | AI 랭킹 |
 | `http://localhost:8080/AI/user/lab/index.jsp` | 실습 랩 |
+| `http://localhost:8080/AI/user/lab/playground.jsp` | Playground |
 | `http://localhost:8080/AI/admin/auth/login.jsp` | 관리자 로그인 |
+| `http://localhost:8080/sitemap.xml` | 사이트맵 |
 
 ---
 
@@ -187,10 +213,17 @@ sudo systemctl restart tomcat9
 | `dao.AIToolDAO` | AI 도구 CRUD, 검색, 추천 |
 | `dao.LabProjectDAO` | 실습 프로젝트 CRUD, 필터링 |
 | `dao.UserDAO` | 사용자 CRUD, 인증 |
-| `servlet.AIToolServlet` | `/api/tools` REST API |
+| `servlet.AIToolServlet` | `/AI/api/tools/*` REST API |
+| `servlet.NewsServlet` | 뉴스 목록/상세 API |
+| `servlet.RankingServlet` | 랭킹/상승 도구/벤치마크 API |
+| `servlet.PaymentServlet` | 결제 및 주문 처리 API |
+| `servlet.SubscriptionServlet` | 구독 상태 API |
+| `servlet.UserAPIKeyServlet` | 사용자 API 키 저장/조회 API |
+| `servlet.LabSessionServlet` | 실습 실행 이력 API |
+| `servlet.SitemapServlet` | `sitemap.xml` 동적 생성 |
 | `filter.SecurityHeadersFilter` | 보안 헤더 필터 |
 | `filter.RateLimitFilter` | IP 기반 Rate Limiting (로그인 5회/분, 일반 60회/분) |
-| `filter.AuthFilter` | 관리자 페이지 인증 필터 |
+| `util.EncryptionUtil` | API 키 AES-GCM 암호화/복호화 |
 | `util.PasswordUtil` | BCrypt 비밀번호 해싱 |
 | `util.EscapeUtil` | XSS 방지 HTML 이스케이프 |
 | `util.CSRFUtil` | CSRF 토큰 생성·검증 |
@@ -205,6 +238,7 @@ sudo systemctl restart tomcat9
 - **CSRF 보호**: 폼 제출 시 토큰 검증
 - **Rate Limiting**: IP 기반 요청 제한 (로그인 5회/분, 일반 60회/분)
 - **보안 헤더**: `X-Content-Type-Options`, `X-Frame-Options`, `CSP` 자동 적용
+- **API 키 암호화 저장**: 사용자 BYOK는 `EncryptionUtil`로 AES-GCM 암호화 후 DB 저장
 - **역할 기반 접근 제어**: 사용자 / 관리자 / Superadmin 분리
 
 ---
