@@ -97,11 +97,18 @@
     .suggestions { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 0; }
     .chip { border:none; padding:8px 11px; border-radius:999px; background:rgba(255,255,255,.06); color:#cbd5e1; font-size:.77rem; }
     .run-bar { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+    .export-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+    .export-actions { display:flex; gap:8px; flex-wrap:wrap; }
     .run-btn {
       border:none; border-radius:14px; padding:13px 18px; font-weight:800; color:#04111d;
       background:linear-gradient(135deg,#7dd3fc,#4ade80); box-shadow:0 12px 28px rgba(74,222,128,.18);
     }
     .run-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .export-btn {
+      border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:10px 13px; font-weight:700;
+      color:#dbeafe; background:rgba(255,255,255,.04);
+    }
+    .export-btn:disabled { opacity:.45; cursor:not-allowed; }
     .status { color:#94a3b8; font-size:.82rem; }
     .output-grid { display:grid; gap:14px; }
     .output-card { padding:16px; border-radius:18px; background:rgba(8,15,29,.78); border:1px solid rgba(255,255,255,.07); }
@@ -207,6 +214,17 @@
           <button class="run-btn" id="runBtn" type="button" onclick="runAgent()" <%= canUseAI ? "" : "disabled" %>>에이전트 실행</button>
         </div>
         <hr style="border-color:rgba(255,255,255,.08); margin:20px 0;">
+        <div class="export-bar">
+          <div class="status" id="exportStatus">결과를 생성하면 Markdown/HTML로 내보낼 수 있습니다.</div>
+          <div class="export-actions">
+            <button class="export-btn" id="exportMarkdownBtn" type="button" onclick="exportCurrentResult('markdown')" disabled>
+              <i class="bi bi-filetype-md"></i> Markdown
+            </button>
+            <button class="export-btn" id="exportHtmlBtn" type="button" onclick="exportCurrentResult('html')" disabled>
+              <i class="bi bi-filetype-html"></i> HTML
+            </button>
+          </div>
+        </div>
         <div class="output-grid">
           <div class="output-card">
             <h3>요약</h3>
@@ -269,6 +287,7 @@
 <script>
   const CSRF_TOKEN = '<%= escapeJs(getCSRFToken(session)) %>';
   const CAN_USE_AI = <%= canUseAI %>;
+  let currentResult = null;
   const templates = Array.from(document.querySelectorAll('.template-card')).map((el) => ({
     id: Number(el.dataset.templateId),
     name: el.dataset.templateName || '',
@@ -309,6 +328,7 @@
   }
 
   function renderOutput(result) {
+    currentResult = result || null;
     const deliverables = result && result.deliverables ? result.deliverables : {};
     document.getElementById('summaryOutput').textContent = result && result.summary ? result.summary : '요약이 없습니다.';
     renderList('toolsOutput', result ? result.recommendedTools : []);
@@ -316,12 +336,108 @@
     document.getElementById('reportOutput').textContent = deliverables.report || '보고서 초안이 없습니다.';
     renderList('slidesOutput', deliverables.slidesOutline || []);
     renderList('checklistOutput', deliverables.checklist || []);
+    const hasResult = !!(result && (result.summary || (deliverables.report) || (result.recommendedTools && result.recommendedTools.length)));
+    document.getElementById('exportMarkdownBtn').disabled = !hasResult;
+    document.getElementById('exportHtmlBtn').disabled = !hasResult;
+    document.getElementById('exportStatus').textContent = hasResult ? '현재 결과를 파일로 내보낼 수 있습니다.' : '결과를 생성하면 Markdown/HTML로 내보낼 수 있습니다.';
   }
 
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text == null ? '' : String(text);
     return div.innerHTML;
+  }
+
+  function slugify(text) {
+    return String(text || 'agent-result')
+      .toLowerCase()
+      .replace(/[^a-z0-9가-힣]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'agent-result';
+  }
+
+  function buildMarkdown(result) {
+    const deliverables = result && result.deliverables ? result.deliverables : {};
+    const lines = [];
+    lines.push('# ' + (activeTemplate ? activeTemplate.name : 'Super Agent Result'));
+    lines.push('');
+    lines.push('## 목표');
+    lines.push(document.getElementById('goalInput').value.trim() || '-');
+    lines.push('');
+    if (result && result.summary) {
+      lines.push('## 요약');
+      lines.push(result.summary);
+      lines.push('');
+    }
+    if (Array.isArray(result && result.recommendedTools) && result.recommendedTools.length) {
+      lines.push('## 추천 도구');
+      result.recommendedTools.forEach((item) => lines.push('- ' + item));
+      lines.push('');
+    }
+    if (Array.isArray(result && result.executionPlan) && result.executionPlan.length) {
+      lines.push('## 실행 단계');
+      result.executionPlan.forEach((item, index) => lines.push((index + 1) + '. ' + item));
+      lines.push('');
+    }
+    if (deliverables.report) {
+      lines.push('## 보고서 초안');
+      lines.push(deliverables.report);
+      lines.push('');
+    }
+    if (Array.isArray(deliverables.slidesOutline) && deliverables.slidesOutline.length) {
+      lines.push('## 슬라이드 개요');
+      deliverables.slidesOutline.forEach((item) => lines.push('- ' + item));
+      lines.push('');
+    }
+    if (Array.isArray(deliverables.checklist) && deliverables.checklist.length) {
+      lines.push('## 체크리스트');
+      deliverables.checklist.forEach((item) => lines.push('- [ ] ' + item));
+      lines.push('');
+    }
+    return lines.join('\n');
+  }
+
+  function buildHtml(result) {
+    const deliverables = result && result.deliverables ? result.deliverables : {};
+    const list = (items) => (items || []).map((item) => '<li>' + escapeHtml(item) + '</li>').join('');
+    return '<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>' +
+      escapeHtml(activeTemplate ? activeTemplate.name : 'Super Agent Result') +
+      '</title><style>body{font-family:\"Noto Sans KR\",sans-serif;max-width:920px;margin:0 auto;padding:40px 24px;line-height:1.75;color:#0f172a;background:#f8fafc;}h1,h2{color:#020617;}section{margin:0 0 28px;}ul,ol{padding-left:22px;}pre{white-space:pre-wrap;background:#e2e8f0;padding:16px;border-radius:12px;} .meta{color:#475569;font-size:14px;}</style></head><body>' +
+      '<h1>' + escapeHtml(activeTemplate ? activeTemplate.name : 'Super Agent Result') + '</h1>' +
+      '<p class="meta">목표: ' + escapeHtml(document.getElementById('goalInput').value.trim() || '-') + '</p>' +
+      (result && result.summary ? '<section><h2>요약</h2><p>' + escapeHtml(result.summary) + '</p></section>' : '') +
+      (Array.isArray(result && result.recommendedTools) && result.recommendedTools.length ? '<section><h2>추천 도구</h2><ul>' + list(result.recommendedTools) + '</ul></section>' : '') +
+      (Array.isArray(result && result.executionPlan) && result.executionPlan.length ? '<section><h2>실행 단계</h2><ol>' + list(result.executionPlan) + '</ol></section>' : '') +
+      (deliverables.report ? '<section><h2>보고서 초안</h2><pre>' + escapeHtml(deliverables.report) + '</pre></section>' : '') +
+      (Array.isArray(deliverables.slidesOutline) && deliverables.slidesOutline.length ? '<section><h2>슬라이드 개요</h2><ul>' + list(deliverables.slidesOutline) + '</ul></section>' : '') +
+      (Array.isArray(deliverables.checklist) && deliverables.checklist.length ? '<section><h2>체크리스트</h2><ul>' + list(deliverables.checklist) + '</ul></section>' : '') +
+      '</body></html>';
+  }
+
+  function downloadTextFile(filename, content, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportCurrentResult(format) {
+    if (!currentResult) return;
+    const baseName = slugify((activeTemplate ? activeTemplate.name : 'agent-result') + '-' + new Date().toISOString().slice(0, 10));
+    if (format === 'markdown') {
+      downloadTextFile(baseName + '.md', buildMarkdown(currentResult), 'text/markdown;charset=utf-8');
+      document.getElementById('exportStatus').textContent = 'Markdown 파일을 다운로드했습니다.';
+      return;
+    }
+    if (format === 'html') {
+      downloadTextFile(baseName + '.html', buildHtml(currentResult), 'text/html;charset=utf-8');
+      document.getElementById('exportStatus').textContent = 'HTML 파일을 다운로드했습니다.';
+    }
   }
 
   async function saveRun(goal, result, meta) {
