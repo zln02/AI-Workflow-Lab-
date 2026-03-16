@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS agent_templates (
 
 CREATE TABLE IF NOT EXISTS agent_runs (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id BIGINT NOT NULL,
+  user_id INT NOT NULL,
   template_id INT NULL,
   title VARCHAR(200) NOT NULL,
   user_goal TEXT NOT NULL,
