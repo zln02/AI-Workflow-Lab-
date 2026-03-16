@@ -5,6 +5,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="db.DBConnect" %>
+<%@ page import="util.CSRFUtil" %>
 <%@ page import="util.EscapeUtil" %>
 <%!
   private String formatAdminTimestamp(Object value) {
@@ -18,49 +19,76 @@
   }
   request.setCharacterEncoding("UTF-8");
 
-  String msg = null;
-  String msgType = "success";
-
-  if ("POST".equals(request.getMethod()) && "update".equals(request.getParameter("action"))) {
-    String idParam = request.getParameter("id");
-    if (idParam != null && idParam.matches("\\d+")) {
-      try (Connection c = DBConnect.getConnection();
-           PreparedStatement ps = c.prepareStatement(
-             "UPDATE agent_templates SET name=?, description=?, system_prompt=?, output_schema_json=?, badge_label=?, suggested_goal=?, is_active=? WHERE id=?")) {
-        ps.setString(1, request.getParameter("name"));
-        ps.setString(2, request.getParameter("description"));
-        ps.setString(3, request.getParameter("system_prompt"));
-        ps.setString(4, request.getParameter("output_schema_json"));
-        ps.setString(5, request.getParameter("badge_label"));
-        ps.setString(6, request.getParameter("suggested_goal"));
-        ps.setBoolean(7, "on".equals(request.getParameter("is_active")));
-        ps.setInt(8, Integer.parseInt(idParam));
-        ps.executeUpdate();
-        msg = "에이전트 템플릿이 업데이트되었습니다.";
-      } catch (Exception e) {
-        msg = "업데이트 실패: " + e.getMessage();
-        msgType = "error";
-      }
-    }
+  String msg = (String) session.getAttribute("agentAdminMessage");
+  String msgType = (String) session.getAttribute("agentAdminMessageType");
+  if (msg != null) {
+    session.removeAttribute("agentAdminMessage");
+    session.removeAttribute("agentAdminMessageType");
+  }
+  if (msgType == null || msgType.trim().isEmpty()) {
+    msgType = "success";
+  }
+  String csrfToken = CSRFUtil.getToken(request);
+  if (csrfToken == null) {
+    csrfToken = CSRFUtil.setToken(request);
   }
 
-  if ("POST".equals(request.getMethod()) && "create".equals(request.getParameter("action"))) {
-    try (Connection c = DBConnect.getConnection();
-         PreparedStatement ps = c.prepareStatement(
-           "INSERT INTO agent_templates (code, name, description, system_prompt, output_schema_json, badge_label, suggested_goal, is_active) VALUES (?,?,?,?,?,?,?,?)")) {
-      ps.setString(1, request.getParameter("code"));
-      ps.setString(2, request.getParameter("name"));
-      ps.setString(3, request.getParameter("description"));
-      ps.setString(4, request.getParameter("system_prompt"));
-      ps.setString(5, request.getParameter("output_schema_json"));
-      ps.setString(6, request.getParameter("badge_label"));
-      ps.setString(7, request.getParameter("suggested_goal"));
-      ps.setBoolean(8, "on".equals(request.getParameter("is_active")));
-      ps.executeUpdate();
-      msg = "새 에이전트 템플릿이 추가되었습니다.";
-    } catch (Exception e) {
-      msg = "추가 실패: " + e.getMessage();
-      msgType = "error";
+  if ("POST".equals(request.getMethod())) {
+    String action = request.getParameter("action");
+    if (!CSRFUtil.validateToken(request)) {
+      session.setAttribute("agentAdminMessage", "유효하지 않은 요청입니다. 페이지를 새로고침한 뒤 다시 시도하세요.");
+      session.setAttribute("agentAdminMessageType", "error");
+      response.sendRedirect("/AI/admin/agents/index.jsp");
+      return;
+    }
+
+    if ("update".equals(action)) {
+      String idParam = request.getParameter("id");
+      if (idParam != null && idParam.matches("\\d+")) {
+        try (Connection c = DBConnect.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+               "UPDATE agent_templates SET name=?, description=?, system_prompt=?, output_schema_json=?, badge_label=?, suggested_goal=?, is_active=? WHERE id=?")) {
+          ps.setString(1, request.getParameter("name"));
+          ps.setString(2, request.getParameter("description"));
+          ps.setString(3, request.getParameter("system_prompt"));
+          ps.setString(4, request.getParameter("output_schema_json"));
+          ps.setString(5, request.getParameter("badge_label"));
+          ps.setString(6, request.getParameter("suggested_goal"));
+          ps.setBoolean(7, "on".equals(request.getParameter("is_active")));
+          ps.setInt(8, Integer.parseInt(idParam));
+          ps.executeUpdate();
+          session.setAttribute("agentAdminMessage", "에이전트 템플릿이 업데이트되었습니다.");
+          session.setAttribute("agentAdminMessageType", "success");
+        } catch (Exception e) {
+          session.setAttribute("agentAdminMessage", "업데이트 실패: " + e.getMessage());
+          session.setAttribute("agentAdminMessageType", "error");
+        }
+      }
+      response.sendRedirect("/AI/admin/agents/index.jsp");
+      return;
+    }
+
+    if ("create".equals(action)) {
+      try (Connection c = DBConnect.getConnection();
+           PreparedStatement ps = c.prepareStatement(
+             "INSERT INTO agent_templates (code, name, description, system_prompt, output_schema_json, badge_label, suggested_goal, is_active) VALUES (?,?,?,?,?,?,?,?)")) {
+        ps.setString(1, request.getParameter("code"));
+        ps.setString(2, request.getParameter("name"));
+        ps.setString(3, request.getParameter("description"));
+        ps.setString(4, request.getParameter("system_prompt"));
+        ps.setString(5, request.getParameter("output_schema_json"));
+        ps.setString(6, request.getParameter("badge_label"));
+        ps.setString(7, request.getParameter("suggested_goal"));
+        ps.setBoolean(8, "on".equals(request.getParameter("is_active")));
+        ps.executeUpdate();
+        session.setAttribute("agentAdminMessage", "새 에이전트 템플릿이 추가되었습니다.");
+        session.setAttribute("agentAdminMessageType", "success");
+      } catch (Exception e) {
+        session.setAttribute("agentAdminMessage", "추가 실패: " + e.getMessage());
+        session.setAttribute("agentAdminMessageType", "error");
+      }
+      response.sendRedirect("/AI/admin/agents/index.jsp");
+      return;
     }
   }
 
@@ -167,6 +195,7 @@
             <form method="post" action="/AI/admin/agents/index.jsp" class="admin-form-card" style="display:grid;gap:12px;padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(255,255,255,.03);">
               <input type="hidden" name="action" value="update">
               <input type="hidden" name="id" value="<%= item.get("id") %>">
+              <input type="hidden" name="csrf_token" value="<%= EscapeUtil.escapeHtml(csrfToken) %>">
               <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
                 <div>
                   <div style="font-size:1rem;font-weight:800;"><%= EscapeUtil.escapeHtml(String.valueOf(item.get("name"))) %></div>
@@ -223,6 +252,7 @@
             <div class="panel-body">
               <form method="post" action="/AI/admin/agents/index.jsp" style="display:grid;gap:12px;">
                 <input type="hidden" name="action" value="create">
+                <input type="hidden" name="csrf_token" value="<%= EscapeUtil.escapeHtml(csrfToken) %>">
                 <div class="form-field">
                   <label>코드</label>
                   <input type="text" name="code" placeholder="예: report-builder" required>
