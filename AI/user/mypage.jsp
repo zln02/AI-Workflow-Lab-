@@ -10,6 +10,7 @@
 <%@ page import="dao.AIModelDAO" %>
 <%@ page import="dao.CreditDAO" %>
 <%@ page import="dao.LabSessionDAO" %>
+<%@ page import="dao.AgentRunDAO" %>
 <%@ page import="service.UserService" %>
 <%@ page import="util.CSRFUtil" %>
 <%@ page import="util.EscapeUtil" %>
@@ -18,6 +19,7 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.math.BigDecimal" %>
 <%@ page import="model.LabSession" %>
+<%@ page import="model.AgentRun" %>
 <%
   request.setCharacterEncoding("UTF-8");
   response.setCharacterEncoding("UTF-8");
@@ -162,6 +164,11 @@
     labSessions = new LabSessionDAO().findRecentByUser(user.getId(), 10);
   } catch (Exception e) {}
 
+  List<AgentRun> agentRuns = new java.util.ArrayList<>();
+  try {
+    agentRuns = new AgentRunDAO().findRecentByUser(user.getId(), 10);
+  } catch (Exception e) {}
+
   String returnParam = request.getParameter("return");
   String returnUrl = null;
   if (returnParam != null && !returnParam.isEmpty()
@@ -304,6 +311,9 @@
     </button>
     <button class="tab-item" data-tab="labs" onclick="switchTab('labs', this)">
       <i class="bi bi-bezier2"></i>실습 기록
+    </button>
+    <button class="tab-item" data-tab="agents" onclick="switchTab('agents', this)">
+      <i class="bi bi-stars"></i>에이전트
     </button>
     <button class="tab-item" data-tab="apikeys" onclick="switchTab('apikeys', this)">
       <i class="bi bi-key"></i>API 키
@@ -717,6 +727,50 @@
       </div>
     </div>
   </div><!-- /panel-labs -->
+
+  <!-- ══ Panel: Agent Runs ══ -->
+  <div id="panel-agents" class="tab-panel">
+    <div class="glass-card">
+      <div class="card-header"><i class="bi bi-stars"></i>최근 에이전트 실행</div>
+      <div class="glass-card__body">
+        <% if (agentRuns.isEmpty()) { %>
+          <div class="no-orders">저장된 에이전트 실행이 없습니다.</div>
+        <% } else { %>
+          <% for (AgentRun agentRun : agentRuns) { %>
+            <div class="order-card">
+              <div class="order-card__top">
+                <div>
+                  <div class="order-card__id"><%= EscapeUtil.escapeHtml(agentRun.getTitle() != null ? agentRun.getTitle() : "에이전트 실행") %></div>
+                  <div class="order-card__date">
+                    <%= agentRun.getCreatedAt() != null ? new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(agentRun.getCreatedAt()) : "-" %>
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="order-card__price" style="font-size:1rem;"><%= agentRun.getPromptTokens() + agentRun.getOutputTokens() %> tokens</div>
+                  <div class="order-card__method"><%= EscapeUtil.escapeHtml(agentRun.getTemplateName() != null ? agentRun.getTemplateName() : "-") %> · <%= EscapeUtil.escapeHtml(String.valueOf(agentRun.getCreditsUsed())) %> credits</div>
+                </div>
+              </div>
+              <div style="color:var(--text-secondary,#cbd5e1); font-size:.875rem; line-height:1.7; margin-bottom:12px;">
+                <strong style="color:var(--text-primary,#f8fafc);">목표</strong><br>
+                <%= EscapeUtil.escapeHtml(agentRun.getUserGoal() != null ? agentRun.getUserGoal() : "") %>
+              </div>
+              <%
+                String preview = "";
+                if (agentRun.getFinalOutputJson() != null) {
+                  preview = agentRun.getFinalOutputJson();
+                  if (preview.length() > 220) preview = preview.substring(0, 220) + "...";
+                }
+              %>
+              <div style="color:var(--text-muted,#94a3b8); font-size:.8125rem; line-height:1.65; margin-bottom:14px; white-space:pre-wrap;"><%= EscapeUtil.escapeHtml(preview) %></div>
+              <a href="/AI/user/agent/workspace.jsp" class="btn-primary" style="display:inline-flex;padding:8px 14px;font-size:.82rem;">
+                <i class="bi bi-arrow-repeat"></i>에이전트 워크스페이스 열기
+              </a>
+            </div>
+          <% } %>
+        <% } %>
+      </div>
+    </div>
+  </div><!-- /panel-agents -->
 
   <!-- ══ Panel: API Keys ══ -->
   <div id="panel-apikeys" class="tab-panel">
