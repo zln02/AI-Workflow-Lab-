@@ -281,6 +281,13 @@
     .agent-detail__list {
       margin: 0; padding-left: 18px; color: var(--text-secondary,#cbd5e1); font-size: .86rem; line-height: 1.75;
     }
+    .agent-detail-toggle {
+      display:inline-flex; align-items:center; gap:8px; margin:0 0 10px;
+      padding:8px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.04); color:#dbeafe; font-size:.82rem; font-weight:700;
+    }
+    .agent-detail-group { display:none; }
+    .agent-detail-group.is-open { display:block; }
   </style>
 </head>
 <body>
@@ -807,6 +814,10 @@
                       ? deliverables.getAsJsonArray("checklist") : null;
                   }
                 %>
+                <button type="button" class="agent-detail-toggle" onclick="toggleAgentDetail(this)">
+                  <i class="bi bi-chevron-down"></i>상세 보기
+                </button>
+                <div class="agent-detail-group">
                 <% if (!summary.isEmpty()) { %>
                 <div class="agent-detail">
                   <div class="agent-detail__title">요약</div>
@@ -859,6 +870,7 @@
                   <% } %>
                 </div>
                 <% } %>
+                </div>
               <% } %>
               <a href="/AI/user/agent/workspace.jsp" class="btn-primary" style="display:inline-flex;padding:8px 14px;font-size:.82rem;">
                 <i class="bi bi-arrow-repeat"></i>에이전트 워크스페이스 열기
@@ -945,6 +957,17 @@
       switchTab(requestedTab, btn);
     }
   })();
+
+  function toggleAgentDetail(button) {
+    const detailGroup = button.nextElementSibling;
+    if (!detailGroup || !detailGroup.classList.contains('agent-detail-group')) return;
+    const isOpen = detailGroup.classList.toggle('is-open');
+    const icon = button.querySelector('i');
+    if (icon) {
+      icon.className = isOpen ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+    }
+    button.lastChild.textContent = isOpen ? '상세 접기' : '상세 보기';
+  }
 
   /* ── Open profile tab if password errors exist ── */
   <% if ((passwordError != null && !passwordError.isEmpty()) || passwordSuccess != null) { %>
