@@ -10,6 +10,7 @@
   boolean _isHome    = _uri.equals("/AI/user/home.jsp") || _uri.equals("/AI/") || _uri.equals("/");
   boolean _isTools   = _uri.contains("/tools/");
   boolean _isLab     = _uri.contains("/lab/");
+  boolean _isAgent   = _uri.contains("/agent/");
   boolean _isPricing = _uri.contains("/pricing") || _uri.contains("/package");
   boolean _isMypage  = _uri.contains("/mypage");
 %>
@@ -40,6 +41,11 @@
       <li>
         <a href="/AI/user/lab/index.jsp" class="site-nav__link<%= _isLab ? " site-nav__link--active" : "" %>">
           실습 랩
+        </a>
+      </li>
+      <li>
+        <a href="/AI/user/agent/workspace.jsp" class="site-nav__link<%= _isAgent ? " site-nav__link--active" : "" %>">
+          에이전트
         </a>
       </li>
       <li>
@@ -100,6 +106,11 @@
       <li>
         <a href="/AI/user/lab/index.jsp" class="mobile-nav__link<%= _isLab ? " mobile-nav__link--active" : "" %>">
           <i class="bi bi-flask"></i> 실습 랩
+        </a>
+      </li>
+      <li>
+        <a href="/AI/user/agent/workspace.jsp" class="mobile-nav__link<%= _isAgent ? " mobile-nav__link--active" : "" %>">
+          <i class="bi bi-stars"></i> 에이전트
         </a>
       </li>
       <li>
