@@ -96,6 +96,16 @@
   List<Map<String, Object>> recentRuns = new ArrayList<>();
   int activeCount = 0;
   int runCount = 0;
+  String templateQuery = request.getParameter("q");
+  if (templateQuery == null) {
+    templateQuery = "";
+  } else {
+    templateQuery = templateQuery.trim();
+  }
+  String statusFilter = request.getParameter("status");
+  if (!"active".equals(statusFilter) && !"inactive".equals(statusFilter)) {
+    statusFilter = "all";
+  }
   try (Connection c = DBConnect.getConnection()) {
     try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM agent_templates WHERE is_active = 1");
          ResultSet rs = ps.executeQuery()) {
@@ -105,8 +115,27 @@
          ResultSet rs = ps.executeQuery()) {
       if (rs.next()) runCount = rs.getInt(1);
     }
-    try (PreparedStatement ps = c.prepareStatement("SELECT * FROM agent_templates ORDER BY id ASC");
-         ResultSet rs = ps.executeQuery()) {
+    StringBuilder templateSql = new StringBuilder("SELECT * FROM agent_templates WHERE 1=1");
+    List<String> templateParams = new ArrayList<>();
+    if (!templateQuery.isEmpty()) {
+      templateSql.append(" AND (code LIKE ? OR name LIKE ? OR description LIKE ? OR badge_label LIKE ?)");
+      String searchValue = "%" + templateQuery + "%";
+      templateParams.add(searchValue);
+      templateParams.add(searchValue);
+      templateParams.add(searchValue);
+      templateParams.add(searchValue);
+    }
+    if ("active".equals(statusFilter)) {
+      templateSql.append(" AND is_active = 1");
+    } else if ("inactive".equals(statusFilter)) {
+      templateSql.append(" AND is_active = 0");
+    }
+    templateSql.append(" ORDER BY is_active DESC, id ASC");
+    try (PreparedStatement ps = c.prepareStatement(templateSql.toString())) {
+      for (int i = 0; i < templateParams.size(); i++) {
+        ps.setString(i + 1, templateParams.get(i));
+      }
+      try (ResultSet rs = ps.executeQuery()) {
       while (rs.next()) {
         Map<String, Object> row = new HashMap<>();
         row.put("id", rs.getInt("id"));
@@ -120,6 +149,7 @@
         row.put("is_active", rs.getBoolean("is_active"));
         row.put("created_at", rs.getTimestamp("created_at"));
         templates.add(row);
+      }
       }
     }
     try (PreparedStatement ps = c.prepareStatement(
@@ -188,9 +218,32 @@
         <div class="glass-panel">
           <div class="panel-header">
             <h2>템플릿 목록</h2>
-            <span class="panel-subtext">수정 후 바로 저장됩니다.</span>
+            <span class="panel-subtext">검색과 상태 필터를 적용할 수 있습니다.</span>
           </div>
           <div class="panel-body" style="display:grid;gap:16px;">
+            <form method="get" action="/AI/admin/agents/index.jsp" style="display:grid;grid-template-columns:1.2fr .8fr auto;gap:12px;align-items:end;padding:16px;border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(255,255,255,.03);">
+              <div class="form-field">
+                <label>검색</label>
+                <input type="text" name="q" value="<%= EscapeUtil.escapeHtml(templateQuery) %>" placeholder="코드, 이름, 설명, 배지">
+              </div>
+              <div class="form-field">
+                <label>상태</label>
+                <select name="status">
+                  <option value="all" <%= "all".equals(statusFilter) ? "selected" : "" %>>전체</option>
+                  <option value="active" <%= "active".equals(statusFilter) ? "selected" : "" %>>활성만</option>
+                  <option value="inactive" <%= "inactive".equals(statusFilter) ? "selected" : "" %>>비활성만</option>
+                </select>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="submit" class="btn-primary"><i class="bi bi-search"></i>필터 적용</button>
+                <a href="/AI/admin/agents/index.jsp" class="btn-secondary" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;"><i class="bi bi-arrow-counterclockwise"></i>초기화</a>
+              </div>
+            </form>
+
+            <% if (templates.isEmpty()) { %>
+            <div class="empty-state">조건에 맞는 템플릿이 없습니다.</div>
+            <% } %>
+
             <% for (Map<String, Object> item : templates) { %>
             <form method="post" action="/AI/admin/agents/index.jsp" class="admin-form-card" style="display:grid;gap:12px;padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(255,255,255,.03);">
               <input type="hidden" name="action" value="update">
