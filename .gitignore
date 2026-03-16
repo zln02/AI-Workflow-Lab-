@@ -140,6 +140,7 @@ $RECYCLE.BIN/
 .Trash-*
 
 # Application specific
+WEB-INF/classes/
 **/WEB-INF/classes/**/*.class
 **/WEB-INF/lib/
 **/META-INF/
@@ -170,7 +171,8 @@ $RECYCLE.BIN/
 **/site/
 
 
-# User uploads
-uploads/profile-images/
+# Runtime uploads
+uploads/*
+!uploads/.gitkeep
 
-# Dev docs (move these to docs/ which IS tracked)
+# Dev docs are tracked under docs/

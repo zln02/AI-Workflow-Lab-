@@ -7,7 +7,7 @@
 cd /var/lib/tomcat9/webapps/ROOT
 javac -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*" \
   -d WEB-INF/classes \
-  WEB-INF/src/**/*.java WEB-INF/classes/db/DBConnect.java
+  $(find WEB-INF/src -name "*.java")
 ```
 
 ### Deploy (restart Tomcat)
@@ -31,7 +31,7 @@ MYSQL_PWD=$(sudo awk -F= '/password/{print $2; exit}' /etc/mysql/debian.cnf | tr
 Recompile + restart Tomcat (no hot-reload):
 ```bash
 javac -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*" -d WEB-INF/classes \
-  WEB-INF/src/**/*.java WEB-INF/classes/db/DBConnect.java \
+  $(find WEB-INF/src -name "*.java") \
   && sudo systemctl restart tomcat9
 ```
 
@@ -58,16 +58,16 @@ ROOT/
       video/
   WEB-INF/
     src/
+      constants/   # Shared constants
       dao/         # Database access objects (AIToolDAO, UserDAO, …)
+      db/          # Shared connection factory
+      dto/         # Data transfer objects
+      filter/      # AuthFilter, AdminFilter
+      listener/    # ServletContext lifecycle hooks
       model/       # POJOs (AITool, User, …)
       servlet/     # HttpServlet subclasses — API endpoints at /api/*
-      filter/      # AuthFilter, AdminFilter
       util/        # Helpers (CSRFUtil, …)
-      constants/   # Shared constants
-      dto/         # Data transfer objects
-    classes/
-      db/
-        DBConnect.java   # Shared connection factory (compiled here, not in src/)
+    classes/       # Compiled output only
     lib/           # JAR dependencies (mysql-connector, gson, …)
 ```
 
@@ -124,7 +124,7 @@ Provides: `escapeHtml()`, `escapeHtmlAttribute()`, `CSRFUtil`, `getProviderLogo(
 |--------------|------------------------------------------------|
 | `DB_URL`     | `jdbc:mysql://127.0.0.1:3306/ai_navigator`     |
 | `DB_USER`    | `aiworkflow`                                   |
-| `DB_PASSWORD`| `AiWorkflow2024!`                              |
+| `DB_PASSWORD`| Tomcat 환경 변수에 설정된 실제 값 사용         |
 
 **Category names** in `ai_tools.category` **must be Korean** — English categories break the UI filter:
 - 텍스트 생성, 코드 생성, 이미지 생성, 음성/오디오, 영상 생성

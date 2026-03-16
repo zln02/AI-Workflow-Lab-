@@ -67,7 +67,7 @@ H --> A
 
 ## 프로젝트 구조
 
-```
+```text
 ROOT/
 ├── AI/
 │   ├── admin/                  # 관리자 페이지
@@ -118,19 +118,25 @@ ROOT/
 │       └── seed/
 ├── WEB-INF/
 │   ├── src/                    # Java 소스
+│   │   ├── constants/          # 상수
 │   │   ├── dao/                # DAO 클래스
+│   │   ├── db/                 # DB 연결 관리
+│   │   ├── dto/                # API 응답 DTO
+│   │   ├── filter/             # 필터 (보안, Rate Limiting 등)
+│   │   ├── listener/           # 앱 종료/정리 리스너
 │   │   ├── model/              # 모델 클래스
 │   │   ├── servlet/            # 서블릿
-│   │   ├── filter/             # 필터 (보안, Rate Limiting 등)
-│   │   ├── service/            # 서비스 레이어
-│   │   ├── util/               # 유틸리티
-│   │   ├── dto/                # API 응답 DTO
-│   │   └── constants/          # 상수
-│   └── web.xml
+│   │   └── util/               # 유틸리티
+│   ├── classes/                # 컴파일 산출물 (Git 제외)
+│   └── web.xml                 # 서블릿/필터 설정
 ├── docs/                       # 프로젝트 문서
+│   ├── guides/                 # 작업/운영 가이드
+│   ├── plans/                  # 전략/개선 계획
 │   ├── tasks/                  # 개발 작업 목록
 │   ├── DEPLOYMENT.md           # 배포 가이드
-│   └── AI-WORKFLOW-LAB-IMPROVEMENT-PLAN.md
+│   ├── AI-WORKFLOW-LAB-IMPROVEMENT-PLAN.md
+│   └── REFACTORING_REPORT.md
+├── uploads/                    # 런타임 업로드 (.gitkeep만 추적)
 └── README.md
 ```
 
@@ -197,12 +203,10 @@ done
 ```bash
 cd /var/lib/tomcat9/webapps/ROOT
 
-find WEB-INF/src -name "*.java" > /tmp/ai-workflow-lab-java-files.txt
-
 javac -encoding UTF-8 \
   -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*:WEB-INF/classes" \
   -d WEB-INF/classes \
-  @/tmp/ai-workflow-lab-java-files.txt
+  $(find WEB-INF/src -name "*.java")
 ```
 
 ### 5. Tomcat 시작
@@ -262,6 +266,17 @@ sudo systemctl restart tomcat9
 - **보안 헤더**: `X-Content-Type-Options`, `X-Frame-Options`, `CSP` 자동 적용
 - **API 키 암호화 저장**: 사용자 BYOK API 키를 AES-GCM으로 암호화 후 DB 저장 (`EncryptionUtil`)
 - **역할 기반 접근 제어**: 사용자 / 관리자 / Superadmin 분리
+
+---
+
+## Git 저장소 기준
+
+- 추적 권장: `AI/`, `WEB-INF/src/`, `WEB-INF/web.xml`, `docs/`, `README.md`, `.gitignore`
+- 추적 제외: `WEB-INF/classes/`, `uploads/` 실제 파일, 로그, 임시파일, IDE 설정
+- 문서 정리 기준:
+  - 작업/운영 가이드: `docs/guides/`
+  - 전략/계획: `docs/plans/`
+  - 작업 목록: `docs/tasks/`
 
 ---
 

@@ -1,48 +1,54 @@
 package db;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 public class DBConnect {
     private static HikariDataSource dataSource;
-    
+
     static {
         try {
-            // HikariCP 설정
             HikariConfig config = new HikariConfig();
-            
-            // 환경 변수에서 데이터베이스 설정 읽기
+
             String dbUrl = System.getenv("DB_URL");
             String dbUser = System.getenv("DB_USER");
             String dbPassword = System.getenv("DB_PASSWORD");
-            
+
             String environment = System.getenv("ENVIRONMENT");
             boolean isDev = "dev".equalsIgnoreCase(environment) || "development".equalsIgnoreCase(environment);
 
             if (dbUrl == null) {
-                if (!isDev) throw new IllegalStateException("[FATAL] DB_URL 환경 변수가 설정되지 않았습니다. 프로덕션에서는 DB_URL, DB_USER, DB_PASSWORD를 반드시 설정하세요.");
+                if (!isDev) {
+                    throw new IllegalStateException("[FATAL] DB_URL 환경 변수가 설정되지 않았습니다. 프로덕션에서는 DB_URL, DB_USER, DB_PASSWORD를 반드시 설정하세요.");
+                }
                 dbUrl = "jdbc:mysql://localhost:3306/ai_navigator?useSSL=true&serverTimezone=UTC&requireSSL=false&verifyServerCertificate=false";
                 System.err.println("[DEV MODE] DB_URL 기본값 사용");
             }
             if (dbUser == null) {
-                if (!isDev) throw new IllegalStateException("[FATAL] DB_USER 환경 변수가 설정되지 않았습니다.");
+                if (!isDev) {
+                    throw new IllegalStateException("[FATAL] DB_USER 환경 변수가 설정되지 않았습니다.");
+                }
                 dbUser = "root";
                 System.err.println("[DEV MODE] DB_USER 기본값 사용");
             }
             if (dbPassword == null) {
-                if (!isDev) throw new IllegalStateException("[FATAL] DB_PASSWORD 환경 변수가 설정되지 않았습니다.");
+                if (!isDev) {
+                    throw new IllegalStateException("[FATAL] DB_PASSWORD 환경 변수가 설정되지 않았습니다.");
+                }
                 dbPassword = System.getenv("DB_DEV_PASSWORD");
-                if (dbPassword == null) throw new IllegalStateException("[FATAL] 개발 환경에서도 DB_DEV_PASSWORD 환경 변수를 설정해야 합니다.");
+                if (dbPassword == null) {
+                    throw new IllegalStateException("[FATAL] 개발 환경에서도 DB_DEV_PASSWORD 환경 변수를 설정해야 합니다.");
+                }
                 System.err.println("[DEV MODE] DB_DEV_PASSWORD 환경 변수 사용");
             }
-            
+
             config.setJdbcUrl(dbUrl);
             config.setUsername(dbUser);
             config.setPassword(dbPassword);
-            
-            // 커넥션 풀 설정
+
             config.setDriverClassName("com.mysql.cj.jdbc.Driver");
             config.setMaximumPoolSize(20);
             config.setMinimumIdle(5);
@@ -50,8 +56,7 @@ public class DBConnect {
             config.setIdleTimeout(600000);
             config.setMaxLifetime(1800000);
             config.setLeakDetectionThreshold(60000);
-            
-            // 보안 설정
+
             config.addDataSourceProperty("cachePrepStmts", "true");
             config.addDataSourceProperty("prepStmtCacheSize", "250");
             config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
@@ -62,32 +67,29 @@ public class DBConnect {
             config.addDataSourceProperty("cacheServerConfiguration", "true");
             config.addDataSourceProperty("elideSetAutoCommits", "true");
             config.addDataSourceProperty("maintainTimeStats", "false");
-            
+
             dataSource = new HikariDataSource(config);
-            
             System.out.println("HikariCP connection pool initialized successfully");
-            
         } catch (Exception e) {
             System.err.println("Failed to initialize connection pool: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    
+
     public static Connection getConnection() throws SQLException {
         if (dataSource == null) {
             throw new SQLException("Connection pool not initialized");
         }
         return dataSource.getConnection();
     }
-    
+
     public static void closeConnection() {
         if (dataSource != null) {
             dataSource.close();
             System.out.println("Connection pool closed");
         }
     }
-    
-    // 테스트용 메서드
+
     public static boolean testConnection() {
         try (Connection conn = getConnection()) {
             if (conn != null && !conn.isClosed()) {
@@ -99,8 +101,7 @@ public class DBConnect {
         }
         return false;
     }
-    
-    // 커넥션 풀 상태 정보
+
     public static String getPoolStatus() {
         if (dataSource == null) {
             return "Pool not initialized";

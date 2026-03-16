@@ -13,7 +13,9 @@
 | 07 | `07-P3-FRONTEND-UX-AND-FEATURES.md` | **P3 낮음** | UX 개선, 이메일 인증, 비밀번호 찾기, 테스트 코드 | 보통 |
 
 ## 참고 문서
-- `../AI-WORKFLOW-LAB-IMPROVEMENT-PLAN.md` - 전체 분석 리포트
+- `./AI-WORKFLOW-LAB-IMPROVEMENT-PLAN.md` - 전체 분석 리포트
+- `./plans/STRATEGY.md` - 중장기 구현 전략
+- `./guides/CLAUDE.md` - 작업/운영 가이드
 
 ## 프로젝트 정보
 - **경로**: `/var/lib/tomcat9/webapps/ROOT/`
@@ -29,6 +31,6 @@
 6. 작업 완료 후 컴파일 명령어:
    ```bash
    cd /var/lib/tomcat9/webapps/ROOT
-   javac -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*" -d WEB-INF/classes WEB-INF/src/**/*.java WEB-INF/classes/db/DBConnect.java
+   javac -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*" -d WEB-INF/classes $(find WEB-INF/src -name "*.java")
    sudo systemctl restart tomcat9
    ```

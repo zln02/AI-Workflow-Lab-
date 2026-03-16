@@ -1226,7 +1226,7 @@ dashboard.jsp 차트 + analytics 페이지
 cd /var/lib/tomcat9/webapps/ROOT
 javac -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*" \
   -d WEB-INF/classes \
-  WEB-INF/src/**/*.java WEB-INF/classes/db/DBConnect.java
+  $(find WEB-INF/src -name "*.java")
 sudo systemctl restart tomcat9
 ```
 
@@ -1349,5 +1349,5 @@ AI/_common.jsp                     — 새 유틸 함수 추가
 6. **한국어 UI**: 모든 사용자 facing 텍스트는 한국어
 7. **CDN**: Chart.js, Marked.js, Prism.js는 CDN으로 로드
 8. **반응형**: 모바일 768px 이하 대응
-9. **컴파일 명령**: `javac -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*" -d WEB-INF/classes WEB-INF/src/**/*.java WEB-INF/classes/db/DBConnect.java`
+9. **컴파일 명령**: `javac -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*" -d WEB-INF/classes $(find WEB-INF/src -name "*.java")`
 10. **배포**: `sudo systemctl restart tomcat9`
