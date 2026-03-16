@@ -2,6 +2,7 @@
 <%@ page import="dao.CategoryDAO" %>
 <%@ page import="model.Category" %>
 <%@ page import="java.util.List" %>
+<%@ page import="util.CSRFUtil" %>
 <%
   // 관리자 인증 확인
   if (session.getAttribute("admin") == null) {
@@ -47,9 +48,11 @@
                   <td><strong><%= category.getCategoryName() %></strong></td>
                   <td>
                     <a href="/AI/admin/categories/form.jsp?id=<%= category.getId() %>" class="btn btn-sm">수정</a>
-                    <a href="/AI/admin/categories/delete.jsp?id=<%= category.getId() %>" 
-                       class="btn btn-sm btn-danger" 
-                       onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
+                    <form method="POST" action="/AI/admin/categories/delete.jsp" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                      <input type="hidden" name="id" value="<%= category.getId() %>">
+                      <%= CSRFUtil.getHiddenFieldHtml(request) %>
+                      <button type="submit" class="btn btn-sm btn-danger">삭제</button>
+                    </form>
                   </td>
                 </tr>
               <% } %>

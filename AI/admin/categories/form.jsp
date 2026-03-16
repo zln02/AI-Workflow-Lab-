@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="dao.CategoryDAO" %>
 <%@ page import="model.Category" %>
+<%@ page import="util.CSRFUtil" %>
 <%
   if (session.getAttribute("admin") == null) {
     response.sendRedirect("/AI/admin/auth/login.jsp");
@@ -28,6 +29,7 @@
       </header>
       <section class="admin-form-section">
         <form method="POST" action="/AI/admin/categories/save.jsp" id="categoryForm">
+          <%= CSRFUtil.getHiddenFieldHtml(request) %>
           <% if (category != null) { %><input type="hidden" name="id" value="<%= category.getId() %>"><% } %>
           <div class="form-group">
             <label for="category_name">카테고리명 *</label>

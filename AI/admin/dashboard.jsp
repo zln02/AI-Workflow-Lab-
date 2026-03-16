@@ -9,6 +9,7 @@
 <%@ page import="java.util.Locale" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="db.DBConnect" %>
+<%@ page import="util.EscapeUtil" %>
 <%
   if (session.getAttribute("admin") == null) {
     response.sendRedirect("/AI/admin/auth/login.jsp");
@@ -40,6 +41,7 @@
   List<Map<String, Object>> recentUsers = new ArrayList<>();
   List<Map<String, Object>> recentOrders = new ArrayList<>();
   List<Map<String, Object>> topTools = new ArrayList<>();
+  List<String> dataWarnings = new ArrayList<>();
 
   DateTimeFormatter monthKeyFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
   LinkedHashMap<String, Integer> signupMap = new LinkedHashMap<>();
@@ -72,12 +74,16 @@
     try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM ai_tools WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
          ResultSet rs = ps.executeQuery()) {
       if (rs.next()) newToolsThisWeek = rs.getInt(1);
-    } catch (Exception ignored) {}
+    } catch (Exception e) {
+      dataWarnings.add("최근 7일 신규 도구 수를 불러오지 못했습니다.");
+    }
 
     try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
          ResultSet rs = ps.executeQuery()) {
       if (rs.next()) newUsersThisWeek = rs.getInt(1);
-    } catch (Exception ignored) {}
+    } catch (Exception e) {
+      dataWarnings.add("최근 7일 신규 사용자 수를 불러오지 못했습니다.");
+    }
 
     try (PreparedStatement ps = c.prepareStatement("SELECT COALESCE(SUM(total_granted),0), COALESCE(SUM(total_used),0) FROM user_credits");
          ResultSet rs = ps.executeQuery()) {
@@ -88,14 +94,18 @@
           creditUsageRate = (totalUsedCredits * 100.0) / totalGrantedCredits;
         }
       }
-    } catch (Exception ignored) {}
+    } catch (Exception e) {
+      dataWarnings.add("크레딧 집계 데이터를 불러오지 못했습니다.");
+    }
 
     try (PreparedStatement ps = c.prepareStatement(
         "SELECT COALESCE(SUM(total_price),0) FROM orders WHERE order_status = 'COMPLETED' " +
         "AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND created_at < DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH)");
          ResultSet rs = ps.executeQuery()) {
       if (rs.next()) monthRevenue = rs.getDouble(1);
-    } catch (Exception ignored) {}
+    } catch (Exception e) {
+      dataWarnings.add("이번 달 매출을 불러오지 못했습니다.");
+    }
 
     try (PreparedStatement ps = c.prepareStatement(
         "SELECT COALESCE(SUM(total_price),0) FROM orders WHERE order_status = 'COMPLETED' " +
@@ -103,7 +113,9 @@
         "AND created_at < DATE_FORMAT(CURDATE(), '%Y-%m-01')");
          ResultSet rs = ps.executeQuery()) {
       if (rs.next()) previousMonthRevenue = rs.getDouble(1);
-    } catch (Exception ignored) {}
+    } catch (Exception e) {
+      dataWarnings.add("전월 매출을 불러오지 못했습니다.");
+    }
 
     if (previousMonthRevenue > 0) {
       revenueGrowthRate = ((monthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100.0;
@@ -119,7 +131,9 @@
       while (rs.next()) {
         signupMap.put(rs.getString("ym"), rs.getInt("cnt"));
       }
-    } catch (Exception ignored) {}
+    } catch (Exception e) {
+      dataWarnings.add("가입자 추이 데이터를 불러오지 못했습니다.");
+    }
 
     try (PreparedStatement ps = c.prepareStatement(
         "SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, COALESCE(SUM(total_price),0) AS amount " +
@@ -129,7 +143,9 @@
       while (rs.next()) {
         revenueMap.put(rs.getString("ym"), rs.getDouble("amount"));
       }
-    } catch (Exception ignored) {}
+    } catch (Exception e) {
+      dataWarnings.add("매출 추이 데이터를 불러오지 못했습니다.");
+    }
 
     try (PreparedStatement ps = c.prepareStatement(
         "SELECT category, COUNT(*) AS cnt FROM ai_tools " +
@@ -139,7 +155,9 @@
         categoryLabels.add(rs.getString("category"));
         categorySeries.add(rs.getInt("cnt"));
       }
-    } catch (Exception ignored) {}
+    } catch (Exception e) {
+      dataWarnings.add("카테고리 분포를 불러오지 못했습니다.");
+    }
 
     try (PreparedStatement ps = c.prepareStatement(
         "SELECT COALESCE(plan_code, 'free') AS plan_code, COUNT(*) AS cnt " +
@@ -149,7 +167,9 @@
         planLabels.add(rs.getString("plan_code"));
         planSeries.add(rs.getInt("cnt"));
       }
-    } catch (Exception ignored) {}
+    } catch (Exception e) {
+      dataWarnings.add("플랜 분포를 불러오지 못했습니다.");
+    }
 
     try (PreparedStatement ps = c.prepareStatement(
         "SELECT id, name, email, created_at FROM users ORDER BY created_at DESC LIMIT 5");
@@ -162,7 +182,9 @@
         row.put("created_at", rs.getTimestamp("created_at"));
         recentUsers.add(row);
       }
-    } catch (Exception ignored) {}
+    } catch (Exception e) {
+      dataWarnings.add("최근 가입 유저 목록을 불러오지 못했습니다.");
+    }
 
     try (PreparedStatement ps = c.prepareStatement(
         "SELECT id, customer_name, customer_email, total_price, order_status, created_at FROM orders ORDER BY created_at DESC LIMIT 5");
@@ -177,7 +199,9 @@
         row.put("created_at", rs.getTimestamp("created_at"));
         recentOrders.add(row);
       }
-    } catch (Exception ignored) {}
+    } catch (Exception e) {
+      dataWarnings.add("최근 주문 목록을 불러오지 못했습니다.");
+    }
 
     try (PreparedStatement ps = c.prepareStatement(
         "SELECT id, tool_name, category, COALESCE(trend_score, 0) AS trend_score, COALESCE(growth_rate, 0) AS growth_rate, COALESCE(monthly_visits, 0) AS monthly_visits " +
@@ -193,8 +217,11 @@
         row.put("monthly_visits", rs.getLong("monthly_visits"));
         topTools.add(row);
       }
-    } catch (Exception ignored) {}
-  } catch (Exception ignored) {
+    } catch (Exception e) {
+      dataWarnings.add("인기 도구 통계를 불러오지 못했습니다.");
+    }
+  } catch (Exception e) {
+    dataWarnings.add("대시보드 DB 연결에 실패했습니다.");
   }
 
   signupSeries.addAll(signupMap.values());
@@ -204,6 +231,11 @@
   private String escapeJs(String value) {
     if (value == null) return "";
     return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("'", "\\'").replace("\r", "\\r").replace("\n", "\\n");
+  }
+
+  private String escapeHtml(Object value) {
+    if (value == null) return "-";
+    return EscapeUtil.escapeHtml(String.valueOf(value));
   }
 
   private String formatTimestamp(Object value) {
@@ -224,6 +256,16 @@
   <div class="admin-main-wrapper">
     <%@ include file="/AI/admin/layout/topbar.jspf" %>
     <main class="admin-content">
+      <% if (!dataWarnings.isEmpty()) { %>
+      <section class="dashboard-alert" aria-live="polite">
+        <strong>일부 지표를 불러오지 못했습니다.</strong>
+        <ul class="dashboard-alert__list">
+          <% for (String warning : dataWarnings) { %>
+          <li><%= escapeHtml(warning) %></li>
+          <% } %>
+        </ul>
+      </section>
+      <% } %>
       <header class="admin-dashboard-header" style="margin-bottom:2rem;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
           <div>
@@ -327,8 +369,8 @@
             <% } else { for (Map<String, Object> row : recentUsers) { %>
               <div class="dashboard-list__item">
                 <div>
-                  <strong><%= row.get("name") != null ? row.get("name") : "이름 없음" %></strong>
-                  <p><%= row.get("email") != null ? row.get("email") : "-" %></p>
+                  <strong><%= row.get("name") != null ? escapeHtml(row.get("name")) : "이름 없음" %></strong>
+                  <p><%= row.get("email") != null ? escapeHtml(row.get("email")) : "-" %></p>
                 </div>
                 <span><%= formatTimestamp(row.get("created_at")) %></span>
               </div>
@@ -349,12 +391,12 @@
             <% } else { for (Map<String, Object> row : recentOrders) { %>
               <div class="dashboard-list__item">
                 <div>
-                  <strong>#<%= row.get("id") %> <%= row.get("customer_name") != null ? row.get("customer_name") : "고객" %></strong>
-                  <p><%= row.get("customer_email") != null ? row.get("customer_email") : "-" %></p>
+                  <strong>#<%= row.get("id") %> <%= row.get("customer_name") != null ? escapeHtml(row.get("customer_name")) : "고객" %></strong>
+                  <p><%= row.get("customer_email") != null ? escapeHtml(row.get("customer_email")) : "-" %></p>
                 </div>
                 <div style="text-align:right;">
                   <strong>₩<%= String.format(Locale.US, "%,.0f", row.get("total_price")) %></strong>
-                  <p><%= row.get("order_status") != null ? row.get("order_status") : "-" %> · <%= formatTimestamp(row.get("created_at")) %></p>
+                  <p><%= row.get("order_status") != null ? escapeHtml(row.get("order_status")) : "-" %> · <%= formatTimestamp(row.get("created_at")) %></p>
                 </div>
               </div>
             <% }} %>
@@ -386,8 +428,8 @@
                 <tr><td colspan="5" style="text-align:center;padding:2rem;">도구 통계가 없습니다.</td></tr>
               <% } else { for (Map<String, Object> row : topTools) { %>
                 <tr>
-                  <td><strong><%= row.get("tool_name") %></strong></td>
-                  <td><%= row.get("category") != null ? row.get("category") : "-" %></td>
+                  <td><strong><%= escapeHtml(row.get("tool_name")) %></strong></td>
+                  <td><%= row.get("category") != null ? escapeHtml(row.get("category")) : "-" %></td>
                   <td><%= String.format(Locale.US, "%.1f", row.get("trend_score")) %></td>
                   <td><%= String.format(Locale.US, "%+.1f%%", row.get("growth_rate")) %></td>
                   <td><%= compactNumber(((Number) row.get("monthly_visits")).longValue()) %></td>
@@ -397,27 +439,6 @@
           </table>
         </div>
       </section>
-
-      <% if (isSuperadmin) { %>
-      <section class="dashboard-card">
-        <header class="dashboard-card__header">
-          <div>
-            <h2>Superadmin 요청 대기열</h2>
-            <p>관리자 생성 요청 승인/거절</p>
-          </div>
-        </header>
-        <div id="superadminQueueFeedback" class="admin-queue-feedback" aria-live="polite"></div>
-        <div class="admin-table-section" style="margin-top:1.5rem;">
-          <table class="admin-table">
-            <thead>
-              <tr><th>요청자</th><th>아이디</th><th>역할</th><th>권한</th><th>상태</th><th>액션</th></tr>
-            </thead>
-            <tbody id="requestQueueBody"></tbody>
-          </table>
-          <p id="requestQueueEmpty" class="admin-queue-empty">현재 대기 중인 요청이 없습니다.</p>
-        </div>
-      </section>
-      <% } %>
       <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
       <script src="/AI/assets/js/charts.js"></script>
       <script>
@@ -445,105 +466,30 @@
   renderBarChart('revenueChart', monthLabels, revenueSeries, {
     label: '월 매출',
     backgroundColor: palette[2],
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const value = Number(context.raw || 0);
+            return '월 매출: ₩' + value.toLocaleString('ko-KR');
+          }
+        }
+      }
+    },
     scales: {
       x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,.08)' } },
-      y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,.08)' } }
+      y: {
+        ticks: {
+          color: '#94a3b8',
+          callback: function(value) {
+            return '₩' + Number(value).toLocaleString('ko-KR');
+          }
+        },
+        grid: { color: 'rgba(148,163,184,.08)' }
+      }
     }
   });
 
   renderDoughnutChart('planChart', planLabels, planSeries, {});
       </script>
-      <style>
-  .dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.25rem;
-  }
-  .dashboard-secondary-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.25rem;
-  }
-  .dashboard-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-xl);
-    padding: var(--spacing-xl);
-    backdrop-filter: blur(20px);
-  }
-  .dashboard-card__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-  .dashboard-card__header h2 {
-    margin: 0 0 .25rem;
-    font-size: 1.05rem;
-  }
-  .dashboard-card__header p {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: .85rem;
-  }
-  .chart-wrap {
-    height: 300px;
-  }
-  .dashboard-pill-group {
-    display: flex;
-    gap: .75rem;
-    flex-wrap: wrap;
-  }
-  .dashboard-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: .45rem;
-    padding: .7rem 1rem;
-    border-radius: 999px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    color: var(--text-primary);
-    text-decoration: none;
-    background: rgba(15, 23, 42, 0.45);
-  }
-  .dashboard-list {
-    display: grid;
-    gap: .75rem;
-  }
-  .dashboard-list__item {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    align-items: center;
-    padding: .9rem 1rem;
-    border-radius: 1rem;
-    background: rgba(15, 23, 42, 0.45);
-    border: 1px solid rgba(148, 163, 184, 0.12);
-  }
-  .dashboard-list__item strong {
-    display: block;
-    color: #f8fafc;
-  }
-  .dashboard-list__item p {
-    margin: .15rem 0 0;
-    color: var(--text-secondary);
-    font-size: .82rem;
-  }
-  .dashboard-list__item span {
-    color: var(--text-secondary);
-    font-size: .82rem;
-    white-space: nowrap;
-  }
-  .dashboard-empty {
-    margin: 0;
-    padding: 1rem;
-    color: var(--text-secondary);
-  }
-  @media (max-width: 1100px) {
-    .dashboard-grid,
-    .dashboard-secondary-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-      </style>
 <%@ include file="/AI/admin/layout/footer.jspf" %>

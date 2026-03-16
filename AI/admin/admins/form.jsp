@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="dao.AdminDAO" %>
 <%@ page import="model.Admin" %>
+<%@ page import="util.CSRFUtil" %>
 <%
   if (session.getAttribute("admin") == null) {
     response.sendRedirect("/AI/admin/auth/login.jsp");
@@ -34,6 +35,7 @@
       </header>
       <section class="admin-form-section">
         <form method="POST" action="/AI/admin/admins/save.jsp" id="adminForm">
+          <%= CSRFUtil.getHiddenFieldHtml(request) %>
           <% if (admin != null) { %><input type="hidden" name="id" value="<%= admin.getId() %>"><% } %>
           <div class="form-group">
             <label for="username">아이디 *</label>

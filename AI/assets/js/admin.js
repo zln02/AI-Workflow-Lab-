@@ -88,30 +88,52 @@
 
   // ===== Search Functionality =====
   const initSearch = () => {
-    const searchInput = document.getElementById('searchInput');
+    const searchInput = document.getElementById('adminGlobalSearchInput');
     if (!searchInput) return;
-    
-    let searchTimeout;
-    searchInput.addEventListener('input', (e) => {
-      clearTimeout(searchTimeout);
-      const query = e.target.value.trim();
-      
-      if (query.length > 2) {
-        searchTimeout = setTimeout(() => {
-          // Search functionality
-        }, 300);
-      }
-    });
-    
-    // Search on Enter key
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const query = e.target.value.trim();
-        if (query) {
-          // Navigate to search results or filter current page
+
+    const searchTargets = [
+      { href: '/AI/admin/dashboard.jsp', keywords: ['dashboard', '대시보드', 'home', '홈'] },
+      { href: '/AI/admin/tools/index.jsp', keywords: ['tool', 'tools', '도구', 'ai 도구', '모델'] },
+      { href: '/AI/admin/lab/index.jsp', keywords: ['lab', 'labs', '실습', '랩', '프로젝트'] },
+      { href: '/AI/admin/orders/index.jsp', keywords: ['order', 'orders', '주문', '결제', '매출'] },
+      { href: '/AI/admin/users/index.jsp', keywords: ['user', 'users', '사용자', '회원', '유저'] },
+      { href: '/AI/admin/statistics/index.jsp', keywords: ['statistics', 'stats', '통계', '인사이트', '지표'] },
+      { href: '/AI/admin/analytics/index.jsp', keywords: ['analytics', 'analysis', '분석', '허브'] },
+      { href: '/AI/admin/packages/index.jsp', keywords: ['package', 'packages', 'plan', 'pricing', '플랜', '구독'] },
+      { href: '/AI/admin/categories/index.jsp', keywords: ['category', 'categories', '카테고리', '분류'] },
+      { href: '/AI/admin/admins/index.jsp', keywords: ['admin', 'admins', '관리자', '권한'] }
+    ];
+
+    const resolveSearchTarget = (query) => {
+      const normalized = query.trim().toLowerCase();
+      if (!normalized) return null;
+
+      for (const target of searchTargets) {
+        if (target.keywords.some((keyword) => normalized.includes(keyword))) {
+          return target.href;
         }
       }
+      return null;
+    };
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') {
+        return;
+      }
+
+      e.preventDefault();
+      const query = e.target.value.trim();
+      if (!query) {
+        return;
+      }
+
+      const href = resolveSearchTarget(query);
+      if (href) {
+        window.location.href = href;
+        return;
+      }
+
+      window.showToast?.('검색 대상이 명확하지 않습니다. 메뉴명이나 기능명으로 검색하세요.', 'info');
     });
   };
 
@@ -247,99 +269,6 @@
     });
   };
 
-  // ===== Admin Request Queue (Existing Functionality) =====
-  const storageKey = 'aiAdminRequests';
-
-  const readAdminRequests = () => JSON.parse(localStorage.getItem(storageKey) || '[]');
-  const writeAdminRequests = (requests) => localStorage.setItem(storageKey, JSON.stringify(requests));
-  const dispatchAdminRequestsUpdated = () =>
-    window.dispatchEvent(new CustomEvent('aiAdminRequestsUpdated', { detail: readAdminRequests() }));
-
-  const renderAdminRequests = (requests = readAdminRequests()) => {
-    const tableBody = document.getElementById('requestQueueBody');
-    const emptyState = document.getElementById('requestQueueEmpty');
-    if (!tableBody) return;
-    tableBody.innerHTML = '';
-    if (!requests.length) {
-      emptyState?.classList.remove('hidden');
-      return;
-    }
-    emptyState?.classList.add('hidden');
-    requests.forEach((req) => {
-      const row = document.createElement('tr');
-      const statusLabel = document.createElement('span');
-      statusLabel.textContent =
-        req.status === 'approved' ? '승인' : req.status === 'rejected' ? '거절' : '대기';
-      statusLabel.classList.add('status-label');
-      const permissionText =
-        Array.isArray(req.permissions) && req.permissions.length > 0
-          ? req.permissions.join(', ')
-          : '기본 권한 없음';
-
-      row.innerHTML = `
-        <td>${req.requestedBy || 'Superadmin'}</td>
-        <td>${req.username}</td>
-        <td>${req.role}</td>
-        <td>${permissionText}</td>
-        <td></td>
-        <td></td>
-      `;
-      row.children[4].appendChild(statusLabel);
-
-      const actionCell = row.children[5];
-      if (req.status === 'pending') {
-        const approveBtn = document.createElement('button');
-        approveBtn.type = 'button';
-        approveBtn.className = 'btn primary';
-        approveBtn.textContent = '허락';
-        approveBtn.dataset.requestId = req.id;
-        approveBtn.dataset.requestAction = 'approve';
-
-        const rejectBtn = document.createElement('button');
-        rejectBtn.type = 'button';
-        rejectBtn.className = 'btn ghost';
-        rejectBtn.textContent = '거절';
-        rejectBtn.dataset.requestId = req.id;
-        rejectBtn.dataset.requestAction = 'reject';
-
-        actionCell.appendChild(approveBtn);
-        actionCell.appendChild(rejectBtn);
-      } else {
-        actionCell.textContent = '-';
-      }
-
-      tableBody.appendChild(row);
-    });
-  };
-
-  const updateRequestStatus = (id, status) => {
-    const requests = readAdminRequests();
-    const index = requests.findIndex((request) => request.id === id);
-    if (index === -1) return;
-    requests[index].status = status;
-    requests[index].handledAt = new Date().toISOString();
-    writeAdminRequests(requests);
-    dispatchAdminRequestsUpdated();
-    const feedback = document.getElementById('superadminQueueFeedback');
-    if (feedback) {
-      feedback.textContent = `요청 ${status === 'approved' ? '허락' : '거절'}됨: ${requests[index].username}`;
-    }
-  };
-
-  const addAdminRequest = (request) => {
-    const requests = readAdminRequests();
-    requests.unshift({
-      id: Date.now(),
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      ...request,
-    });
-    writeAdminRequests(requests);
-    dispatchAdminRequestsUpdated();
-  };
-
-  window.addAdminRequest = addAdminRequest;
-
   // ===== Initialize Everything on DOM Ready =====
   document.addEventListener('DOMContentLoaded', () => {
     initThemeToggle();
@@ -350,57 +279,6 @@
     initTableEffects();
     initFormValidation();
     initSmoothScroll();
-
-    // Admin Request Queue
-    const policyBtn = document.getElementById('adminPolicyBtn');
-    const modal = document.getElementById('adminPolicyModal');
-    const overlay = document.getElementById('adminModalOverlay');
-    const closeButtons = modal?.querySelectorAll('[data-modal-close]') ?? [];
-    const toggleModal = (show) => {
-      if (!modal || !overlay) return;
-      modal.classList.toggle('active', show);
-      overlay.classList.toggle('active', show);
-    };
-    policyBtn?.addEventListener('click', () => toggleModal(true));
-    closeButtons.forEach((button) => button.addEventListener('click', () => toggleModal(false)));
-    overlay?.addEventListener('click', () => toggleModal(false));
-
-    const creationForm = document.getElementById('adminCreationForm');
-    const feedback = document.getElementById('adminCreationFeedback');
-    creationForm?.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const formData = new FormData(creationForm);
-      const username = formData.get('username');
-      const role = formData.get('role');
-      const permissions = formData.getAll('perm');
-      if (typeof username === 'string' && username.trim().length > 0) {
-        const permissionText = permissions.length ? permissions.join(', ') : '기본 권한 없음';
-        if (feedback) {
-          feedback.textContent = `Superadmin 요청: ${username} (${role}) · 권한: ${permissionText}`;
-        }
-        window.addAdminRequest?.({
-          username,
-          role,
-          permissions,
-          requestedBy: 'Superadmin UI',
-        });
-        toggleModal(false);
-      }
-    });
-
-    const requestTableBody = document.getElementById('requestQueueBody');
-    if (requestTableBody) {
-      requestTableBody.addEventListener('click', (event) => {
-        const actionButton = event.target.closest('[data-request-action]');
-        if (!actionButton) return;
-        const id = Number(actionButton.dataset.requestId);
-        const action = actionButton.dataset.requestAction;
-        updateRequestStatus(id, action === 'approve' ? 'approved' : 'rejected');
-      });
-      renderAdminRequests();
-    }
-    window.addEventListener('aiAdminRequestsUpdated', () => renderAdminRequests());
-    renderAdminRequests();
   });
 
   // Export for global use

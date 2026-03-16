@@ -734,6 +734,7 @@
         </div>
         <% } %>
         <form id="apiKeyForm" onsubmit="saveApiKey(event)">
+          <%= CSRFUtil.getHiddenFieldHtml(request) %>
           <div class="form-field">
             <label>Provider</label>
             <select id="apiProvider" class="form-input">
@@ -899,6 +900,7 @@
 
   async function saveApiKey(e) {
     e.preventDefault();
+    const csrfToken = document.querySelector('#apiKeyForm input[name="csrf_token"]')?.value || '';
     const provider = document.getElementById('apiProvider').value;
     const keyName = document.getElementById('apiKeyName').value;
     const apiKey = document.getElementById('apiKeyValue').value;
@@ -910,7 +912,7 @@
     const resp = await fetch('/AI/api/user/api-keys/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ provider, keyName, apiKey })
+      body: new URLSearchParams({ provider, keyName, apiKey, csrf_token: csrfToken })
     });
     const data = await resp.json();
     if (data.success) {
@@ -931,7 +933,11 @@
 
   async function deleteApiKey(id) {
     if (!confirm('이 API 키를 삭제할까요?')) return;
-    const resp = await fetch('/AI/api/user/api-keys/' + id, { method: 'DELETE' });
+    const csrfToken = document.querySelector('#apiKeyForm input[name="csrf_token"]')?.value || '';
+    const resp = await fetch('/AI/api/user/api-keys/' + id, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-Token': csrfToken }
+    });
     const data = await resp.json();
     if (data.success) {
       loadApiKeys();

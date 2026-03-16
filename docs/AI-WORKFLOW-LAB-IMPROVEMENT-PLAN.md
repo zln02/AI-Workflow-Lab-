@@ -26,7 +26,7 @@
 ## 1. [치명적] 보안 개선사항
 
 ### 1-1. DB 비밀번호 하드코딩 제거
-**파일**: `WEB-INF/classes/db/DBConnect.java:30`
+**파일**: `WEB-INF/src/db/DBConnect.java:30`
 ```
 현재: dbPassword = "1234!";  // 하드코딩된 기본 비밀번호
 개선: 환경변수 필수 + 기본값 제거. 환경변수 없으면 시작 실패하도록 변경
@@ -544,7 +544,7 @@ git commit -m "Remove compiled files and libraries from tracking"
 cd /var/lib/tomcat9/webapps/ROOT
 javac -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*" \
   -d WEB-INF/classes \
-  WEB-INF/src/**/*.java WEB-INF/classes/db/DBConnect.java
+  $(find WEB-INF/src -name "*.java")
 sudo systemctl restart tomcat9
 ```
 

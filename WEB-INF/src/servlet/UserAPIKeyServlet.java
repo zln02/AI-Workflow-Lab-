@@ -3,6 +3,7 @@ package servlet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import model.User;
+import util.CSRFUtil;
 import util.EncryptionUtil;
 
 import javax.servlet.ServletException;
@@ -84,6 +85,9 @@ public class UserAPIKeyServlet extends HttpServlet {
             if (user == null) {
                 return;
             }
+            if (!validateCsrf(request, response, out)) {
+                return;
+            }
 
             String provider = normalizeProvider(request.getParameter("provider"));
             String keyName = defaultString(request.getParameter("keyName"), buildDefaultKeyName(provider));
@@ -103,6 +107,13 @@ public class UserAPIKeyServlet extends HttpServlet {
                 return;
             }
 
+            String encryptedKey = EncryptionUtil.encrypt(apiKey);
+            if (encryptedKey == null || !encryptedKey.startsWith("enc:")) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                out.print(gson.toJson(new ErrorResponse("Server Misconfigured", "서버 암호화 키가 설정되지 않아 API 키를 저장할 수 없습니다.")));
+                return;
+            }
+
             int insertedId = 0;
             try (Connection conn = db.DBConnect.getConnection();
                  PreparedStatement ps = conn.prepareStatement(
@@ -112,7 +123,7 @@ public class UserAPIKeyServlet extends HttpServlet {
                          Statement.RETURN_GENERATED_KEYS)) {
                 ps.setLong(1, user.getId());
                 ps.setString(2, provider);
-                ps.setString(3, EncryptionUtil.encrypt(apiKey));
+                ps.setString(3, encryptedKey);
                 ps.executeUpdate();
                 try (ResultSet keys = ps.getGeneratedKeys()) {
                     if (keys.next()) {
@@ -156,6 +167,9 @@ public class UserAPIKeyServlet extends HttpServlet {
             if (user == null) {
                 return;
             }
+            if (!validateCsrf(request, response, out)) {
+                return;
+            }
 
             Integer id = parseId(request.getPathInfo());
             if (id == null) {
@@ -190,6 +204,9 @@ public class UserAPIKeyServlet extends HttpServlet {
         try {
             User user = requireUser(request, response, out);
             if (user == null) {
+                return;
+            }
+            if (!validateCsrf(request, response, out)) {
                 return;
             }
 
@@ -244,6 +261,19 @@ public class UserAPIKeyServlet extends HttpServlet {
             return null;
         }
         return user;
+    }
+
+    private boolean validateCsrf(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+        String requestToken = request.getHeader("X-CSRF-Token");
+        if (requestToken == null || requestToken.trim().isEmpty()) {
+            requestToken = request.getParameter(CSRFUtil.getTokenParamName());
+        }
+        if (!CSRFUtil.validateToken(request, requestToken)) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            out.print(gson.toJson(new ErrorResponse("Forbidden", "보안 검증에 실패했습니다.")));
+            return false;
+        }
+        return true;
     }
 
     private Integer parseId(String pathInfo) {

@@ -305,7 +305,7 @@ logger.log(Level.SEVERE, "Failed to initialize connection pool", e);
 ```
 
 **대상 파일 목록**:
-- `WEB-INF/classes/db/DBConnect.java`
+- `WEB-INF/src/db/DBConnect.java`
 - `WEB-INF/src/dao/*.java` (모든 DAO)
 - `WEB-INF/src/servlet/*.java` (모든 Servlet)
 - `WEB-INF/src/service/*.java` (모든 Service)
@@ -318,6 +318,6 @@ logger.log(Level.SEVERE, "Failed to initialize connection pool", e);
 cd /var/lib/tomcat9/webapps/ROOT
 javac -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*" \
   -d WEB-INF/classes \
-  WEB-INF/src/**/*.java WEB-INF/classes/db/DBConnect.java
+  $(find WEB-INF/src -name "*.java")
 sudo systemctl restart tomcat9
 ```

@@ -69,11 +69,17 @@ public class CSRFUtil {
     public static boolean validateToken(HttpServletRequest request) {
         String sessionToken = getToken(request);
         String requestToken = request.getParameter(CSRF_TOKEN_REQUEST_PARAM);
-        
+        return validateToken(sessionToken, requestToken);
+    }
+
+    public static boolean validateToken(HttpServletRequest request, String requestToken) {
+        return validateToken(getToken(request), requestToken);
+    }
+
+    private static boolean validateToken(String sessionToken, String requestToken) {
         if (sessionToken == null || requestToken == null) {
             return false;
         }
-        
         return MessageDigest.isEqual(sessionToken.getBytes(), requestToken.getBytes());
     }
     

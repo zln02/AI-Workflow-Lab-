@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="dao.AdminDAO" %>
+<%@ page import="util.CSRFUtil" %>
 <%
   // 관리자 인증 확인
   if (session.getAttribute("admin") == null) {
@@ -13,6 +14,12 @@
   
   if (!isSuperadmin) {
     response.sendRedirect("/AI/admin/statistics/index.jsp");
+    return;
+  }
+
+  if (!"POST".equalsIgnoreCase(request.getMethod()) || !CSRFUtil.validateToken(request)) {
+    response.setStatus(403);
+    out.println("<script>alert('보안 검증에 실패했습니다.'); location.href='index.jsp';</script>");
     return;
   }
 
@@ -41,7 +48,6 @@
     }
   } catch (Exception e) {
     e.printStackTrace();
-    out.println("<script>alert('오류가 발생했습니다: " + e.getMessage() + "'); location.href='index.jsp';</script>");
+    out.println("<script>alert('오류가 발생했습니다. 잠시 후 다시 시도해주세요.'); location.href='index.jsp';</script>");
   }
 %>
-

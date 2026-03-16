@@ -27,10 +27,19 @@
     <session-timeout>30</session-timeout>
     <cookie-config>
       <http-only>true</http-only>
-      <secure>false</secure>
+      <secure>true</secure>
     </cookie-config>
     <tracking-mode>COOKIE</tracking-mode>
   </session-config>
+
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>BlockGitMetadata</web-resource-name>
+      <url-pattern>/.git</url-pattern>
+      <url-pattern>/.git/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint />
+  </security-constraint>
   
   <filter>
     <filter-name>CharacterEncodingFilter</filter-name>

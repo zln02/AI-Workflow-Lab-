@@ -14,6 +14,7 @@ public class EncryptionUtil {
     private static final int IV_LENGTH = 12;
     private static final int TAG_LENGTH = 128;
     private static final String LEGACY_DEFAULT_KEY = "codex-default-encryption-key-32b";
+    private static final String ENCRYPTION_KEY_ENV = "ENCRYPTION_KEY";
 
     private EncryptionUtil() {}
 
@@ -35,7 +36,7 @@ public class EncryptionUtil {
             buffer.put(encrypted);
             return PREFIX + Base64.getEncoder().encodeToString(buffer.array());
         } catch (Exception e) {
-            return plainText;
+            return null;
         }
     }
 
@@ -90,16 +91,15 @@ public class EncryptionUtil {
     }
 
     private static SecretKey resolveKey() throws Exception {
-        String envKey = System.getenv("ENCRYPTION_KEY");
+        String envKey = System.getenv(ENCRYPTION_KEY_ENV);
         if (envKey == null || envKey.trim().isEmpty()) {
-            envKey = LEGACY_DEFAULT_KEY;
+            throw new IllegalStateException("ENCRYPTION_KEY is not configured");
         }
-
         return secretKeyFromString(envKey);
     }
 
     private static SecretKey[] resolveDecryptionKeys() throws Exception {
-        String envKey = System.getenv("ENCRYPTION_KEY");
+        String envKey = System.getenv(ENCRYPTION_KEY_ENV);
         if (envKey == null || envKey.trim().isEmpty() || LEGACY_DEFAULT_KEY.equals(envKey)) {
             return new SecretKey[]{secretKeyFromString(LEGACY_DEFAULT_KEY)};
         }

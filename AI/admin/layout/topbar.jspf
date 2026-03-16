@@ -1,4 +1,5 @@
 <%@ page pageEncoding="UTF-8" %>
+<%@ page import="util.EscapeUtil" %>
 <%
   // session에서 직접 가져오기 (각 JSP 페이지에서 이미 선언된 변수와 충돌 방지)
   model.Admin topbarAdmin = (model.Admin) session.getAttribute("admin");
@@ -23,7 +24,7 @@
     </button>
     <div class="search-box">
       <span class="search-icon"><i class="bi bi-search"></i></span>
-      <input type="text" placeholder="검색..." class="search-input" id="searchInput">
+      <input type="search" placeholder="메뉴, 사용자, 주문, 통계 검색" class="search-input" id="adminGlobalSearchInput" aria-label="관리자 전역 검색">
     </div>
   </div>
   
@@ -31,9 +32,9 @@
     <div class="admin-info">
       <span class="admin-role-badge"><%= roleDisplay %></span>
       <% if (topbarAdmin != null && topbarAdmin.getName() != null) { %>
-        <span class="admin-name"><%= topbarAdmin.getName() %></span>
+        <span class="admin-name"><%= EscapeUtil.escapeHtml(topbarAdmin.getName()) %></span>
       <% } else if (topbarAdmin != null && topbarAdmin.getUsername() != null) { %>
-        <span class="admin-name"><%= topbarAdmin.getUsername() %></span>
+        <span class="admin-name"><%= EscapeUtil.escapeHtml(topbarAdmin.getUsername()) %></span>
       <% } %>
     </div>
     <a href="/AI/admin/auth/logout.jsp" class="btn-logout">

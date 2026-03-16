@@ -4,6 +4,7 @@
 <%@ page import="model.Category" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.ArrayList" %>
+<%@ page import="util.CSRFUtil" %>
 <%
   if (session.getAttribute("admin") == null) {
     response.sendRedirect("/AI/admin/auth/login.jsp");
@@ -98,7 +99,11 @@
                   <td><%= pkg.getCreatedAt() != null ? pkg.getCreatedAt().substring(0, 10) : "-" %></td>
                   <td>
                     <a href="/AI/admin/packages/form.jsp?id=<%= pkg.getId() %>" class="btn btn-sm">수정</a>
-                    <a href="/AI/admin/packages/delete.jsp?id=<%= pkg.getId() %>" class="btn btn-sm btn-danger" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
+                    <form method="POST" action="/AI/admin/packages/delete.jsp" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                      <input type="hidden" name="id" value="<%= pkg.getId() %>">
+                      <%= CSRFUtil.getHiddenFieldHtml(request) %>
+                      <button type="submit" class="btn btn-sm btn-danger">삭제</button>
+                    </form>
                   </td>
                 </tr>
               <% } %>

@@ -133,7 +133,7 @@
 │   │   ├── java/               <- WEB-INF/src/ 내용 이동
 │   │   │   ├── constants/
 │   │   │   ├── dao/
-│   │   │   ├── db/             <- WEB-INF/classes/db/DBConnect.java
+│   │   │   ├── db/             <- WEB-INF/src/db/DBConnect.java
 │   │   │   ├── dto/
 │   │   │   ├── filter/
 │   │   │   ├── model/

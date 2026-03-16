@@ -10,6 +10,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Set" %>
 <%@ page import="java.util.HashSet" %>
+<%@ page import="util.CSRFUtil" %>
 <%
   if (session.getAttribute("admin") == null) {
     response.sendRedirect("/AI/admin/auth/login.jsp");
@@ -45,6 +46,7 @@
       </header>
       <section class="admin-form-section">
         <form method="POST" action="/AI/admin/packages/save.jsp" id="packageForm">
+          <%= CSRFUtil.getHiddenFieldHtml(request) %>
           <% if (pkg != null) { %><input type="hidden" name="id" value="<%= pkg.getId() %>"><% } %>
           
           <!-- Basic Info Section -->

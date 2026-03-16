@@ -11,7 +11,7 @@
 
 ## 작업 1-1: DB 비밀번호 하드코딩 제거
 
-### 파일: `WEB-INF/classes/db/DBConnect.java`
+### 파일: `WEB-INF/src/db/DBConnect.java`
 
 **현재 문제**: 30행에 `dbPassword = "1234!"` 하드코딩되어 있음
 
@@ -253,7 +253,7 @@ if (!planCode.matches("^(STARTER|GROWTH|ENTERPRISE)$")) {
 cd /var/lib/tomcat9/webapps/ROOT
 javac -cp "WEB-INF/lib/*:/usr/share/tomcat9/lib/*" \
   -d WEB-INF/classes \
-  WEB-INF/src/**/*.java WEB-INF/classes/db/DBConnect.java
+  $(find WEB-INF/src -name "*.java")
 sudo systemctl restart tomcat9
 sudo journalctl -u tomcat9 -f  # 로그 확인
 ```

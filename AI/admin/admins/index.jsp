@@ -2,6 +2,7 @@
 <%@ page import="dao.AdminDAO" %>
 <%@ page import="model.Admin" %>
 <%@ page import="java.util.List" %>
+<%@ page import="util.CSRFUtil" %>
 <%
   if (session.getAttribute("admin") == null) {
     response.sendRedirect("/AI/admin/auth/login.jsp");
@@ -59,7 +60,11 @@
                   <td>
                     <a href="/AI/admin/admins/form.jsp?id=<%= admin.getId() %>" class="btn btn-sm">수정</a>
                     <% if (admin.getId() != ((model.Admin) session.getAttribute("admin")).getId()) { %>
-                      <a href="/AI/admin/admins/delete.jsp?id=<%= admin.getId() %>" class="btn btn-sm btn-danger" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
+                      <form method="POST" action="/AI/admin/admins/delete.jsp" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                        <input type="hidden" name="id" value="<%= admin.getId() %>">
+                        <%= CSRFUtil.getHiddenFieldHtml(request) %>
+                        <button type="submit" class="btn btn-sm btn-danger">삭제</button>
+                      </form>
                     <% } %>
                   </td>
                 </tr>
