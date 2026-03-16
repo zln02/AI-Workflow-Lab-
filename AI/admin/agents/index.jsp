@@ -4,12 +4,43 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="com.google.gson.JsonArray" %>
+<%@ page import="com.google.gson.JsonElement" %>
+<%@ page import="com.google.gson.JsonObject" %>
+<%@ page import="com.google.gson.JsonParser" %>
 <%@ page import="db.DBConnect" %>
 <%@ page import="util.CSRFUtil" %>
 <%@ page import="util.EscapeUtil" %>
 <%!
   private String formatAdminTimestamp(Object value) {
     return value == null ? "-" : new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(value);
+  }
+
+  private String readJsonString(JsonObject obj, String key) {
+    if (obj == null || key == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+      return "";
+    }
+    JsonElement element = obj.get(key);
+    return element.isJsonPrimitive() ? element.getAsString() : "";
+  }
+
+  private int readJsonArrayCount(JsonObject obj, String key) {
+    if (obj == null || key == null || !obj.has(key) || !obj.get(key).isJsonArray()) {
+      return 0;
+    }
+    JsonArray array = obj.getAsJsonArray(key);
+    return array == null ? 0 : array.size();
+  }
+
+  private String clipText(String value, int maxLength) {
+    if (value == null) {
+      return "";
+    }
+    String normalized = value.replaceAll("\\s+", " ").trim();
+    if (normalized.length() <= maxLength) {
+      return normalized;
+    }
+    return normalized.substring(0, maxLength) + "...";
   }
 %>
 <%
@@ -153,7 +184,8 @@
       }
     }
     try (PreparedStatement ps = c.prepareStatement(
-        "SELECT ar.id, ar.title, ar.user_goal, ar.created_at, at.name AS template_name, at.code AS template_code " +
+        "SELECT ar.id, ar.title, ar.user_goal, ar.status, ar.model_used, ar.prompt_tokens, ar.output_tokens, ar.credits_used, ar.final_output_json, ar.created_at, " +
+        "at.name AS template_name, at.code AS template_code " +
         "FROM agent_runs ar LEFT JOIN agent_templates at ON at.id = ar.template_id " +
         "ORDER BY ar.created_at DESC LIMIT 8");
          ResultSet rs = ps.executeQuery()) {
@@ -162,6 +194,12 @@
         row.put("id", rs.getInt("id"));
         row.put("title", rs.getString("title"));
         row.put("user_goal", rs.getString("user_goal"));
+        row.put("status", rs.getString("status"));
+        row.put("model_used", rs.getString("model_used"));
+        row.put("prompt_tokens", rs.getInt("prompt_tokens"));
+        row.put("output_tokens", rs.getInt("output_tokens"));
+        row.put("credits_used", rs.getDouble("credits_used"));
+        row.put("final_output_json", rs.getString("final_output_json"));
         row.put("template_name", rs.getString("template_name"));
         row.put("template_code", rs.getString("template_code"));
         row.put("created_at", rs.getTimestamp("created_at"));
@@ -346,16 +384,70 @@
           <div class="glass-panel">
             <div class="panel-header">
               <h2>최근 실행</h2>
+              <span class="panel-subtext">최근 저장된 실행 결과를 빠르게 훑어볼 수 있습니다.</span>
             </div>
             <div class="panel-body" style="display:grid;gap:12px;">
               <% if (recentRuns.isEmpty()) { %>
               <div class="empty-state">아직 저장된 에이전트 실행이 없습니다.</div>
               <% } else { %>
                 <% for (Map<String, Object> run : recentRuns) { %>
+                <%
+                  JsonObject output = null;
+                  String outputSummary = "";
+                  String outputReport = "";
+                  int planCount = 0;
+                  int toolCount = 0;
+                  int checklistCount = 0;
+                  try {
+                    String rawJson = (String) run.get("final_output_json");
+                    if (rawJson != null && !rawJson.trim().isEmpty()) {
+                      output = JsonParser.parseString(rawJson).getAsJsonObject();
+                      outputSummary = clipText(readJsonString(output, "summary"), 160);
+                      outputReport = clipText(readJsonString(output, "report"), 160);
+                      planCount = readJsonArrayCount(output, "executionPlan");
+                      toolCount = readJsonArrayCount(output, "recommendedTools");
+                      checklistCount = readJsonArrayCount(output, "checklist");
+                    }
+                  } catch (Exception ignore) {
+                  }
+                %>
                 <div style="padding:14px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.03);">
-                  <div style="font-size:.92rem;font-weight:800;"><%= EscapeUtil.escapeHtml(String.valueOf(run.get("title"))) %></div>
-                  <div style="color:#94a3b8;font-size:.78rem;margin:6px 0 8px;"><%= EscapeUtil.escapeHtml(String.valueOf(run.get("template_name") != null ? run.get("template_name") : "-")) %> · <%= formatAdminTimestamp(run.get("created_at")) %></div>
-                  <div style="color:#cbd5e1;font-size:.82rem;line-height:1.65;"><%= EscapeUtil.escapeHtml(String.valueOf(run.get("user_goal") != null ? run.get("user_goal") : "")) %></div>
+                  <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+                    <div>
+                      <div style="font-size:.92rem;font-weight:800;"><%= EscapeUtil.escapeHtml(String.valueOf(run.get("title"))) %></div>
+                      <div style="color:#94a3b8;font-size:.78rem;margin:6px 0 0;"><%= EscapeUtil.escapeHtml(String.valueOf(run.get("template_name") != null ? run.get("template_name") : "-")) %> · <%= formatAdminTimestamp(run.get("created_at")) %></div>
+                    </div>
+                    <button type="button" class="btn-secondary" style="padding:8px 12px;font-size:.78rem;" onclick="toggleAdminAgentRunDetail(this)">상세 보기</button>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 8px;">
+                    <span style="padding:4px 8px;border-radius:999px;background:rgba(125,211,252,.14);color:#bae6fd;font-size:.74rem;font-weight:700;"><%= EscapeUtil.escapeHtml(String.valueOf(run.get("status") != null ? run.get("status") : "completed")) %></span>
+                    <% if (run.get("model_used") != null && !String.valueOf(run.get("model_used")).trim().isEmpty()) { %>
+                    <span style="padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);color:#e2e8f0;font-size:.74rem;font-weight:700;"><%= EscapeUtil.escapeHtml(String.valueOf(run.get("model_used"))) %></span>
+                    <% } %>
+                    <span style="padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);color:#e2e8f0;font-size:.74rem;font-weight:700;">Prompt <%= run.get("prompt_tokens") %></span>
+                    <span style="padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);color:#e2e8f0;font-size:.74rem;font-weight:700;">Output <%= run.get("output_tokens") %></span>
+                  </div>
+                  <div style="color:#cbd5e1;font-size:.82rem;line-height:1.65;"><%= EscapeUtil.escapeHtml(clipText(String.valueOf(run.get("user_goal") != null ? run.get("user_goal") : ""), 140)) %></div>
+                  <div class="admin-agent-run-detail" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);">
+                    <% if (!outputSummary.isEmpty()) { %>
+                    <div style="margin-bottom:10px;">
+                      <div style="color:#7dd3fc;font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">요약</div>
+                      <div style="color:#e2e8f0;font-size:.8rem;line-height:1.7;"><%= EscapeUtil.escapeHtml(outputSummary) %></div>
+                    </div>
+                    <% } %>
+                    <% if (!outputReport.isEmpty()) { %>
+                    <div style="margin-bottom:10px;">
+                      <div style="color:#7dd3fc;font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">보고서 초안</div>
+                      <div style="color:#cbd5e1;font-size:.8rem;line-height:1.7;"><%= EscapeUtil.escapeHtml(outputReport) %></div>
+                    </div>
+                    <% } %>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                      <span style="padding:4px 8px;border-radius:999px;background:rgba(34,197,94,.14);color:#bbf7d0;font-size:.74rem;font-weight:700;">추천 도구 <%= toolCount %></span>
+                      <span style="padding:4px 8px;border-radius:999px;background:rgba(251,191,36,.14);color:#fde68a;font-size:.74rem;font-weight:700;">실행 단계 <%= planCount %></span>
+                      <span style="padding:4px 8px;border-radius:999px;background:rgba(244,114,182,.14);color:#fbcfe8;font-size:.74rem;font-weight:700;">체크리스트 <%= checklistCount %></span>
+                      <span style="padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);color:#e2e8f0;font-size:.74rem;font-weight:700;">Credits <%= run.get("credits_used") %></span>
+                    </div>
+                  </div>
                 </div>
                 <% } %>
               <% } %>
@@ -368,5 +460,16 @@
   </div>
 </div>
 <%@ include file="/AI/admin/layout/scripts.jspf" %>
+<script>
+  function toggleAdminAgentRunDetail(button) {
+    var card = button.closest('div[style*="border-radius:16px"]');
+    if (!card) return;
+    var detail = card.querySelector('.admin-agent-run-detail');
+    if (!detail) return;
+    var isOpen = detail.style.display === 'block';
+    detail.style.display = isOpen ? 'none' : 'block';
+    button.textContent = isOpen ? '상세 보기' : '상세 숨기기';
+  }
+</script>
 </body>
 </html>
