@@ -18,6 +18,10 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.math.BigDecimal" %>
+<%@ page import="com.google.gson.JsonArray" %>
+<%@ page import="com.google.gson.JsonElement" %>
+<%@ page import="com.google.gson.JsonObject" %>
+<%@ page import="com.google.gson.JsonParser" %>
 <%@ page import="model.LabSession" %>
 <%@ page import="model.AgentRun" %>
 <%
@@ -264,6 +268,19 @@
       box-shadow: 0 4px 20px rgba(59,130,246,.3); transition: opacity .2s, transform .15s;
     }
     .btn-submit:hover { opacity: .9; transform: translateY(-1px); }
+    .agent-detail {
+      margin-top: 14px; padding: 16px; border-radius: 14px;
+      background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.06);
+    }
+    .agent-detail__title {
+      margin: 0 0 8px; font-size: .82rem; font-weight: 700; color: #93c5fd; text-transform: uppercase; letter-spacing: .06em;
+    }
+    .agent-detail__text {
+      color: var(--text-secondary,#cbd5e1); font-size: .86rem; line-height: 1.75; white-space: pre-wrap;
+    }
+    .agent-detail__list {
+      margin: 0; padding-left: 18px; color: var(--text-secondary,#cbd5e1); font-size: .86rem; line-height: 1.75;
+    }
   </style>
 </head>
 <body>
@@ -760,8 +777,89 @@
                   preview = agentRun.getFinalOutputJson();
                   if (preview.length() > 220) preview = preview.substring(0, 220) + "...";
                 }
+                JsonObject agentOutput = null;
+                try {
+                  if (agentRun.getFinalOutputJson() != null && !agentRun.getFinalOutputJson().trim().isEmpty()) {
+                    agentOutput = JsonParser.parseString(agentRun.getFinalOutputJson()).getAsJsonObject();
+                  }
+                } catch (Exception ignore) {}
               %>
               <div style="color:var(--text-muted,#94a3b8); font-size:.8125rem; line-height:1.65; margin-bottom:14px; white-space:pre-wrap;"><%= EscapeUtil.escapeHtml(preview) %></div>
+              <% if (agentOutput != null) { %>
+                <%
+                  String summary = agentOutput.has("summary") && !agentOutput.get("summary").isJsonNull()
+                    ? agentOutput.get("summary").getAsString() : "";
+                  JsonArray recommendedTools = agentOutput.has("recommendedTools") && agentOutput.get("recommendedTools").isJsonArray()
+                    ? agentOutput.getAsJsonArray("recommendedTools") : null;
+                  JsonArray executionPlan = agentOutput.has("executionPlan") && agentOutput.get("executionPlan").isJsonArray()
+                    ? agentOutput.getAsJsonArray("executionPlan") : null;
+                  JsonObject deliverables = agentOutput.has("deliverables") && agentOutput.get("deliverables").isJsonObject()
+                    ? agentOutput.getAsJsonObject("deliverables") : null;
+                  String report = "";
+                  JsonArray slidesOutline = null;
+                  JsonArray checklist = null;
+                  if (deliverables != null) {
+                    report = deliverables.has("report") && !deliverables.get("report").isJsonNull()
+                      ? deliverables.get("report").getAsString() : "";
+                    slidesOutline = deliverables.has("slidesOutline") && deliverables.get("slidesOutline").isJsonArray()
+                      ? deliverables.getAsJsonArray("slidesOutline") : null;
+                    checklist = deliverables.has("checklist") && deliverables.get("checklist").isJsonArray()
+                      ? deliverables.getAsJsonArray("checklist") : null;
+                  }
+                %>
+                <% if (!summary.isEmpty()) { %>
+                <div class="agent-detail">
+                  <div class="agent-detail__title">요약</div>
+                  <div class="agent-detail__text"><%= EscapeUtil.escapeHtml(summary) %></div>
+                </div>
+                <% } %>
+                <% if (recommendedTools != null && recommendedTools.size() > 0) { %>
+                <div class="agent-detail">
+                  <div class="agent-detail__title">추천 도구</div>
+                  <ul class="agent-detail__list">
+                    <% for (JsonElement item : recommendedTools) { %>
+                    <li><%= EscapeUtil.escapeHtml(item.getAsString()) %></li>
+                    <% } %>
+                  </ul>
+                </div>
+                <% } %>
+                <% if (executionPlan != null && executionPlan.size() > 0) { %>
+                <div class="agent-detail">
+                  <div class="agent-detail__title">실행 단계</div>
+                  <ul class="agent-detail__list">
+                    <% for (JsonElement item : executionPlan) { %>
+                    <li><%= EscapeUtil.escapeHtml(item.getAsString()) %></li>
+                    <% } %>
+                  </ul>
+                </div>
+                <% } %>
+                <% if (!report.isEmpty()) { %>
+                <div class="agent-detail">
+                  <div class="agent-detail__title">보고서 초안</div>
+                  <div class="agent-detail__text"><%= EscapeUtil.escapeHtml(report) %></div>
+                </div>
+                <% } %>
+                <% if ((slidesOutline != null && slidesOutline.size() > 0) || (checklist != null && checklist.size() > 0)) { %>
+                <div class="agent-detail">
+                  <% if (slidesOutline != null && slidesOutline.size() > 0) { %>
+                  <div class="agent-detail__title">슬라이드 개요</div>
+                  <ul class="agent-detail__list" style="margin-bottom:<%= (checklist != null && checklist.size() > 0) ? "12px" : "0" %>;">
+                    <% for (JsonElement item : slidesOutline) { %>
+                    <li><%= EscapeUtil.escapeHtml(item.getAsString()) %></li>
+                    <% } %>
+                  </ul>
+                  <% } %>
+                  <% if (checklist != null && checklist.size() > 0) { %>
+                  <div class="agent-detail__title">체크리스트</div>
+                  <ul class="agent-detail__list">
+                    <% for (JsonElement item : checklist) { %>
+                    <li><%= EscapeUtil.escapeHtml(item.getAsString()) %></li>
+                    <% } %>
+                  </ul>
+                  <% } %>
+                </div>
+                <% } %>
+              <% } %>
               <a href="/AI/user/agent/workspace.jsp" class="btn-primary" style="display:inline-flex;padding:8px 14px;font-size:.82rem;">
                 <i class="bi bi-arrow-repeat"></i>에이전트 워크스페이스 열기
               </a>
