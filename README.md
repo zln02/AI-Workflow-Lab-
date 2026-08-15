@@ -302,4 +302,4 @@ sudo systemctl restart tomcat9
 ## 작성자
 
 - **박진영**
-- GitHub: [AI-Workflow-Lab-](https://github.com/zln02/AI-Workflow-Lab-)
+- GitHub: [AI-Workflow-Lab](https://github.com/zln02/AI-Workflow-Lab)

@@ -34,7 +34,7 @@
         <p class="site-footer__col-title">프로젝트</p>
         <ul class="site-footer__links">
           <li>
-            <a href="https://github.com/zln02/AI-Workflow-Lab-" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/zln02/AI-Workflow-Lab" target="_blank" rel="noopener noreferrer">
               <i class="bi bi-github"></i> GitHub
             </a>
           </li>

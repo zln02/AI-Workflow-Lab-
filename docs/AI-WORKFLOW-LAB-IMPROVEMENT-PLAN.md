@@ -3,7 +3,7 @@
 > **프로젝트**: AI Workflow Lab - AI 도구 추천 + 실무 프로젝트 경험 플랫폼
 > **위치**: `/var/lib/tomcat9/webapps/ROOT/`
 > **스택**: Java 11 + Tomcat 9.0.58 + MySQL + JSP/Servlet + Bootstrap 5 + HikariCP
-> **Git**: https://github.com/zln02/AI-Workflow-Lab-.git
+> **Git**: https://github.com/zln02/AI-Workflow-Lab.git
 
 ---
 

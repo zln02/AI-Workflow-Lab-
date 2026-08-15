@@ -20,7 +20,7 @@
 ## 프로젝트 정보
 - **경로**: `/var/lib/tomcat9/webapps/ROOT/`
 - **스택**: Java 11 + Tomcat 9 + MySQL + JSP/Servlet + Bootstrap 5
-- **Git**: https://github.com/zln02/AI-Workflow-Lab-.git
+- **Git**: https://github.com/zln02/AI-Workflow-Lab.git
 
 ## Sonnet 사용 시 공통 지침
 1. 파일 수정 전 반드시 기존 파일을 먼저 읽을 것

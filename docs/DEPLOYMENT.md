@@ -26,7 +26,7 @@ cd /var/lib/tomcat9/webapps/
 sudo mv ROOT ROOT_backup
 
 # 저장소 클론
-sudo git clone https://github.com/zln02/AI-Workflow-Lab-.git ROOT
+sudo git clone https://github.com/zln02/AI-Workflow-Lab.git ROOT
 
 # 권한 설정
 sudo chown -R tomcat:tomcat /var/lib/tomcat9/webapps/ROOT
